@@ -28,11 +28,28 @@ continue:
     lgdt  gdt_desc_ptr # load GDTR; Refer to IA-32 Intel Spec (Page 50)
 
     # INIT IDT (TO_DO)
+    pushl %eax
+    pushl %ecx
+    pushl %edx
 init_idt:
-    
+    movl KERNEL_CS,%eax
+    shll $16,%eax # Note that there are no handlers being installed at this point
+    movl $0x00008e00,%edx
+    leal idt,%edi
+    movl $NUM_VEC,%ecx
+loop_idt:
+    movl %eax,(%edi) # Offset 31..16 | P | DPL | 0D110 | 000 | xxxx
+    movl %edx,4(%edi) # Segment Selector | Offset 15..0
+    addl $8, %edi
+    decl %ecx
+    cmpl $0,%ecx
+    jne  loop_idt
+    popl %edx
+    popl %ecx
+    popl %eax
     # Load the IDT (TO_DO)
 load_idt:
-
+    lidt(idt_desc_ptr)
     # Load CS with the new descriptor value
     ljmp    $KERNEL_CS, $keep_going
 

@@ -25,6 +25,13 @@ _start:
 
 continue:
     # Load the GDT
+    lgdt  gdt_desc_ptr # load GDTR; Refer to IA-32 Intel Spec (Page 50)
+
+    # INIT IDT (TO_DO)
+init_idt:
+    
+    # Load the IDT (TO_DO)
+load_idt:
 
     # Load CS with the new descriptor value
     ljmp    $KERNEL_CS, $keep_going

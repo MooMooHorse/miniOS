@@ -37,7 +37,7 @@ tss_bottom:
 
     .align  16
 gdt_desc_ptr: # 32-bit Linear Base Address | 16-Bit Table Limit
-    .word gdt_bottom - gdt - 1 # Little Edian : 16-Bit Table Limit (gdt size); -1 : gdt_bottom is the next address after gdt 
+    .word gdt_bottom - gdt - 1 # Little Endian : 16-Bit Table Limit (gdt size); -1 : gdt_bottom is the next address after gdt 
     .long gdt # Base Address of GDT (start) 
 gdt:
 _gdt:

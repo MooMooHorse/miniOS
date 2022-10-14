@@ -47,6 +47,31 @@ int idt_test(){
 
 // add more tests here
 
+int humble_idt_test(){
+	TEST_HEADER;
+
+	int i;
+	int result=PASS;
+	for(i=0;i<20;i++){
+		if(((idt[i].offset_31_16<<16)|(idt[i].offset_15_00))==0){
+			if(i!=9&&i!=15) return FAIL;
+		}
+	}
+	return result;
+}
+
+int exception_test(){
+	TEST_HEADER;
+
+	int i;
+	int result=PASS;
+
+	int operands=1;
+
+	operands=operands/0;
+
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -55,6 +80,7 @@ int idt_test(){
 
 /* Test suite entry point */
 void launch_tests(){
-	TEST_OUTPUT("idt_test", idt_test());
+	// TEST_OUTPUT("exception_test",exception_test());
+	// TEST_OUTPUT("idt_test", humble_idt_test());
 	// launch your tests here
 }

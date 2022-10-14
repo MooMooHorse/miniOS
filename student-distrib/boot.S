@@ -32,18 +32,21 @@ continue:
     pushl %ecx
     pushl %edx
 init_idt:
-    movl KERNEL_CS,%eax
+    movl $KERNEL_CS,%eax
     shll $16,%eax # Note that there are no handlers being installed at this point
     movl $0x00008e00,%edx
     leal idt,%edi
     movl $NUM_VEC,%ecx
 loop_idt:
-    movl %eax,(%edi) # Offset 31..16 | P | DPL | 0D110 | 000 | xxxx
-    movl %edx,4(%edi) # Segment Selector | Offset 15..0
+    movl %eax,(%edi) # Segment Selector | Offset 15..0
+    movl %edx,4(%edi) # Offset 31..16 | P | DPL | 0D110 | 000 | xxxx
     addl $8, %edi
     decl %ecx
     cmpl $0,%ecx
     jne  loop_idt
+
+    call install_exception_hanlder # install IDT for exception handlers
+
     popl %edx
     popl %ecx
     popl %eax

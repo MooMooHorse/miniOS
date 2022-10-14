@@ -1,29 +1,41 @@
 /* exception.S - exception handlers
  * vim:ts=4 noexpandtab
  */
-
+#define ASM 1
+#include "exception.h"
 
 /* assembly linkage for exceptions */
-.globl divide_zero_exception         
-.globl debug_exception
-.globl NMI_interrupt
-.globl breakpoint_exception
-.globl overflow_exception
-.globl BOUND_range_exceed_exception
-.globl invalid_opcode_exception
-.globl device_not_available_exception
-.globl double_fault_exception
-.globl invalid_TSS_exception
-.globl segment_not_present_exception
-.globl stack_fault_exception
-.globl general_protection_exception
-.globl page_fault_exception
-.globl x87_fpu_floating_point_error
-.globl alignment_check_exception
-.globl machine_check_exception
-.globl SIMD_floating_point_exception
+.text
+
+.globl execption_hanlder_jump_table
 
 .align 4
+
+/* jump table for exception hanlder, in total 21, because of reserved for intel */
+execption_hanlder_jump_table:
+.long divide_zero_exception
+.long debug_exception
+.long NMI_interrupt
+.long breakpoint_exception
+.long overflow_exception
+.long BOUND_range_exceed_exception
+.long invalid_opcode_exception
+.long device_not_available_exception
+.long double_fault_exception
+.long reserved_exception
+.long invalid_TSS_exception
+.long segment_not_present_exception
+.long stack_fault_exception
+.long general_protection_exception
+.long page_fault_exception
+.long reserved_exception
+.long x87_fpu_floating_point_error
+.long alignment_check_exception
+.long machine_check_exception
+.long SIMD_floating_point_exception
+.long reserved_exception
+
+
 
 
 /* Before assembly linkage, IF is cleared since we have interrupt gate 
@@ -31,39 +43,22 @@
 *  fastcall is used in this function, eax, ecx, edx
 */
 common_exception_handler:
-    /* old eax has ~#IRQ, note that it is always*/
-    movl (%esp),%eax
     /* save all the registers */
-    pushw %fs
-    pushw %es 
-    pushw %ds
-    pushl %eax
-    pushl %ebp
-    pushl %edi
-    pushl %esi 
-    pushl %edx 
-    pushl %ecx 
-    pushl %ebx 
-
-    /* call the handler in C : fastcall */
+    pushal
+    /* old eax has ~#IRQ, note that it is always*/
+    movl %esp,%eax
+    /* push argument */
+    /* call the handler in C : (if fastcall not available) */
+    pushl %eax # push arguments (because fastcall not available)
     call do_exception
+    addl $4,%esp # pop arguments
     /* restorre all registers */
-    popl %ebx
-    popl %ecx
-    popl %edx
-    popl %esi
-    popl %edi
-    popl %ebp
-    popl %eax
-    /* Warning !!! This pop is problematic because of alignment */
-    popw %ds
-    popw %es
-    popw %fs
+    popal
     /* jump to wrapup_common_exception handler */
-    jmp wrapup_common_exception:
+    jmp wrapup_common_exception
 
 wrapup_common_exception:
-
+    jmp wrapup_common_exception # while(1);
 
 iret # this will never be called because of the nature of exceptions 
 
@@ -154,3 +149,4 @@ SIMD_floating_point_exception:
 
 /* 20 */
 /* reserved for intel */
+reserved_exception:

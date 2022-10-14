@@ -112,5 +112,5 @@ dkms.conf
 *.qcow
 source/
 
-# others
+# Others
 *.dep

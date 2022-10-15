@@ -15,7 +15,7 @@ void i8259_init(void) {
     slave_mask = SLAVE_MASK_INIT;
     
     outb(0xFF, MASTER_8259_PORT + 1); // mask out PIC 8259A-1
-    outb(0xFF, SLAVE_8259_PORT) + 1;   // mask out PIC 8259A-2
+    outb(0xFF, SLAVE_8259_PORT + 1);   // mask out PIC 8259A-2
 
     outb(ICW1, MASTER_8259_PORT);            // ICW1: select 8259A-1 init
     outb(ICW2_MASTER, MASTER_8259_PORT + 1); // ICW2: 8259A-1 IR0-7 mapped to 0x20-0x27

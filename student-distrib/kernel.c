@@ -1,12 +1,11 @@
 /* kernel.c - the C part of the kernel
- * vim:ts=4 noexpandtab
  */
 
 #include "multiboot.h"
 #include "x86_desc.h"
 #include "lib.h"
 #include "i8259.h"
-#include "vm.h"
+#include "mmu.h"
 #include "debug.h"
 #include "tests.h"
 

@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "tests.h"
 
-// #define RUN_TESTS
+#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */

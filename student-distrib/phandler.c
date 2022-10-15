@@ -29,7 +29,7 @@ static char* exception_name[20]={
 "invalid opcode exception",
 "device not available exception",
 "double fault exception",
-"", /* reserved for intel */
+"coprocessor segment overrun", /* reserved for intel */
 "invalid TSS exception",
 "segment not present exception",
 "stack fault exception",
@@ -87,7 +87,7 @@ uint32_t do_exception(old_regs_t* oldregs){
  * 1 - reserved 
  */
 static uint8_t is_exception_reserved(uint32_t i){
-    return (i==9||i==15||i>=20);
+    return (i==15||i>=20);
 }
 
 /**

@@ -46,7 +46,12 @@ int idt_test(){
 }
 
 // add more tests here
-
+/**
+ * @brief This is weekened version of idt test
+ * Coverage IDT test
+ * Output PASS/FAIL
+ * @return ** int 
+ */
 int humble_idt_test(){
 	TEST_HEADER;
 
@@ -59,13 +64,23 @@ int humble_idt_test(){
 	}
 	return result;
 }
-
+/**
+ * @brief test divide by zero exception
+ * Coverage exception
+ * OUTPUT : print exception message
+ * @return ** int 
+ */
 int exception_test(){
 	TEST_HEADER;
 	int operands=1;
 	operands=operands/0;
 }
-
+/**
+ * @brief This is a test for system call installation
+ * Coverage IDT, system call
+ * OUTPUT PASS/FAIL
+ * @return ** int 
+ */
 int syscall_inspection1(){
 	TEST_HEADER;
 	int i=0x80;
@@ -76,6 +91,12 @@ int syscall_inspection1(){
 	}
 	return result;
 }
+/**
+ * @brief This is a test for system call calling
+ * Coverage, system call
+ * OUTPUT print system call message
+ * @return ** int 
+ */
 int syscall_inspection2(){
 	TEST_HEADER;
 	asm volatile("int $0x80");

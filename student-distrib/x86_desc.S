@@ -1,5 +1,4 @@
 # x86_desc.S - Set up x86 segment descriptors, descriptor tables
-# vim:ts=4 noexpandtab
 
 #define ASM     1
 #include "x86_desc.h"
@@ -12,6 +11,7 @@
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
 .globl gdt_desc_ptr # used for lgdt parameter in boot.S (continue:)
+.globl pgd, pgt
 
 .align 4
 
@@ -111,3 +111,20 @@ _idt:
 
 idt_bottom:
 
+    .align PGSIZE
+pgd:
+_pgd:
+    .rept NUM_ENT
+    .long 0
+    .endr
+
+pgd_bottom:
+
+    .align PGSIZE
+pgt:
+_pgt:
+    .rept NUM_ENT
+    .long 0
+    .endr
+
+pgt_bottom:

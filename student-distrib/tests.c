@@ -62,15 +62,26 @@ int humble_idt_test(){
 
 int exception_test(){
 	TEST_HEADER;
-
-	int i;
-	int result=PASS;
-
 	int operands=1;
-
 	operands=operands/0;
-
 }
+
+int syscall_inspection1(){
+	TEST_HEADER;
+	int i=0x80;
+	int result=PASS;
+	if(((idt[i].offset_31_16<<16)|(idt[i].offset_15_00))==0){
+		assertion_failure();
+		result = FAIL;
+	}
+	return result;
+}
+int syscall_inspection2(){
+	TEST_HEADER;
+	asm volatile("int $0x80");
+	return PASS;
+}
+
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -80,6 +91,9 @@ int exception_test(){
 
 /* Test suite entry point */
 void launch_tests(){
+	// TEST_OUTPUT("syscall inspection",syscall_inspection2());
+	// TEST_OUTPUT("syscall inspection",syscall_inspection1());
+	// TEST_OUTPUT("idt_test",idt_test());
 	// TEST_OUTPUT("exception_test",exception_test());
 	// TEST_OUTPUT("idt_test", humble_idt_test());
 	// launch your tests here

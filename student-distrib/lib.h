@@ -72,8 +72,19 @@ static inline uint32_t inl(port) {
     return val;
 }
 
+// /* Writes a byte to a port */
+// #define outb(data, port)                \
+// do {                                    \
+//     asm volatile ("outb %b1, (%w0)"     \
+//                   "pause"               \
+//             :                           \
+//             : "d"(port), "a"(data)      \
+//             : "memory", "cc"            \
+//     );                                  \
+// } while (0)
+
 /* Writes a byte to a port */
-#define outb(data, port)                \
+#define outb_p(data, port)              \
 do {                                    \
     asm volatile ("outb %b1, (%w0)"     \
             :                           \

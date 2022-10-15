@@ -12,6 +12,8 @@
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
 
+/*  */
+
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
@@ -21,6 +23,9 @@
 #define ICW3_MASTER         0x04
 #define ICW3_SLAVE          0x02
 #define ICW4                0x01
+
+#define MASTER_MASK_INIT    0x0FB
+#define SLAVE_MASK_INIT     0x0FF
 
 /* End-of-interrupt byte.  This gets OR'd with
  * the interrupt number and sent out to the PIC

@@ -1,5 +1,4 @@
 /* lib.h - Defines for useful library functions
- * vim:ts=4 noexpandtab
  */
 
 #ifndef _LIB_H
@@ -28,12 +27,12 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
-/* Special purposes functions. */
+/* Special-purpose functions. */
 /* Writes to register `cr3`. Used to switch page tables. */
 static inline void
 lcr3(uint32_t val)
 {
-	asm volatile("movl %0, %%cr3" : : "r" (val));
+    asm volatile("movl %0, %%cr3" : : "r" (val));
 }
 
 /* Port read functions */

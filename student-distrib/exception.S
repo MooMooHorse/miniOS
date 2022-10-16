@@ -1,5 +1,4 @@
 /* exception.S - exception handlers
- * vim:ts=4 noexpandtab
  */
 #define ASM 1
 #include "exception.h"

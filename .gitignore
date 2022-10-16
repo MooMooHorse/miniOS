@@ -111,6 +111,7 @@ dkms.conf
 # 391 specific
 *.qcow
 source/
+bootimg
 
 # Others
 *.dep

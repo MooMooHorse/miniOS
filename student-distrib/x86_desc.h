@@ -1,6 +1,5 @@
 /* x86_desc.h - Defines for various x86 descriptors, descriptor tables,
  * and selectors
- * vim:ts=4 noexpandtab
  */
 
 #ifndef _X86_DESC_H
@@ -21,6 +20,12 @@
 
 /* Number of vectors in the interrupt descriptor table (IDT) */
 #define NUM_VEC     256
+
+/* Size of a 4KB page in bytes. */
+#define PGSIZE      4096
+
+/* Number of entries in a page directory or a page table. */
+#define NUM_ENT     1024
 
 #ifndef ASM
 
@@ -123,6 +128,10 @@ extern uint32_t ldt;
 extern uint32_t tss_size;
 extern seg_desc_t tss_desc_ptr;
 extern tss_t tss;
+
+// Page directory, the first page table.
+extern uint32_t pgdir[NUM_ENT] __attribute__((aligned (PGSIZE)));
+extern uint32_t pgtbl[NUM_ENT] __attribute__((aligned (PGSIZE)));
 
 /* Sets runtime-settable parameters in the GDT entry for the LDT */
 #define SET_LDT_PARAMS(str, addr, lim)                          \

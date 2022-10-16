@@ -1,5 +1,4 @@
-/* lib.c - Some basic library functions (printf, strlen, etc.)
- * vim:ts=4 noexpandtab */
+/* lib.c - Some basic library functions (printf, strlen, etc.) */
 
 #include "lib.h"
 

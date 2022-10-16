@@ -1,6 +1,5 @@
 /* multiboot.h - Defines used in working with Multiboot-compliant
  * bootloaders (such as GRUB)
- * vim:ts=4 noexpandtab
  */
 
 #ifndef _MULTIBOOT_H

@@ -1,10 +1,11 @@
 # boot.S - start point for the kernel after GRUB gives us control
-# vim:ts=4 noexpandtab
 
 #define ASM     1
 
 #include "multiboot.h"
 #include "x86_desc.h"
+#include "exception.h"
+#include "syscall.h"
 
 .text
 
@@ -46,7 +47,7 @@ loop_idt:
     jne  loop_idt
 
     call install_exception_hanlder # install IDT for exception handlers
-
+    call install_syscall # install IDT for system call
     popl %edx
     popl %ecx
     popl %eax

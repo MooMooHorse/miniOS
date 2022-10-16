@@ -17,9 +17,9 @@
 void
 vm_init(void)
 {
-    pgd[0] |= (unsigned long) pgt | PAGE_P | PAGE_RW;  // Map the first page table.
-    pgd[1] |= (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS;  // PDE #1 --> 4M ~ 8M
-    pgt[PTX(VIDEO)] |= VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
+    pgdir[0] |= (unsigned long) pgtbl | PAGE_P | PAGE_RW;  // Map the first page table.
+    pgdir[1] |= (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS;  // PDE #1 --> 4M ~ 8M
+    pgtbl[PTX(VIDEO)] |= VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
     // Turn on page size extension for 4MB pages.
     asm volatile(
@@ -33,7 +33,7 @@ vm_init(void)
     );
 
     // Set page directory.
-    lcr3((uint32_t) pgd);
+    lcr3((uint32_t) pgdir);
 
     // Turn on paging.
     asm volatile(

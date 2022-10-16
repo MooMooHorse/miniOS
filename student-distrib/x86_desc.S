@@ -11,7 +11,7 @@
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
 .globl gdt_desc_ptr # used for lgdt parameter in boot.S (continue:)
-.globl pgd, pgt
+.globl pgdir, pgtbl
 
 .align 4
 
@@ -112,19 +112,19 @@ _idt:
 idt_bottom:
 
     .align PGSIZE
-pgd:
-_pgd:
+pgdir:
+_pgdir:
     .rept NUM_ENT
     .long 0
     .endr
 
-pgd_bottom:
+pgdir_bottom:
 
     .align PGSIZE
-pgt:
-_pgt:
+pgtbl:
+_pgtbl:
     .rept NUM_ENT
     .long 0
     .endr
 
-pgt_bottom:
+pgtbl_bottom:

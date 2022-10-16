@@ -130,8 +130,8 @@ extern seg_desc_t tss_desc_ptr;
 extern tss_t tss;
 
 // Page directory, the first page table.
-extern unsigned long pgd[NUM_ENT] __attribute__((aligned (PGSIZE)));
-extern unsigned long pgt[NUM_ENT] __attribute__((aligned (PGSIZE)));
+extern uint32_t pgdir[NUM_ENT] __attribute__((aligned (PGSIZE)));
+extern uint32_t pgtbl[NUM_ENT] __attribute__((aligned (PGSIZE)));
 
 /* Sets runtime-settable parameters in the GDT entry for the LDT */
 #define SET_LDT_PARAMS(str, addr, lim)                          \

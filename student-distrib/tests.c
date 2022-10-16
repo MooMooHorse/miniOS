@@ -138,7 +138,7 @@ int pgfault_test(){
  */
 int vm_bound_test1(){
     TEST_HEADER;
-    unsigned char data = *(unsigned char*) (0xB8000 - 1);  // One before video memory.
+    unsigned char data = *(unsigned char*) (VIDEO - 1);  // One before video memory.
 
     printf("Successfully dereferenced: %u\n", data);
 
@@ -156,7 +156,7 @@ int vm_bound_test1(){
  */
 int vm_bound_test2(){
     TEST_HEADER;
-    unsigned char data = *(unsigned char*) (0xB8000 + PGSIZE);  // One past video memory.
+    unsigned char data = *(unsigned char*) (VIDEO + PGSIZE);  // One past video memory.
 
     printf("Successfully dereferenced: %u\n", data);
 
@@ -174,7 +174,7 @@ int vm_bound_test2(){
  */
 int vm_bound_test3(){
     TEST_HEADER;
-    unsigned char data = *(unsigned char*) (0x400000 - 1);  // One before 4M.
+    unsigned char data = *(unsigned char*) ((1U << PDXOFF) - 1);  // One before 4M.
 
     printf("Successfully dereferenced: %u\n", data);
 
@@ -192,7 +192,7 @@ int vm_bound_test3(){
  */
 int vm_bound_test4(){
     TEST_HEADER;
-    unsigned char data = *(unsigned char*) (0x400000 + PGSIZE * NUM_ENT);  // Past video memory.
+    unsigned char data = *(unsigned char*) ((1U << PDXOFF) + PGSIZE * NUM_ENT);  // Past video memory.
 
     printf("Successfully dereferenced: %u\n", data);
 
@@ -210,7 +210,7 @@ int vm_bound_test4(){
  */
 int vm_sanity_test(){
     TEST_HEADER;
-    unsigned char* ptr = (void*) 0xB8000;  // Starting va of video memory.
+    unsigned char* ptr = (void*) VIDEO;  // Starting va of video memory.
     uint32_t sum = 0;
     int i;
 
@@ -218,7 +218,7 @@ int vm_sanity_test(){
         sum += *ptr++;
     }
 
-    ptr = (void*) 0x400000;  // Start of direct mapping at 4M.
+    ptr = (void*) (1U << PDXOFF);  // Start of direct mapping at 4M.
     for (i = 0; i < PGSIZE * NUM_ENT; i++) {  // Test fails when we +/- 1.
         sum += *ptr++;
     }

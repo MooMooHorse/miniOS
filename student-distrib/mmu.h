@@ -36,7 +36,7 @@
 #define PAGE_ADDR(pte)      ((uint32_t) (pte) & ~0xFFF)        // Extract the index.
 #define PAGE_FLAGS(pte)     ((uint32_t) (pte) & 0xFFF)         // Extract the flags.
 
-// Assemble indices and offset into a virtual memory.
+// Assemble indices and offset into a virtual memory address.
 #define VA(d, t, o)         (((d) << PDXOFF) | (t) << PTXOFF | (o))
 
 #define PGROUNDUP(x)        (((x) + PGSIZE - 1) & ~(PGSIZE - 1))

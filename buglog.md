@@ -10,6 +10,9 @@
 | :white_check_mark:                                   | `003`   |
 | :white_check_mark:                                   | `004`   |
 | Potential, Harmless for cp1, will "fix" in later cps | `005`   |
+| :white_check_mark:                                   | `006`   |
+| :white_check_mark:                                   | `007`   |
+| :white_check_mark:                                   | `008`   |
 
 ### Bug `#000`
 **Description**  
@@ -76,3 +79,16 @@ Ok if you just have a while loop
 
 But I just record it, I will fix it when adding processes.
 
+### Bug `#006` 
+
+**Description**  
+
+Kernel immediately crashed after paging is enabled. Used `gdb` to step through
+in instruction level. No obvious software level exception occurred. Incorrect PDE/PTE
+value suspected.
+
+**Resolution**  
+
+After careful examination, the physical address of the second 4-MB page is OR'ed 
+to the PDE without proper offset, overwriting flag area and eventually causing 
+paging to breakdown in hardware level. Added offset to the physical address.

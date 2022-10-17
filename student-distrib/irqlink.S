@@ -31,6 +31,7 @@ common_interrupt_handler:
     /* save all the registers */
     pushal
     pushfl
+    cli
     /* old eax has ~#IRQ, note that it is always*/
     movl %esp,%eax
     /* push argument */
@@ -41,19 +42,15 @@ common_interrupt_handler:
     /* restore all registers */
     popfl
     popal
-
     addl $4,%esp # pop $0xfffff...
-    sti
     iret
 
 /* 1 */
 keyboard_interrupt:
-    cli
     pushl $0xfffffffe # ~0xfffffffe = 1  ;
     jmp common_interrupt_handler 
 
 /* 8 */
 rtc_interrupt:
-    cli
     pushl $0xfffffff7 # ~0xfffffff7 = 8  ;
     jmp common_interrupt_handler 

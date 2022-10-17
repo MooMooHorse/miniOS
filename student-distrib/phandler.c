@@ -134,7 +134,7 @@ uint32_t do_interrupt(old_ireg_t *oldregs) {
             rtc_handler();
             break;
         default:
-            printf("out of bounds interrupt %d\n", interrupt_index);
+            printf("unknown interrupt %d\n", interrupt_index);
             break;
     }
     return interrupt_index;

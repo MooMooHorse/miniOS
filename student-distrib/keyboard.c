@@ -9,15 +9,8 @@
  * 
  */
 #include "keyboard.h"
-// static char buf[BUFFER_SIZE];
-// static uint32_t buffer_pt;
-static char simple_char[SCAN_CODE_SIZE];
-// static compound_char[];
 
-// void flush_the_buffer(){
-//     // printf(" "); printing the buffer
-//     buffer_pt=0;
-// }
+static char simple_char[SCAN_CODE_SIZE];
 
 /**
  * @brief Initialize the keyboard
@@ -106,7 +99,6 @@ void keyboard_init(void){
  *
  */
 void keyboard_handler(void){
-    cli();
     uint8_t scan_code = inb(KEYBOARD_PORT); //first byte NOT IN ASCII
     // if(val==0xe0){
     //     // inb();//second byte;
@@ -129,10 +121,5 @@ void keyboard_handler(void){
     (simple_char[scan_code]>='0'&&simple_char[scan_code]<='9'))
         putc(simple_char[scan_code]); // output the ascii 
     send_eoi(KEYBOARD_IRQ);
-    sti();
     return ;
 }
-
-// void test_keyboard(){
-//     /* lowercase, number */
-// }

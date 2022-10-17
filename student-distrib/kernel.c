@@ -138,11 +138,6 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
-
-    /* install interrupt handler to IDT */
-    // SET_IDT_ENTRY(idt[0x21],keyboard_handler);
-    // SET_IDT_ENTRY(idt[0x28],rtc_handler); /* to be installed using assembly */
-
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
     vm_init();
@@ -151,24 +146,14 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
-    // #ifdef RUN_TESTS_RTC
     rtc_init();
-    // #endif
-    // #ifdef RUN_TESTS_KEYBOARD
-    // #ifndef RUN_TESTS_RTC
     keyboard_init();
-    // #endif
-    // #endif
     
-
-
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    // printf("Enabling Interrupts\n");
     sti();
-    // while(1);
 
 #ifdef RUN_TESTS
     /* Run tests */

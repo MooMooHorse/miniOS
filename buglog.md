@@ -92,3 +92,25 @@ value suspected.
 After careful examination, the physical address of the second 4-MB page is OR'ed 
 to the PDE without proper offset, overwriting flag area and eventually causing 
 paging to breakdown in hardware level. Added offset to the physical address.
+
+#### Bug `#007` 
+
+**Description**
+
+Page fault when rtc handler
+
+**Resolution**  
+
+* Stop **all global + static variable**
+* Otherwise to put them in kernel code section
+
+### Bug `#008` 
+
+**Description**
+
+All Handlers executed with page fault with certain probability
+
+**Resolution**  
+
+* Misuse of STI
+* Don't use sti when there are no sti called before

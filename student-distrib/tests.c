@@ -22,6 +22,7 @@ static inline void assertion_failure(){
     asm volatile("int $15");
 }
 
+uint8_t test_num;
 
 /* Checkpoint 1 tests */
 
@@ -274,6 +275,17 @@ int page_flags_test(){
     }
     return PASS;
 }
+/**
+ * @brief rtc test
+ * OUTPUT : in a place in screen, a,b will alternate once per second
+ * coverage : RTC, PIC
+ * @return ** int 
+ */
+int rtc_test(){
+    TEST_HEADER;
+    test_num=12;
+    return PASS;
+}
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -297,5 +309,7 @@ void launch_tests(){
     /* TEST_OUTPUT("vm_bound_test4", vm_bound_test4()); */
     /* TEST_OUTPUT("vm_sanity_test", vm_sanity_test()); */
     // TEST_OUTPUT("page_flags_test", page_flags_test());
+    // TEST_OUTPUT("rtc_test",rtc_test());
+    
 }
 

@@ -11,6 +11,9 @@
 #include "rtc.h"
 #include "i8259.h"
 #include "lib.h"
+#include "tests.h"
+
+static uint32_t rtc_cnt;
 
 /**
  * @brief Initialize the RTC
@@ -28,6 +31,7 @@ void rtc_init(void) {
 
     // ENABLE PERIODIC INTERRUPTS
     // Default rate of 1024 Hz
+    rtc_cnt=0;
     outb(RTC_REG_B, RTC_PORT);
     char prev = inb(RTC_PORT + 1);
 
@@ -58,6 +62,16 @@ void rtc_handler(void) {
 
     // send EOI
     send_eoi(RTC_IRQ);
+    if(test_num==12){
+        static uint8_t show_ch=1;
+        if(show_ch) showc('a');
+        else showc('b');
+        if(rtc_cnt==1023) show_ch^=1;
+    }
+    rtc_cnt++;
+    if(rtc_cnt==1024){
+        rtc_cnt=0;
+    }
 
     // enable interrupts
     sti();

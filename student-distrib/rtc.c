@@ -16,11 +16,9 @@
 
 /**
  * @brief Initialize the RTC
- *
+ * Should be ran when CLI is called 
  */
 void rtc_init(void) {
-    // disable all interrupts
-    cli();
 
     // ENABLE PERIODIC INTERRUPTS
     // Default rate of 1024 Hz
@@ -33,9 +31,6 @@ void rtc_init(void) {
     // enable IRQ8
     enable_irq(RTC_IRQ);
 
-    // enable interrupts
-
-    sti();
 }
 
 /**

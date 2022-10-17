@@ -21,12 +21,10 @@ static uint8_t simple_char[scan_code_2_size];
 
 /**
  * @brief Initialize the keyboard
- *
+ * Should be ran when CLI is called 
  */
 void keyboard_init(void){
     int i;
-    // disable all interrupts
-    cli();
 
     // initialize the scanCodeArray
     for (i=0; i<scan_code_2_size; i++){
@@ -74,8 +72,6 @@ void keyboard_init(void){
     // enable IRQ1
     enable_irq(KEYBOARD_IRQ);
 
-    // enable interrupts
-    sti();
 }
 
 /**
@@ -103,7 +99,7 @@ void keyboard_handler(void){
     //     return ;
     // }
     // printf("%c", simple_char[scan_code]); // output the ascii 
-    // send_eoi(KEYBOARD_IRQ);
+    send_eoi(KEYBOARD_IRQ);
     sti();
     return ;
 }

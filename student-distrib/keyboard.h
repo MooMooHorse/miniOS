@@ -9,7 +9,7 @@
 #define KEYBOARD_PORT 0x60
 // #define SCAN_CODE 0xe0
 // #define BUFFER_SIZE 256
-#define scan_code_2_size 0x83
+#define SCAN_CODE_SIZE 0xff
 
 void keyboard_init(void);
 void keyboard_handler(void);

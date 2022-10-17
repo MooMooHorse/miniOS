@@ -151,8 +151,12 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
+    #ifdef RUN_TESTS_RTC
     rtc_init();
+    #endif
+    #ifdef RUN_TESTS_KEYBOARD
     keyboard_init();
+    #endif
     
 
 

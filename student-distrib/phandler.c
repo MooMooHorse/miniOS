@@ -1,6 +1,6 @@
 /**
  * @file phandler.c
- * @author haor2
+ * @author haor2, tufekci2
  * @brief exception hanlder file
  * @version 0.1
  * @date 2022-10-13

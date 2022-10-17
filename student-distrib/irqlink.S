@@ -1,4 +1,12 @@
-/* irqlink.S - interrupt handlers
+/**
+ * @file irqlink.s
+ * @author tufekci2
+ * @brief asm file for interrupt related handling. 
+ * @version 0.1
+ * @date 2022-10-16
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 #define ASM 1
 #include "irqlink.h"

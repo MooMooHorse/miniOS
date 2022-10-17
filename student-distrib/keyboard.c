@@ -33,19 +33,60 @@ void keyboard_init(void){
             else simple_char[i]=(char)(i-1+(uint8_t)('0'));
         }else{
             switch (i){
-            case 0x10:
-                simple_char[i]='q';
-                break;
-            case 0x11:
-                simple_char[i]='w';
-                break;
-            case 0x12:
-                simple_char[i]='e';
-            break;
-            case 0x13:
-                simple_char[i]='r';
-            break;
-            /* undefined right now */
+            // case 0x02: simple_char[i]='1'; break;
+            // case 0x03: simple_char[i]='2'; break;
+            // case 0x04: simple_char[i]='3'; break;
+            // case 0x05: simple_char[i]='4'; break;
+            // case 0x06: simple_char[i]='5'; break;
+            // case 0x07: simple_char[i]='6'; break;
+            // case 0x08: simple_char[i]='7'; break;
+            // case 0x09: simple_char[i]='8'; break;
+            // case 0x0A: simple_char[i]='9'; break;
+            // case 0x0B: simple_char[i]='0'; break;
+            // case 0x0C: simple_char[i]='-'; break;
+            // case 0x0D: simple_char[i]='='; break;
+            // case 0x0E: simple_char[i]='\b'; break;
+            // case 0x0F: simple_char[i]='\t'; break;
+            case 0x10: simple_char[i]='q'; break;
+            case 0x11: simple_char[i]='w'; break;
+            case 0x12: simple_char[i]='e'; break;
+            case 0x13: simple_char[i]='r'; break;
+            case 0x14: simple_char[i]='t'; break;
+            case 0x15: simple_char[i]='y'; break;
+            case 0x16: simple_char[i]='u'; break;
+            case 0x17: simple_char[i]='i'; break;
+            case 0x18: simple_char[i]='o'; break;
+            case 0x19: simple_char[i]='p'; break;
+            // case 0x1A: simple_char[i]='['; break;
+            // case 0x1B: simple_char[i]=']'; break;
+            // case 0x1C: simple_char[i]='\r'; break;
+            // case 0x1D: simple_char[i]='\0'; break;
+            case 0x1E: simple_char[i]='a'; break;
+            case 0x1F: simple_char[i]='s'; break;
+            case 0x20: simple_char[i]='d'; break;
+            case 0x21: simple_char[i]='f'; break;
+            case 0x22: simple_char[i]='g'; break;
+            case 0x23: simple_char[i]='h'; break;
+            case 0x24: simple_char[i]='j'; break;
+            case 0x25: simple_char[i]='k'; break;
+            case 0x26: simple_char[i]='l'; break;
+            // case 0x27: simple_char[i]=';'; break;
+            // case 0x28: simple_char[i]=''''; break;
+            // case 0x29: simple_char[i]='`'; break;
+            // case 0x2A: simple_char[i]='\0'; break;
+            // case 0x2B: simple_char[i]='\\'; break;
+            case 0x2C: simple_char[i]='z'; break;
+            case 0x2D: simple_char[i]='x'; break;
+            case 0x2E: simple_char[i]='c'; break;
+            case 0x2F: simple_char[i]='v'; break;
+            case 0x30: simple_char[i]='b'; break;
+            case 0x31: simple_char[i]='n'; break;
+            case 0x32: simple_char[i]='m'; break;
+            // case 0x33: simple_char[i]=','; break;
+            // case 0x34: simple_char[i]='.'; break;
+            // case 0x35: simple_char[i]='/'; break;
+            // case 0x36: simple_char[i]='\0'; break;
+
             default:
                 simple_char[i]=0;
                 break;

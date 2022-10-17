@@ -30,11 +30,13 @@ void i8259_init(void) {
 
     outb(master_mask, MASTER_8259_PORT + 1); // restore master PIC mask
     outb(slave_mask, SLAVE_8259_PORT + 1);   // restore slave PIC mask
+
+    // enable_irq(SLAVE_8259_PORT);
 }
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    unsigned int mask;
+    unsigned int mask=0x01;
 
     if (irq_num & 0x0008) {
         mask <<= (irq_num & 7);
@@ -50,7 +52,7 @@ void enable_irq(uint32_t irq_num) {
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-    unsigned int mask;
+    unsigned int mask=0x01;
 
     if (irq_num & 0x0008) {
         mask <<= (irq_num & 7);

@@ -38,7 +38,7 @@ void rtc_init(void) {
     enable_irq(RTC_IRQ);
 
     // enable interrupts
-    
+
     sti();
 }
 
@@ -54,7 +54,7 @@ void rtc_handler(void) {
     outb(RTC_REG_C, RTC_PORT);
     inb(RTC_PORT + 1);
 
-    printf("a");
+    // printf("a");
 
     // send EOI
     send_eoi(RTC_IRQ);

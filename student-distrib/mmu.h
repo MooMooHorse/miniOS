@@ -1,4 +1,12 @@
-/* mmu.h - This file contains definitions for the x86 memory management unit.
+/**
+ * @file mmu.h
+ * @author Scharfrichter Qian
+ * @brief Definitions for the x86 memory management unit.
+ * @version 0.1
+ * @date 2022-10-14
+ *
+ * @copyright Copyright (c) 2022
+ *
  */
 
 #ifndef _MMU_H

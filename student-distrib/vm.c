@@ -1,6 +1,12 @@
-/*
- * vm.c -- This file contains function implementations for virtual memory
- * management.
+/**
+ * @file vm.c
+ * @author Scharfrichter Qian
+ * @brief Function implementations for virtual memory management.
+ * @version 0.1
+ * @date 2022-10-14
+ *
+ * @copyright Copyright (c) 2022
+ *
  */
 
 #include "mmu.h"

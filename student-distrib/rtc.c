@@ -39,7 +39,7 @@ void rtc_handler(void) {
     // Handle RTC interrupt.
     rtc_test(virt_rtc);  // Only for testing purposes.
 
-    if (++virt_rtc == RTC_MAX_FREQ){
+    if (++virt_rtc == RTC_DEF_FREQ){
         virt_rtc = 0;  // Reset virtualization counter.
     }
 

@@ -179,6 +179,17 @@ void putc(uint8_t c) {
     }
 }
 
+/**
+ * @brief show a character at a location without changing the screen coordinate
+ * @param c 
+ * @return ** void 
+ */
+void showc(uint8_t c){
+    *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+    *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+}
+
+
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert
  *            int8_t* buf = allocated buffer to place string in

@@ -37,11 +37,14 @@ void i8259_init(void) {
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
     unsigned int mask=0x01;
+    if(irq_num>16){
+        return ;
+    }
 
-    if (irq_num & 0x0008) {
-        mask <<= (irq_num & 7);
-        mask = ~mask;
-        outb((inb(SLAVE_8259_PORT + 1) & mask), SLAVE_8259_PORT + 1);
+    if (irq_num & 0x0008) { /* secondary pic */
+        mask <<= (irq_num & 7); /* if it's 3rd on secondary pic, then it's 1<<2 */
+        mask = ~mask; /* negate it, e.g. 3rd is 1111111011 */
+        outb((inb(SLAVE_8259_PORT + 1) & mask), SLAVE_8259_PORT + 1); /*  */
     }
     else {
         mask <<= irq_num;
@@ -53,6 +56,9 @@ void enable_irq(uint32_t irq_num) {
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
     unsigned int mask=0x01;
+    if(irq_num>16){
+        return ;
+    }
 
     if (irq_num & 0x0008) {
         mask <<= (irq_num & 7);
@@ -66,6 +72,9 @@ void disable_irq(uint32_t irq_num) {
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
+    if(irq_num>16){
+        return ;
+    }
     if (irq_num & 0x0008) {
         outb(EOI | (irq_num & 7), SLAVE_8259_PORT);
         outb(EOI | 2, MASTER_8259_PORT);

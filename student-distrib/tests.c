@@ -275,17 +275,6 @@ int page_flags_test(){
     }
     return PASS;
 }
-/**
- * @brief rtc test
- * OUTPUT : in a place in screen, a,b will alternate once per second
- * coverage : RTC, PIC
- * @return ** int 
- */
-int rtc_test(){
-    TEST_HEADER;
-    test_num=12;
-    return PASS;
-}
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */

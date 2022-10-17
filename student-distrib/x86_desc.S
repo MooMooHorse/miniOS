@@ -12,6 +12,7 @@
 .globl idt_desc_ptr, idt
 .globl gdt_desc_ptr # used for lgdt parameter in boot.S (continue:)
 .globl pgdir, pgtbl
+.globl virt_rtc
 
 .align 4
 
@@ -128,3 +129,6 @@ _pgtbl:
     .endr
 
 pgtbl_bottom:
+
+virt_rtc:
+.long 0

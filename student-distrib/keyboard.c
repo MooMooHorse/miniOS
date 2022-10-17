@@ -102,7 +102,7 @@ void keyboard_handler(void){
     //     sti();
     //     return ;
     // }
-    printf("%c", simple_char[scan_code]); // output the ascii 
+    // printf("%c", simple_char[scan_code]); // output the ascii 
     // send_eoi(KEYBOARD_IRQ);
     sti();
     return ;

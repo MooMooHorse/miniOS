@@ -2,6 +2,8 @@
     "files.associations": {
         "i8259.h": "c",
         "lib.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "tests.h": "c",
+        "rtc.h": "c"
     }
 }

@@ -12,6 +12,7 @@
 #include "i8259.h"
 #include "lib.h"
 #include "tests.h"
+#include "x86_desc.h"
 
 /**
  * @brief Initialize the RTC
@@ -48,10 +49,16 @@ void rtc_handler(void) {
     cli();
 
     // Handle RTC interrupt.
-    test_interrupts();  // Only for testing purposes.
-
+    #ifdef RUN_TESTS_RTC
+    rtc_test(virt_rtc);  // Only for testing purposes.
+    #endif
     outb(RTC_REG_C, RTC_PORT);
     inb(RTC_PORT + 1);  // Discard contents of register C.
+
+    virt_rtc++;
+    if(virt_rtc==1024){
+        virt_rtc=0;
+    }
 
     send_eoi(RTC_IRQ);
     /* restore_flags(flags);  // Restore flags. (Also the IF bit.) */

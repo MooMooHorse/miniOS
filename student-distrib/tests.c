@@ -274,6 +274,17 @@ int page_flags_test(){
     return PASS;
 }
 
+/**
+ * @brief rtc test
+ * OUTPUT : every second, all the screen location is altered by once
+ * coverage : RTC, PIC
+ * @return ** int 
+ */
+void rtc_test(uint32_t x){
+    if(x==1023) test_interrupts();
+}
+
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */

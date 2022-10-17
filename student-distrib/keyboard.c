@@ -91,7 +91,6 @@ void keyboard_init(void){
 
     // enable IRQ1
     enable_irq(KEYBOARD_IRQ);
-
 }
 
 /**
@@ -121,5 +120,4 @@ void keyboard_handler(void){
     (simple_char[scan_code]>='0'&&simple_char[scan_code]<='9'))
         putc(simple_char[scan_code]); // output the ascii 
     send_eoi(KEYBOARD_IRQ);
-    return ;
 }

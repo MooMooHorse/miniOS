@@ -22,8 +22,6 @@ static inline void assertion_failure(){
     asm volatile("int $15");
 }
 
-uint8_t test_num;
-
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example
@@ -273,17 +271,6 @@ int page_flags_test(){
             return FAIL;
         }
     }
-    return PASS;
-}
-/**
- * @brief rtc test
- * OUTPUT : in a place in screen, a,b will alternate once per second
- * coverage : RTC, PIC
- * @return ** int 
- */
-int rtc_test(){
-    TEST_HEADER;
-    test_num=12;
     return PASS;
 }
 

@@ -37,8 +37,9 @@ void rtc_init(void) {
  */
 void rtc_handler(void) {
     // Handle RTC interrupt.
+    #ifdef RUN_TESTS_RTC
     rtc_test(virt_rtc);  // Only for testing purposes.
-
+    #endif
     if (++virt_rtc == RTC_DEF_FREQ){
         virt_rtc = 0;  // Reset virtualization counter.
     }

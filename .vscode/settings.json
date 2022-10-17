@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "i8259.h": "c",
-        "lib.h": "c"
+        "lib.h": "c",
+        "types.h": "c"
     }
 }

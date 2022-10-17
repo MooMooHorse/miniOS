@@ -13,6 +13,7 @@
 #include "exception.h"
 #include "lib.h"
 #include "x86_desc.h"
+#include "irqlink.h"
 
 #define SCROLL_SCREEN_ENABLE 0
 

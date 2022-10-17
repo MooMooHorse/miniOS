@@ -1,3 +1,5 @@
+#ifndef _RTC_H
+#define _RTC_H
 #include "types.h"
 
 #define RTC_PORT 0x70
@@ -11,3 +13,5 @@
 /* RTC init and handler */
 extern void rtc_init(void);
 extern void rtc_handler(void);
+
+#endif

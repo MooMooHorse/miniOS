@@ -6,12 +6,12 @@
 /* assembly linkage for interrupts */
 .text
 
-.globl interrupt_hanlder_jump_table
+.globl interrupt_handler_jump_table
 
 .align 4
 
 /* jump table for interrupt hanlder */
-interrupt_hanlder_jump_table:
+interrupt_handler_jump_table:
 .long keyboard_interrupt
 .long rtc_interrupt
 
@@ -40,10 +40,10 @@ common_interrupt_handler:
 keyboard_interrupt:
     cli
     pushl $0xfffffffe # ~0xfffffffe = 1  ;
-    jmp common_exception_handler 
+    jmp common_interrupt_handler 
 
 /* 8 */
 rtc_interrupt:
     cli
     pushl $0xfffffff7 # ~0xfffffff7 = 8  ;
-    jmp common_exception_handler 
+    jmp common_interrupt_handler 

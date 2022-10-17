@@ -1,3 +1,6 @@
+#ifndef _KEYBOARD_H
+#define _KEYBOARD_H
+
 #include "types.h"
 #include "i8259.h"
 #include "lib.h"
@@ -10,3 +13,6 @@
 
 void keyboard_init(void);
 void keyboard_handler(void);
+
+#endif
+

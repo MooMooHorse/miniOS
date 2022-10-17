@@ -9,6 +9,7 @@
 #include "rtc.h"
 #include "debug.h"
 #include "tests.h"
+#include "keyboard.h"
 
 #define RUN_TESTS
 
@@ -136,20 +137,24 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
     }
+
+
     /* install interrupt handler to IDT */
+    SET_IDT_ENTRY(idt[0x21],keyboard_handler);
     SET_IDT_ENTRY(idt[0x28],rtc_handler); /* to be installed using assembly */
 
+    /* Initialize devices, memory, filesystem, enable device interrupts on the
+     * PIC, any other initialization stuff... */
+    vm_init();
+    
     /* Init the PIC */
     i8259_init();
 
     /* Initialize devices */
     rtc_init();
-    // keyboard_init();
+    keyboard_init();
     
 
-    /* Initialize devices, memory, filesystem, enable device interrupts on the
-     * PIC, any other initialization stuff... */
-    vm_init();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

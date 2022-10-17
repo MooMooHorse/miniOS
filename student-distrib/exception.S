@@ -51,7 +51,7 @@ common_exception_handler:
     pushl %eax # push arguments (because fastcall not available)
     call do_exception
     addl $4,%esp # pop arguments
-    /* restorre all registers */
+    /* restore all registers */
     popal
     /* jump to wrapup_common_exception handler */
     jmp wrapup_common_exception

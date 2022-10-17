@@ -22,8 +22,6 @@ static inline void assertion_failure(){
     asm volatile("int $15");
 }
 
-uint8_t test_num;
-
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example

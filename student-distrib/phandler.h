@@ -14,7 +14,6 @@
 
 #ifndef ASM
 #include "types.h"
-#include "exception.h"
 
 /**
  * @brief This struct is to record the values on stack 
@@ -36,8 +35,24 @@ typedef struct old_regs {
     uint32_t orig_eax;
 } old_regs_t;
 
+typedef struct old_int_regs{
+    uint32_t oflags;
+    uint32_t oedi;
+    uint32_t oesi;
+    uint32_t oebp;
+    uint32_t oesp;
+    uint32_t oebx;
+    uint32_t oedx;
+    uint32_t oecx;
+    uint32_t oeax;
+    uint32_t orig_eax;
+} old_ireg_t;
+
 uint32_t do_exception(old_regs_t* oldregs); /* exception hanlder */
 void install_exception_hanlder(void);
+
+uint32_t do_interrupt(old_ireg_t *oldregs);
+void install_interrupt_hanlder();
 #endif
 
 #endif

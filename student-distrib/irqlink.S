@@ -30,6 +30,7 @@ interrupt_handler_jump_table:
 common_interrupt_handler:
     /* save all the registers */
     pushal
+    pushfl
     /* old eax has ~#IRQ, note that it is always*/
     movl %esp,%eax
     /* push argument */
@@ -38,9 +39,10 @@ common_interrupt_handler:
     call do_interrupt
     addl $4,%esp # pop arguments
     /* restore all registers */
+    popfl
     popal
 
-    popl %eax # this is to popl the value of pushl on exception entry.
+    addl $4,%esp # pop $0xfffff...
     sti
     iret
 

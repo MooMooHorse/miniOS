@@ -48,7 +48,7 @@ loop_idt:
 
     call install_exception_hanlder # install IDT for exception handlers
     call install_syscall # install IDT for system call
-    ; call install_interrupt_hanlder # install handler for interrupt
+    call install_interrupt_hanlder # install handler for interrupt
     popl %edx
     popl %ecx
     popl %eax

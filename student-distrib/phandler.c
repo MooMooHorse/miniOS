@@ -14,6 +14,8 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "irqlink.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 #define SCROLL_SCREEN_ENABLE 0
 
@@ -113,7 +115,7 @@ void install_exception_hanlder() {
  * -1 : pointer passed into it is invalid
  * else : interrupt index
  */
-uint32_t do_interrupt(old_regs_t *oldregs) {
+uint32_t do_interrupt(old_ireg_t *oldregs) {
     if (oldregs == NULL) {
         printf("invalid pointer old_regs\n");
         return -1;
@@ -125,11 +127,11 @@ uint32_t do_interrupt(old_regs_t *oldregs) {
         return interrupt_index;
     }
     switch (interrupt_index) {
-        case 0x21:
-            printf("keyboard interrupt");
+        case 0x01:
+            keyboard_handler();
             break;
-        case 0x28:
-            printf("RTC interrupt");
+        case 0x08:
+            rtc_handler();
             break;
         default:
             printf("out of bounds interrupt %d\n", interrupt_index);

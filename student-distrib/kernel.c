@@ -140,8 +140,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
 
     /* install interrupt handler to IDT */
-    SET_IDT_ENTRY(idt[0x21],keyboard_handler);
-    SET_IDT_ENTRY(idt[0x28],rtc_handler); /* to be installed using assembly */
+    // SET_IDT_ENTRY(idt[0x21],keyboard_handler);
+    // SET_IDT_ENTRY(idt[0x28],rtc_handler); /* to be installed using assembly */
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
@@ -151,14 +151,14 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
-    #ifdef RUN_TESTS_RTC
+    // #ifdef RUN_TESTS_RTC
     rtc_init();
-    #endif
-    #ifdef RUN_TESTS_KEYBOARD
-    #ifndef RUN_TESTS_RTC
+    // #endif
+    // #ifdef RUN_TESTS_KEYBOARD
+    // #ifndef RUN_TESTS_RTC
     keyboard_init();
-    #endif
-    #endif
+    // #endif
+    // #endif
     
 
 

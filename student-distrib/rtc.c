@@ -50,7 +50,7 @@ void rtc_init(void) {
 void rtc_handler(void) {
     uint32_t flags;
     cli_and_save(flags);
-    /* test_interrupts(); */
+    test_interrupts();
     send_eoi(RTC_IRQ);
     restore_flags(flags);
 }

@@ -36,50 +36,44 @@ void i8259_init(void) {
 
 /* Enable (unmask) the specified IRQ */
 void enable_irq(uint32_t irq_num) {
-    unsigned int mask=0x01;
-    if(irq_num>16){
-        return ;
-    }
+    uint8_t mask = 0x1;
+    if (irq_num >= 16) { return; }  // Invalid IRQ #!
 
-    if (irq_num & 0x0008) { /* secondary pic */
+    if (irq_num & 8) { /* secondary pic */
         mask <<= (irq_num & 7); /* if it's 3rd on secondary pic, then it's 1<<2 */
-        mask = ~mask; /* negate it, e.g. 3rd is 1111111011 */
-        outb((inb(SLAVE_8259_PORT + 1) & mask), SLAVE_8259_PORT + 1); /*  */
-    }
-    else {
+        slave_mask &= ~mask; /* negate it, e.g. 3rd is 1111111011 */
+        outb(slave_mask, SLAVE_8259_PORT + 1);
+    } else {
         mask <<= irq_num;
-        mask = ~mask;
-        outb((inb(MASTER_8259_PORT + 1) & mask), MASTER_8259_PORT + 1);
+        master_mask &= ~mask;
+        outb(master_mask, MASTER_8259_PORT + 1);
     }
 }
 
 /* Disable (mask) the specified IRQ */
 void disable_irq(uint32_t irq_num) {
-    unsigned int mask=0x01;
-    if(irq_num>16){
-        return ;
-    }
+    uint8_t mask = 0x1;
+    if (irq_num >= 16) { return; }  // Invalid IRQ #!
 
-    if (irq_num & 0x0008) {
+    if (irq_num & 8) {
         mask <<= (irq_num & 7);
-        outb((inb(SLAVE_8259_PORT + 1) | mask), SLAVE_8259_PORT + 1);
-    }
-    else {
+        slave_mask |= mask;
+        outb(slave_mask, SLAVE_8259_PORT + 1);
+    } else {
         mask <<= irq_num;
-        outb((inb(MASTER_8259_PORT + 1) | mask), MASTER_8259_PORT + 1);
+        master_mask |= mask;
+        outb(master_mask, MASTER_8259_PORT + 1);
     }
 }
 
 /* Send end-of-interrupt signal for the specified IRQ */
 void send_eoi(uint32_t irq_num) {
-    if(irq_num>16){
-        return ;
-    }
-    if (irq_num & 0x0008) {
+    if (irq_num >= 16) { return; }  // Invalid IRQ #!
+
+    if (irq_num & 8) {
         outb(EOI | (irq_num & 7), SLAVE_8259_PORT);
         outb(EOI | 2, MASTER_8259_PORT);
-    }
-    else {
+    } else {
         outb(EOI | irq_num, MASTER_8259_PORT);
     }
 }

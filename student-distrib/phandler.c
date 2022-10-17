@@ -104,3 +104,45 @@ void install_exception_hanlder() {
         SET_IDT_ENTRY(idt[i], execption_hanlder_jump_table[i]);
     }
 }
+
+/**
+ * @brief interrupt handler
+ * @param oldregs
+ * @return ** uint32_t
+ * -1 : pointer passed into it is invalid
+ * else : interrupt index
+ */
+uint32_t do_interrupt(old_regs_t *oldregs) {
+    if (oldregs == NULL) {
+        printf("invalid pointer old_regs\n");
+        return -1;
+    }
+    /* negate this value : reason explained in irqlink.S */
+    uint32_t interrupt_index = (~oldregs->orig_eax);
+    if (interrupt_index < 0 || interrupt_index > 0x2F) {
+        printf("wrong interrupt index: %d, you will double fault!\n", interrupt_index);
+        return interrupt_index;
+    }
+    switch (interrupt_index) {
+        case 0x21:
+            printf("keyboard interrupt");
+            break;
+        case 0x28:
+            printf("RTC interrupt");
+            break;
+        default:
+            printf("out of bounds interrupt %d\n", interrupt_index);
+            break;
+    }
+    return interrupt_index;
+}
+
+/**
+ * @brief set interrupt handler table
+ * IDT 0x21, 0x28
+ * @return ** void
+ */
+void install_interrupt_hanlder() {
+    SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[0]);
+    SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[1]);
+}

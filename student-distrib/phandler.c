@@ -19,30 +19,6 @@
 /**
  * @brief exception name array
  */
-<<<<<<< HEAD
-static char *exception_name[20] = {
-    "divide zero exception",
-    "debug exception",
-    "NMI interrupt",
-    "breakpoint exception",
-    "overflow exception",
-    "BOUND range exceed exception",
-    "invalid opcode exception",
-    "device not available exception",
-    "double fault exception",
-    "", /* reserved for intel */
-    "invalid TSS exception",
-    "segment not present exception",
-    "stack fault exception",
-    "general protection exception",
-    "page fault exception",
-    "", /* reserved for intel */
-    "x87 fpu floating point error",
-    "alignment check exception",
-    "machine check exception",
-    "SIMD floating point exception"
-    /* reserved for intel */
-=======
 static char* exception_name[20]={
 "divide zero exception",
 "debug exception",
@@ -65,7 +41,6 @@ static char* exception_name[20]={
 "machine check exception",
 "SIMD floating point exception"
 /* reserved for intel */
->>>>>>> haor2
 };
 
 /**
@@ -111,13 +86,9 @@ uint32_t do_exception(old_regs_t *oldregs) {
  * 0 - not reserved
  * 1 - reserved
  */
-<<<<<<< HEAD
-static uint8_t is_exception_reserved(uint32_t i) { return (i == 9 || i == 15 || i >= 20); }
-=======
 static uint8_t is_exception_reserved(uint32_t i){
     return (i==15||i>=20);
 }
->>>>>>> haor2
 
 /**
  * @brief set exception handler table

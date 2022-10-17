@@ -9,5 +9,5 @@
 #define RTC_IRQ 8
 
 /* RTC init and handler */
-void rtc_init(void);
-void rtc_handler(void);
+extern void rtc_init(void);
+extern void rtc_handler(void);

@@ -83,7 +83,6 @@ static inline uint32_t inl(port) {
 #define outb(data, port)                \
 do {                                    \
     asm volatile ("outb %b1, (%w0)"     \
-                  "pause"               \
             :                           \
             : "d"(port), "a"(data)      \
             : "memory", "cc"            \

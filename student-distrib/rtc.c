@@ -1,3 +1,13 @@
+/**
+ * @file rtc.c
+ * @author erik
+ * @brief RTC related functions, including handler
+ * @version 0.1
+ * @date 2022-10-16
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "rtc.h"
 #include "i8259.h"
 #include "lib.h"

@@ -6,6 +6,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "mmu.h"
+#include "rtc.h"
 #include "debug.h"
 #include "tests.h"
 
@@ -135,6 +136,8 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
     }
+    /* install interrupt handler to IDT */
+    
 
     /* Init the PIC */
     i8259_init();

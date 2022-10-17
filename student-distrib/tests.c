@@ -307,7 +307,6 @@ void launch_tests(){
     /* TEST_OUTPUT("vm_bound_test4", vm_bound_test4()); */
     /* TEST_OUTPUT("vm_sanity_test", vm_sanity_test()); */
     // TEST_OUTPUT("page_flags_test", page_flags_test());
-    // TEST_OUTPUT("rtc_test",rtc_test());
     
 }
 

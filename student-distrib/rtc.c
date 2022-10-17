@@ -47,8 +47,6 @@ void rtc_handler(void) {
     #ifdef RUN_TESTS_RTC
     rtc_test(virt_rtc);  // Only for testing purposes.
     #endif
-    outb(RTC_REG_C, RTC_PORT);
-    inb(RTC_PORT + 1);  // Discard contents of register C.
 
     virt_rtc++;
     if(virt_rtc==1024){
@@ -56,6 +54,10 @@ void rtc_handler(void) {
     }
 
     send_eoi(RTC_IRQ);
+
+    outb(RTC_REG_C, RTC_PORT);
+    inb(RTC_PORT + 1);  // Discard contents of register C.
+    
     /* restore_flags(flags);  // Restore flags. (Also the IF bit.) */
     sti();
 }

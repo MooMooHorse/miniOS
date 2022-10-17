@@ -42,9 +42,10 @@ void rtc_init(void) {
  *
  */
 void rtc_handler(void) {
-    uint32_t flags;
+    /* uint32_t flags; */
 
-    cli_and_save(flags);  // Disable interrupts and save flags.
+    /* cli_and_save(flags);  // Disable interrupts and save flags. */
+    cli();
 
     // Handle RTC interrupt.
     test_interrupts();  // Only for testing purposes.
@@ -53,6 +54,7 @@ void rtc_handler(void) {
     inb(RTC_PORT + 1);  // Discard contents of register C.
 
     send_eoi(RTC_IRQ);
-    restore_flags(flags);  // Restore flags. (Also the IF bit.)
+    /* restore_flags(flags);  // Restore flags. (Also the IF bit.) */
+    sti();
 }
 

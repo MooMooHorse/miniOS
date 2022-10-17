@@ -155,7 +155,9 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     #endif
     #ifdef RUN_TESTS_KEYBOARD
+    #ifndef RUN_TESTS_RTC
     keyboard_init();
+    #endif
     #endif
     
 

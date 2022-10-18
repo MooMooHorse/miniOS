@@ -20,72 +20,63 @@ void keyboard_init(void){
     int i;
 
     // initialize the scanCodeArray
-    for (i=0; i<SCAN_CODE_SIZE; i++){
-        if(i>=0x02&&i<=0x0B){/* digits */
-            if(i==0x0B) simple_char[i]='0';
-            else simple_char[i]=(char)(i-1+(uint8_t)('0'));
-        }else{
-            switch (i){
-            // case 0x02: simple_char[i]='1'; break;
-            // case 0x03: simple_char[i]='2'; break;
-            // case 0x04: simple_char[i]='3'; break;
-            // case 0x05: simple_char[i]='4'; break;
-            // case 0x06: simple_char[i]='5'; break;
-            // case 0x07: simple_char[i]='6'; break;
-            // case 0x08: simple_char[i]='7'; break;
-            // case 0x09: simple_char[i]='8'; break;
-            // case 0x0A: simple_char[i]='9'; break;
-            // case 0x0B: simple_char[i]='0'; break;
-            // case 0x0C: simple_char[i]='-'; break;
-            // case 0x0D: simple_char[i]='='; break;
-            // case 0x0E: simple_char[i]='\b'; break;
-            // case 0x0F: simple_char[i]='\t'; break;
-            case 0x10: simple_char[i]='q'; break;
-            case 0x11: simple_char[i]='w'; break;
-            case 0x12: simple_char[i]='e'; break;
-            case 0x13: simple_char[i]='r'; break;
-            case 0x14: simple_char[i]='t'; break;
-            case 0x15: simple_char[i]='y'; break;
-            case 0x16: simple_char[i]='u'; break;
-            case 0x17: simple_char[i]='i'; break;
-            case 0x18: simple_char[i]='o'; break;
-            case 0x19: simple_char[i]='p'; break;
-            // case 0x1A: simple_char[i]='['; break;
-            // case 0x1B: simple_char[i]=']'; break;
-            // case 0x1C: simple_char[i]='\r'; break;
-            // case 0x1D: simple_char[i]='\0'; break;
-            case 0x1E: simple_char[i]='a'; break;
-            case 0x1F: simple_char[i]='s'; break;
-            case 0x20: simple_char[i]='d'; break;
-            case 0x21: simple_char[i]='f'; break;
-            case 0x22: simple_char[i]='g'; break;
-            case 0x23: simple_char[i]='h'; break;
-            case 0x24: simple_char[i]='j'; break;
-            case 0x25: simple_char[i]='k'; break;
-            case 0x26: simple_char[i]='l'; break;
-            // case 0x27: simple_char[i]=';'; break;
-            // case 0x28: simple_char[i]=''''; break;
-            // case 0x29: simple_char[i]='`'; break;
-            // case 0x2A: simple_char[i]='\0'; break;
-            // case 0x2B: simple_char[i]='\\'; break;
-            case 0x2C: simple_char[i]='z'; break;
-            case 0x2D: simple_char[i]='x'; break;
-            case 0x2E: simple_char[i]='c'; break;
-            case 0x2F: simple_char[i]='v'; break;
-            case 0x30: simple_char[i]='b'; break;
-            case 0x31: simple_char[i]='n'; break;
-            case 0x32: simple_char[i]='m'; break;
-            // case 0x33: simple_char[i]=','; break;
-            // case 0x34: simple_char[i]='.'; break;
-            // case 0x35: simple_char[i]='/'; break;
-            // case 0x36: simple_char[i]='\0'; break;
+    for (i=0; i<SCAN_CODE_SIZE; i++)
+        simple_char[i]=0;
 
-            default:
-                simple_char[i]=0;
-                break;
-            }
-        }
-    }
+    simple_char[0x02]='1'; 
+    simple_char[0x03]='2'; 
+    simple_char[0x04]='3';
+    simple_char[0x05]='4';
+    simple_char[0x06]='5';
+    simple_char[0x07]='6';
+    simple_char[0x08]='7';
+    simple_char[0x09]='8';
+    simple_char[0x0A]='9';
+    simple_char[0x0B]='0';
+    simple_char[0x0C]='-';
+    simple_char[0x0D]='=';
+    simple_char[0x0E]='\b';
+    simple_char[0x0F]='\t';
+    simple_char[0x10]='q';
+    simple_char[0x11]='w';
+    simple_char[0x12]='e';
+    simple_char[0x13]='r';
+    simple_char[0x14]='t';
+    simple_char[0x15]='y';
+    simple_char[0x16]='u';
+    simple_char[0x17]='i';
+    simple_char[0x18]='o';
+    simple_char[0x19]='p';
+    simple_char[0x1A]='[';
+    simple_char[0x1B]=']';
+    simple_char[0x1C]='\r';
+    simple_char[0x1D]='\0';
+    simple_char[0x1E]='a';
+    simple_char[0x1F]='s';
+    simple_char[0x20]='d';
+    simple_char[0x21]='f';
+    simple_char[0x22]='g';
+    simple_char[0x23]='h';
+    simple_char[0x24]='j';
+    simple_char[0x25]='k';
+    simple_char[0x26]='l';
+    simple_char[0x27]=';';
+    simple_char[0x28]='\'';
+    simple_char[0x29]='`';
+    simple_char[0x2A]='\0';
+    simple_char[0x2B]='\\';
+    simple_char[0x2C]='z';
+    simple_char[0x2D]='x';
+    simple_char[0x2E]='c';
+    simple_char[0x2F]='v';
+    simple_char[0x30]='b';
+    simple_char[0x31]='n';
+    simple_char[0x32]='m';
+    simple_char[0x33]=',';
+    simple_char[0x34]='.';
+    simple_char[0x35]='/';
+    simple_char[0x36]='\0';
+
     // initialize simple_char
     /* map from scancode to ascii*/
 

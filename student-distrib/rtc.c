@@ -18,7 +18,8 @@
  * @brief Initialize the RTC
  * Should be ran when CLI is called 
  */
-void rtc_init(void) {
+void 
+rtc_init(void) {
     // ENABLE PERIODIC INTERRUPTS
     // NOTE: The default rate is 1024 Hz!
     outb(RTC_REG_B, RTC_PORT);
@@ -35,7 +36,8 @@ void rtc_init(void) {
  * @brief RTC interrupt handler
  *
  */
-void rtc_handler(void) {
+void 
+rtc_handler(void) {
     // Handle RTC interrupt.
     #ifdef RUN_TESTS_RTC
     rtc_test(virt_rtc);  // Only for testing purposes.

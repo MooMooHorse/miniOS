@@ -291,7 +291,11 @@ void rtc_test(uint32_t x){
 /* Checkpoint 5 tests */
 
 
-/* Test suite entry point */
+/**
+ * @brief launching test function
+ * @param None
+ * @return ** void 
+ */
 void launch_tests(){
     // launch your tests here
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());

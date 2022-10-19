@@ -13,19 +13,21 @@
 #include "syslink.h"
 /**
  * @brief sys_call_dispatcher() is called when idt[0x80] is invoked
- * 
+ * @param none
  * @return ** void 
  */
-void sys_call_dispatcher(){
+void 
+sys_call_dispatcher(){
     printf("system call is invoked\n");
 }
 
 /**
  * @brief install system call to idt
- * 
+ * @param none
  * @return ** void 
  */
-void install_syscall(){
+void 
+install_syscall(){
     SET_IDT_ENTRY(idt[0x80],syscall_entry_ptr);
 }
 

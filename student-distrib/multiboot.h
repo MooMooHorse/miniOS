@@ -66,6 +66,8 @@ typedef struct memory_map {
     uint32_t type;
 } memory_map_t;
 
+#define FILESYS_MOD 0
+
 #endif /* ASM */
 
 #endif /* _MULTIBOOT_H */

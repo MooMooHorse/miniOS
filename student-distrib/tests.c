@@ -1,7 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-
+#include "filesystem.h"
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
 #include "mmu.h"
@@ -284,6 +284,49 @@ void rtc_test(uint32_t x){
     if(x==1023) test_interrupts();
 }
 
+static void display_dentry(dentry_t* dentry){
+    puts((int8_t*)dentry->filename);
+    printf("filetype=%d inode_name=%d\n",dentry->filetype,dentry->inode_num);
+}
+
+
+int32_t filesystem_test_read_dentry1(){
+    // TEST_HEADER;
+
+    // int i;
+    int result = PASS;
+    // uint8_t* buf[100];
+    dentry_t ret;
+    if(readonly_fs.f_rw.read_dentry_by_index(0,&ret)==-1){
+        return FAIL;
+    }
+    display_dentry(&ret);
+    return result;
+}
+
+int32_t filesystem_test_read_dentry2(){
+    // int i;
+    int result = PASS;
+    // uint8_t* buf[100];
+    dentry_t ret;
+    if(readonly_fs.f_rw.read_dentry_by_name((uint8_t*)"frame0.txt",&ret)==-1){
+        return FAIL;
+    }
+    display_dentry(&ret);
+    return result;
+}
+
+int32_t filesystem_test_read(){
+    // int i;
+    int result = PASS;
+    uint8_t buf[100];
+    // dentry_t ret;
+    if(readonly_fs.f_rw.read_data(38,40,buf,100)==-1){
+        return FAIL;
+    }
+    puts((int8_t*)buf);
+    return result;
+}
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -311,6 +354,8 @@ void launch_tests(){
     /* TEST_OUTPUT("vm_bound_test4", vm_bound_test4()); */
     /* TEST_OUTPUT("vm_sanity_test", vm_sanity_test()); */
     // TEST_OUTPUT("page_flags_test", page_flags_test());
-    
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry1());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry2());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read());
 }
 

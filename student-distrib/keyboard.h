@@ -13,6 +13,8 @@
 
 void keyboard_init(void);
 void keyboard_handler(void);
+void clear_screen(void);
+void handle_vertical_scroll(void);
 
 #endif
 

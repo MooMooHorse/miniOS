@@ -166,6 +166,13 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
+    
+    // Brief clear_screen() and handle_verticle_scoll() tests -- REMOVE LATER
+    // printf("Lord have mercy, I'm about to vertical scroll!\n");
+    // handle_vertical_scroll();
+
+    // printf("Lord have mercy, I'm about to clear the screen!\n");
+    // clear_screen();
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

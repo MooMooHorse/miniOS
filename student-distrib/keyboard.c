@@ -9,9 +9,8 @@
  * 
  */
 #include "keyboard.h"
-static char buf[BUFFER_SIZE];
 // static uint32_t buffer_pt;
-static char simple_char[SCAN_CODE_SIZE];
+static char buf[BUFFER_SIZE];
 
 // modifier key flags
 int shift_flag = 0;
@@ -110,23 +109,84 @@ void keyboard_handler(void){
         // case (0xE0):
         //     extended_flag = 1;
         //     break;
+    }
 
-        if (scan_code < SCAN_CODE_SIZE) {
-            char c = simple_char[scan_code];
-            if (c != '\0') {
-                if (shift_flag ^ caps_flag) {
-                    c = c - 32;
+    if (scan_code < SCAN_CODE_SIZE) {
+        char c = simple_char[scan_code];
+        if (c != '\0') {
+            if (shift_flag ^ caps_flag) {
+                c = c - 32;
+            }
+            if (ctrl_flag) {
+                if (c == 'l') { // clear terminal (ctrl+l)
+                    clear_screen();
+                    return;
                 }
-                if (ctrl_flag) {
-                    if (c == 'l') { // clear terminal (ctrl+l)
-                        // clear_screen();
-                        return;
-                    }
-                }
-                putc(c);
+            }
+
+            if (keyCount < 80) {
                 buf[keyCount++] = c;
             }
+            else {
+                handle_vertical_scroll();
+                keyCount = 1;
+            }
+
+            putc(c);
         }
     }
+
     send_eoi(KEYBOARD_IRQ);
+}
+
+
+// to be added/integrated into terminal.c/h
+#define VIDEO_MEM_ADDR 0xB8000
+#define NUM_COLS 80
+#define NUM_ROWS 25
+
+static char* VIDEO_MEM = (char *)VIDEO_MEM_ADDR;
+static char buf[BUFFER_SIZE];
+
+void clear_buffer(void) {
+    int32_t i;
+    for (i = 0; i < BUFFER_SIZE; i++) {
+        buf[i] = '\0';
+    }
+    keyCount = 0;
+}
+
+void clear_screen (void) {
+    int32_t mem_index;
+
+    for (mem_index = 0; mem_index < NUM_ROWS * NUM_COLS; mem_index++) {
+        *(uint8_t *)(VIDEO_MEM + (mem_index << 1)) = ' ';
+        *(uint8_t *)(VIDEO_MEM + (mem_index << 1) + 1) = 0x7;
+    }
+
+    clear_buffer();
+    // Hey Brant! I added this to reset cursor position when we clear the screen on terminal
+    // x_screen = 0;
+    // y_screen = 0;
+    return;
+}
+
+void handle_vertical_scroll(void) {
+    int32_t i;
+
+    // shift rows up
+    for (i = 0; i < (NUM_ROWS - 1) * NUM_COLS; i++) {
+        // set current line to the next line
+        *(uint8_t *)(VIDEO_MEM + (i << 1)) = *(uint8_t *)(VIDEO_MEM + ((i + NUM_COLS) << 1));
+        *(uint8_t *)(VIDEO_MEM + (i << 1) + 1) = 0x7;
+    }
+
+    // clear last line
+    for(i = (NUM_ROWS - 1) * NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(VIDEO_MEM + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO_MEM + (i << 1) + 1) = 0x7;
+    }
+    
+    // Hey Brant! You probably need to adjust the cursor/prompt here after the vertical scroll
+    return;
 }

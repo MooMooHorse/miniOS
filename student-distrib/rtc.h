@@ -15,4 +15,8 @@
 extern void rtc_init(void);
 extern void rtc_handler(void);
 
+// typedef struct RTC{
+    
+// } rtc_t;
+
 #endif

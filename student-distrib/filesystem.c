@@ -6,7 +6,8 @@ static int32_t close_fs();
 
 fs_t readonly_fs = {
     .open_fs = open_fs,
-    .close_fs = close_fs};
+    .close_fs = close_fs
+};
 
 static int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
@@ -307,3 +308,4 @@ read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
     }
     return -1;
 }
+

@@ -20,7 +20,7 @@ static int32_t fake_write (void);
  * @param addr memory address 
  * @return ** uint32_t 4 Bytes contained in memory
  */
-static uint32_t read_4B(uint32_t addr){
+static inline uint32_t read_4B(uint32_t addr){
     return *((uint32_t*)addr);
 }
 
@@ -29,7 +29,7 @@ static uint32_t read_4B(uint32_t addr){
  * @param addr memory address 
  * @return ** uint32_t 1 Byte contained in memory
  */
-static uint8_t read_1B(uint32_t addr){
+static inline uint8_t read_1B(uint32_t addr){
     return *((uint8_t*)addr);
 }
 
@@ -41,7 +41,7 @@ static uint8_t read_1B(uint32_t addr){
  * @return ** int32_t 0 - success
  * else - failed
  */
-static int32_t fs_sanity_check(uint32_t inode,uint32_t addr){
+static inline int32_t fs_sanity_check(uint32_t inode,uint32_t addr){
     return (inode<0||inode>readonly_fs.iblock_num||addr<readonly_fs.sys_st_addr||addr>readonly_fs.sys_ed_addr);
 }
 
@@ -112,7 +112,8 @@ static int32_t fake_write (){
  * @return ** int32_t - number of bytes read
  * <=0 when failed
  */
-static int32_t read_from_block(uint32_t *offset,uint32_t dnum,uint8_t* buf, uint32_t length,uint32_t *buf_ptr){
+static int32_t 
+read_from_block(uint32_t *offset,uint32_t dnum,uint8_t* buf, uint32_t length,uint32_t *buf_ptr){
     /* data block starting addres : starting address + (number of blocks before this dblock)*block_size */
     /* number of blocks before dblock : dblock_index + 1 (bootblock) + number of iblocks (N) */
     if(offset==NULL||buf==NULL||buf_ptr==NULL) return -1;
@@ -151,7 +152,8 @@ static int32_t read_from_block(uint32_t *offset,uint32_t dnum,uint8_t* buf, uint
  * >=0 on success 
  * <0 read failed
  */
-static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+static int32_t 
+read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     uint32_t data_block_num,buf_ptr=0,read_length,ret;
     uint32_t inode_addr,file_length,data_block_offset,data_block_entry_addr;
     if(buf==NULL) return -1; 
@@ -198,7 +200,8 @@ static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t
  * @param dentry 
  * @return ** int32_t 
  */
-static int32_t read_after_fname(uint32_t dentry_addr,dentry_t* dentry){
+static int32_t 
+read_after_fname(uint32_t dentry_addr,dentry_t* dentry){
     uint32_t i;
     dentry_addr+=readonly_fs.filename_size;
     if(fs_sanity_check(0,dentry_addr)||fs_sanity_check(0,dentry_addr+3)) return -1;
@@ -222,7 +225,8 @@ static int32_t read_after_fname(uint32_t dentry_addr,dentry_t* dentry){
  * @param dentry 
  * @return ** int32_t 
  */
-static int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
+static int32_t 
+read_dentry_by_index(uint32_t index, dentry_t* dentry){
     if(dentry==NULL||index>readonly_fs.iblock_num||index<0){
         return -1;
     }
@@ -246,7 +250,8 @@ static int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
  * @return ** int32_t -1 on failure or fname unfound
  * other on success
  */
-static int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
+static int32_t 
+read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
     if(dentry==NULL||fname==NULL){
         return -1;
     }

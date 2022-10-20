@@ -152,18 +152,30 @@ static int32_t read_from_block(uint32_t *offset,uint32_t dnum,uint8_t* buf, uint
  * <0 read failed
  */
 static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+    uint32_t data_block_num,buf_ptr=0,read_length,ret;
+    uint32_t inode_addr,file_length,data_block_offset,data_block_entry_addr;
     if(buf==NULL) return -1; 
     if(fs_sanity_check(inode,readonly_fs.sys_st_addr)) return -1; /* inode out of bound */
     if(length<=0) return 0; /* no need to read */
-    uint32_t data_block_offset=offset/readonly_fs.block_size;
-    offset%=readonly_fs.block_size;
-    uint32_t inode_addr=(uint32_t)readonly_fs.sys_st_addr+(inode+1)*readonly_fs.block_size; /* inode+1 : boot block and number of inode */
+    
+    /* calculate inode address */
+    inode_addr=(uint32_t)readonly_fs.sys_st_addr+(inode+1)*readonly_fs.block_size; /* inode+1 : boot block and number of inode */
     if(fs_sanity_check(0,inode_addr)||fs_sanity_check(0,inode_addr+3)) return -1;
-    uint32_t file_length=read_4B(inode_addr);
+    
+    /* extract file length */
+    file_length=read_4B(inode_addr);
     if(offset>=file_length) return -1; /* invalid index for reading */
-    uint32_t data_block_entry_addr=inode_addr+readonly_fs.dblock_entry_offset+data_block_offset*readonly_fs.dblock_entry_size;
+
+    /* calculate in-block offset*/
+    data_block_offset=offset/readonly_fs.block_size;
+    offset%=readonly_fs.block_size; /* discard offset that fully occupies previous blocks*/
+
+    /* calculate first data block address */
+    data_block_entry_addr=inode_addr+
+    readonly_fs.dblock_entry_offset+
+    data_block_offset*readonly_fs.dblock_entry_size;
     if(fs_sanity_check(0,data_block_entry_addr)) return -1;
-    uint32_t data_block_num,buf_ptr=0,read_length,ret;
+    
 
     /* !This always assume length in inode is accurate! */
     length=file_length>length?length:file_length; /* Actual reading length : length = min(length, file_length) */

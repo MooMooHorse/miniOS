@@ -1,7 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-
+#include "filesystem.h"
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
 #include "mmu.h"
@@ -276,14 +276,144 @@ int page_flags_test(){
 
 /**
  * @brief rtc test
+ * INPUT : NONE
  * OUTPUT : every second, all the screen location is altered by once
- * coverage : RTC, PIC
+ * Coverage : RTC, PIC
  * @return ** int 
  */
 void rtc_test(uint32_t x){
     if(x==1023) test_interrupts();
 }
 
+/**
+ * @brief display dentry item
+ * Internal use
+ * @param dentry 
+ * @return ** void 
+ */
+static void display_dentry(dentry_t* dentry){
+    puts((int8_t*)dentry->filename);
+    printf("filetype=%d inode_name=%d\n",dentry->filetype,dentry->inode_num);
+}
+
+/**
+ * @brief test read dentry using index
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + Display dentry info
+ * Coverage: read dentry by index
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read_dentry1(){
+    // TEST_HEADER;
+
+    // int i;
+    int result = PASS;
+    // uint8_t* buf[100];
+    dentry_t ret;
+    if(readonly_fs.f_rw.read_dentry_by_index(0,&ret)==-1){
+        return FAIL;
+    }
+    display_dentry(&ret);
+    return result;
+}
+/**
+ * @brief test read dentry using name, txt file
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + Display dentry info
+ * Coverage: read dentry by name, txt file
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read_dentry2(){
+    // int i;
+    int result = PASS;
+    // uint8_t* buf[100];
+    dentry_t ret;
+    if(readonly_fs.f_rw.read_dentry_by_name((uint8_t*)"frame0.txt",&ret)==-1){
+        return FAIL;
+    }
+    display_dentry(&ret);
+    return result;
+}
+/**
+ * @brief test read dentry using name, executable
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + Display dentry info
+ * Coverage: read dentry by name, executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read_dentry3(){
+    // int i;
+    int result = PASS;
+    // uint8_t* buf[100];
+    dentry_t ret;
+    if(readonly_fs.f_rw.read_dentry_by_name((uint8_t*)"hello",&ret)==-1){
+        return FAIL;
+    }
+    display_dentry(&ret);
+    return result;
+}
+/**
+ * @brief test read file data
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + read length + read info
+ * Coverage : read file data, large length, offset
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read1(){
+    int i;
+    int result = PASS;
+    uint8_t buf[120];
+    uint32_t f_len;
+    // dentry_t ret;
+    if((f_len=readonly_fs.f_rw.read_data(38,40,buf,100))==-1){
+        return FAIL;
+    }
+    printf("read file length : %d\n",f_len);
+    for(i=0;i<f_len;i++) putc(buf[i]);
+    return result;
+}
+
+
+/**
+ * @brief test read file data
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + read length + read info (ELF)
+ * Coverage : read file data, zero offset, ELF, executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read2(){
+    int i;
+    int result = PASS;
+    uint8_t buf[120];
+    uint32_t f_len;
+    // dentry_t ret;
+    if((f_len=readonly_fs.f_rw.read_data(10,0,buf,10))==-1){
+        return FAIL;
+    }
+    printf("read file length : %d\n",f_len);
+    for(i=0;i<f_len;i++) putc(buf[i]);
+    return result;
+}
+/**
+ * @brief test read file data
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL + read length + read info (MAGIC NUMBER)
+ * Coverage : read file data, zero offset, MAGIC NUMBER, executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_test_read3(){
+    int i;
+    int result = PASS;
+    uint8_t buf[120];
+    uint32_t f_len;
+    // dentry_t ret;
+    if((f_len=readonly_fs.f_rw.read_data(10,5309,buf,40))==-1){
+        return FAIL;
+    }
+    printf("read file length : %d\n",f_len);
+    for(i=0;i<f_len;i++) putc(buf[i]);
+    return result;
+}
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -291,7 +421,11 @@ void rtc_test(uint32_t x){
 /* Checkpoint 5 tests */
 
 
-/* Test suite entry point */
+/**
+ * @brief launching test function
+ * @param None
+ * @return ** void 
+ */
 void launch_tests(){
     // launch your tests here
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
@@ -307,6 +441,11 @@ void launch_tests(){
     /* TEST_OUTPUT("vm_bound_test4", vm_bound_test4()); */
     /* TEST_OUTPUT("vm_sanity_test", vm_sanity_test()); */
     // TEST_OUTPUT("page_flags_test", page_flags_test());
-    
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry1());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry2());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry3());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read1());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read2());
+    // TEST_OUTPUT("filesystem_test_read",filesystem_test_read3());
 }
 

@@ -14,6 +14,8 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "irqlink.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 #define SCROLL_SCREEN_ENABLE 0
 
@@ -51,7 +53,8 @@ static char* exception_name[20]={
  * -1 : pointer passed into it is invalid
  * else : exception index
  */
-uint32_t do_exception(old_regs_t *oldregs) {
+uint32_t 
+do_exception(old_regs_t *oldregs) {
     if (oldregs == NULL) {
         printf("invalid pointer old_regs\n");
         return -1;
@@ -87,7 +90,8 @@ uint32_t do_exception(old_regs_t *oldregs) {
  * 0 - not reserved
  * 1 - reserved
  */
-static uint8_t is_exception_reserved(uint32_t i){
+static uint8_t 
+is_exception_reserved(uint32_t i){
     return (i==15||i>=20);
 }
 
@@ -97,7 +101,8 @@ static uint8_t is_exception_reserved(uint32_t i){
  * Omit Intel reserved
  * @return ** void
  */
-void install_exception_hanlder() {
+void 
+install_exception_hanlder() {
     int32_t i;
     for (i = 0; i < 20; i++) {
         if (is_exception_reserved(i))
@@ -113,7 +118,8 @@ void install_exception_hanlder() {
  * -1 : pointer passed into it is invalid
  * else : interrupt index
  */
-uint32_t do_interrupt(old_regs_t *oldregs) {
+uint32_t 
+do_interrupt(old_ireg_t *oldregs) {
     if (oldregs == NULL) {
         printf("invalid pointer old_regs\n");
         return -1;
@@ -125,14 +131,14 @@ uint32_t do_interrupt(old_regs_t *oldregs) {
         return interrupt_index;
     }
     switch (interrupt_index) {
-        case 0x21:
-            printf("keyboard interrupt");
+        case 0x01:
+            keyboard_handler();
             break;
-        case 0x28:
-            printf("RTC interrupt");
+        case 0x08:
+            rtc_handler();
             break;
         default:
-            printf("out of bounds interrupt %d\n", interrupt_index);
+            printf("unknown interrupt %d\n", interrupt_index);
             break;
     }
     return interrupt_index;
@@ -143,7 +149,8 @@ uint32_t do_interrupt(old_regs_t *oldregs) {
  * IDT 0x21, 0x28
  * @return ** void
  */
-void install_interrupt_hanlder() {
+void 
+install_interrupt_hanlder() {
     SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[0]);
     SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[1]);
 }

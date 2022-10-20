@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "keyboard.h"
-
+#include "filesystem.h"
 
 
 /* Macros. */
@@ -50,12 +50,18 @@ void entry(unsigned long magic, unsigned long addr) {
     if (CHECK_FLAG(mbi->flags, 2))
         printf("cmdline = %s\n", (char *)mbi->cmdline);
 
+    /* Module 0 : File System Image */
     if (CHECK_FLAG(mbi->flags, 3)) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
         while (mod_count < mbi->mods_count) {
-            printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
+            /* start of file system address for Module 0 */
+            if(mod_count==FILESYS_MOD){ /* open file system given module address */
+                readonly_fs.open_fs((uint32_t)mod);
+            }
+            printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start); 
+            /* end of file system address for Module 0 */
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
             printf("First few bytes of module:\n");
             for (i = 0; i < 16; i++) {
@@ -138,11 +144,6 @@ void entry(unsigned long magic, unsigned long addr) {
         ltr(KERNEL_TSS);
     }
 
-
-    /* install interrupt handler to IDT */
-    SET_IDT_ENTRY(idt[0x21],keyboard_handler);
-    SET_IDT_ENTRY(idt[0x28],rtc_handler); /* to be installed using assembly */
-
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
     vm_init();
@@ -151,24 +152,14 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
-    #ifdef RUN_TESTS_RTC
     rtc_init();
-    #endif
-    #ifdef RUN_TESTS_KEYBOARD
-    #ifndef RUN_TESTS_RTC
     keyboard_init();
-    #endif
-    #endif
     
-
-
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    // printf("Enabling Interrupts\n");
     sti();
-    // while(1);
 
 #ifdef RUN_TESTS
     /* Run tests */

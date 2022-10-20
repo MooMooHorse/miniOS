@@ -17,19 +17,15 @@ static char simple_char[SCAN_CODE_SIZE];
 int shift_flag = 0;
 int caps_flag = 0;
 int ctrl_flag = 0;
+int alt_flag = 0;
+int keyCount = 0;
 // static compound_char[];
 
 static const char simple_char[SCAN_CODE_SIZE] = {
     [2] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
-    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\r', '\0', 'a',
+    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a',
     's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x',
-    'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0'  // [0x36]
-};
-
-// modifier key flags
-int shift_flag = 0;
-int caps_flag = 0;
-int ctrl_flag = 0;
+    'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '\0', '\0', ' '}; // 0x39 
 
 /**
  * @brief Initialize the keyboard
@@ -65,9 +61,15 @@ void keyboard_handler(void){
     // }
     switch (scan_code) {
         // "i will do scan codes" -- oz
+
         // Shift Press (L)
         case (0x2A):
             shift_flag = 1;
+            break;
+
+        // Shift Release (L)
+        case (0xAA):
+            shift_flag = 0;
             break;
 
         // Shift Press (R)
@@ -75,24 +77,56 @@ void keyboard_handler(void){
             shift_flag = 1;
             break;
 
+        // Shift Release (R)
+        case (0xB6):
+            shift_flag = 0;
+            break;
+
+        // Ctrl Press (L/R)
+        case (0x1D):
+            ctrl_flag = 1;
+            break;
+
+        // Ctrl Release (L/R)
+        case (0x9D):
+            ctrl_flag = 0;
+            break;
+
+        // Alt Press (L/R)
+        case (0x38):
+            alt_flag = 1;
+            break;
+        
+        // Alt Release (L/R)
+        case (0xB8):
+            alt_flag = 0;
+            break;
+
         // Caps Lock
         case (0x3A):
             caps_flag = !caps_flag;
             break;
-
-        // Ctrl (L) Press
-        case (0x9D):
-            ctrl_flag = 1;
-            break;
-
-        // Ctrl (R) Press
-
-
-    }
-
-    if ((simple_char[scan_code]>='a' && simple_char[scan_code]<='z') ||
-        (simple_char[scan_code]>='0' && simple_char[scan_code]<='9'))
         
-        putc(simple_char[scan_code]); // output the ascii 
+        // case (0xE0):
+        //     extended_flag = 1;
+        //     break;
+
+        if (scan_code < SCAN_CODE_SIZE) {
+            char c = simple_char[scan_code];
+            if (c != '\0') {
+                if (shift_flag ^ caps_flag) {
+                    c = c - 32;
+                }
+                if (ctrl_flag) {
+                    if (c == 'l') { // clear terminal (ctrl+l)
+                        // clear_screen();
+                        return;
+                    }
+                }
+                putc(c);
+                buf[keyCount++] = c;
+            }
+        }
+    }
     send_eoi(KEYBOARD_IRQ);
 }

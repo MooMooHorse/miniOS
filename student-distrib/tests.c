@@ -18,7 +18,7 @@
 #define TEST_OUTPUT(name, result)    \
     printf("[TEST %s] Result = %s\n", name, (result) ? "PASS" : "FAIL");
 
-static inline void assertion_failure(){
+static inline void assertion_failure() {
     /* Use exception #15 for assertions, otherwise
        reserved by Intel */
     asm volatile("int $15");
@@ -35,14 +35,14 @@ static inline void assertion_failure(){
  * Coverage: Load IDT, IDT definition
  * Files: x86_desc.h/S
  */
-int idt_test(){
+int idt_test() {
     TEST_HEADER;
 
     int i;
     int result = PASS;
-    for (i = 0; i < 10; ++i){
+    for (i = 0; i < 10; ++i) {
         if ((idt[i].offset_15_00 == NULL) &&
-            (idt[i].offset_31_16 == NULL)){
+            (idt[i].offset_31_16 == NULL)) {
             assertion_failure();
             result = FAIL;
         }
@@ -58,14 +58,14 @@ int idt_test(){
  * Output PASS/FAIL
  * @return ** int 
  */
-int humble_idt_test(){
+int humble_idt_test() {
     TEST_HEADER;
 
     int i;
-    int result=PASS;
-    for(i=0;i<20;i++){
-        if(((idt[i].offset_31_16<<16)|(idt[i].offset_15_00))==0){
-            if(i!=9&&i!=15) return FAIL;
+    int result = PASS;
+    for (i = 0; i < 20; i++) {
+        if (((idt[i].offset_31_16 << 16) | (idt[i].offset_15_00)) == 0) {
+            if (i != 9 && i != 15) return FAIL;
         }
     }
     return result;
@@ -77,7 +77,7 @@ int humble_idt_test(){
  * OUTPUT : print exception message
  * @return ** int 
  */
-int exception_test(){
+int exception_test() {
     TEST_HEADER;
     volatile int x = 0;
     return 1 / x;
@@ -89,11 +89,11 @@ int exception_test(){
  * OUTPUT PASS/FAIL
  * @return ** int 
  */
-int syscall_inspection1(){
+int syscall_inspection1() {
     TEST_HEADER;
-    int i=0x80;
-    int result=PASS;
-    if(((idt[i].offset_31_16<<16)|(idt[i].offset_15_00))==0){
+    int i = 0x80;
+    int result = PASS;
+    if (((idt[i].offset_31_16 << 16) | (idt[i].offset_15_00)) == 0) {
         assertion_failure();
         result = FAIL;
     }
@@ -105,7 +105,7 @@ int syscall_inspection1(){
  * OUTPUT print system call message
  * @return ** int 
  */
-int syscall_inspection2(){
+int syscall_inspection2() {
     TEST_HEADER;
     asm volatile("int $0x80");
     return PASS;
@@ -120,10 +120,10 @@ int syscall_inspection2(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int pgfault_test(){
+int pgfault_test() {
     TEST_HEADER;
 
-    uint32_t data = *(uint32_t *) 3;  // Invalid virtual address!
+    uint32_t data = *(uint32_t*) 3;  // Invalid virtual address!
     printf("data: %u\n", data);
     return FAIL;
 }
@@ -137,7 +137,7 @@ int pgfault_test(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int vm_bound_test1(){
+int vm_bound_test1() {
     TEST_HEADER;
     unsigned char data = *(unsigned char*) (VIDEO - 1);  // One before video memory.
 
@@ -155,7 +155,7 @@ int vm_bound_test1(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int vm_bound_test2(){
+int vm_bound_test2() {
     TEST_HEADER;
     unsigned char data = *(unsigned char*) (VIDEO + PGSIZE);  // One past video memory.
 
@@ -173,7 +173,7 @@ int vm_bound_test2(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int vm_bound_test3(){
+int vm_bound_test3() {
     TEST_HEADER;
     unsigned char data = *(unsigned char*) ((1U << PDXOFF) - 1);  // One before 4M.
 
@@ -191,7 +191,7 @@ int vm_bound_test3(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int vm_bound_test4(){
+int vm_bound_test4() {
     TEST_HEADER;
     unsigned char data = *(unsigned char*) ((1U << PDXOFF) + PGSIZE * NUM_ENT);  // Past video memory.
 
@@ -209,7 +209,7 @@ int vm_bound_test4(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int vm_sanity_test(){
+int vm_sanity_test() {
     TEST_HEADER;
     unsigned char* ptr = (void*) VIDEO;  // Starting va of video memory.
     uint32_t sum = 0;
@@ -237,7 +237,7 @@ int vm_sanity_test(){
  * Coverage: Paging initialization, pagedir & pgtbl setup.
  * Files: vm.c
  */
-int page_flags_test(){
+int page_flags_test() {
     TEST_HEADER;
     uint32_t* it = pgdir;  // Start of page directory.
     int i;
@@ -283,8 +283,8 @@ int page_flags_test(){
  * Coverage : RTC, PIC
  * @return ** int 
  */
-void rtc_test(uint32_t x){
-    if(x==1023) test_interrupts();
+void rtc_test(uint32_t x) {
+    if (x == 1023) test_interrupts();
 }
 
 /* Checkpoint 2 tests */
@@ -295,9 +295,9 @@ void rtc_test(uint32_t x){
  * @param dentry 
  * @return ** void 
  */
-static void display_dentry(dentry_t* dentry){
-    puts((int8_t*)dentry->filename);
-    printf("filetype=%d inode_name=%d\n",dentry->filetype,dentry->inode_num);
+static void display_dentry(dentry_t* dentry) {
+    puts((int8_t*) dentry->filename);
+    printf("filetype=%d inode_name=%d\n", dentry->filetype, dentry->inode_num);
 }
 
 /**
@@ -307,14 +307,14 @@ static void display_dentry(dentry_t* dentry){
  * Coverage: read dentry by index
  * @return ** int32_t 
  */
-int32_t filesystem_test_read_dentry1(){
+int32_t filesystem_test_read_dentry1() {
     // TEST_HEADER;
 
     // int i;
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if(readonly_fs.f_rw.read_dentry_by_index(0,&ret)==-1){
+    if (readonly_fs.f_rw.read_dentry_by_index(0, &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -327,12 +327,12 @@ int32_t filesystem_test_read_dentry1(){
  * Coverage: read dentry by name, txt file
  * @return ** int32_t 
  */
-int32_t filesystem_test_read_dentry2(){
+int32_t filesystem_test_read_dentry2() {
     // int i;
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if(readonly_fs.f_rw.read_dentry_by_name((uint8_t*)"frame0.txt",&ret)==-1){
+    if (readonly_fs.f_rw.read_dentry_by_name((uint8_t*) "frame0.txt", &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -345,12 +345,12 @@ int32_t filesystem_test_read_dentry2(){
  * Coverage: read dentry by name, executable
  * @return ** int32_t 
  */
-int32_t filesystem_test_read_dentry3(){
+int32_t filesystem_test_read_dentry3() {
     // int i;
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if(readonly_fs.f_rw.read_dentry_by_name((uint8_t*)"hello",&ret)==-1){
+    if (readonly_fs.f_rw.read_dentry_by_name((uint8_t*) "hello", &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -363,20 +363,19 @@ int32_t filesystem_test_read_dentry3(){
  * Coverage : read file data, large length, offset
  * @return ** int32_t 
  */
-int32_t filesystem_test_read1(){
+int32_t filesystem_test_read1() {
     int i;
     int result = PASS;
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if((f_len=readonly_fs.f_rw.read_data(38,40,buf,100))==-1){
+    if ((f_len = readonly_fs.f_rw.read_data(38, 40, buf, 100)) == -1) {
         return FAIL;
     }
-    printf("read file length : %d\n",f_len);
-    for(i=0;i<f_len;i++) putc(buf[i]);
+    printf("read file length : %d\n", f_len);
+    for (i = 0; i < f_len; i++) putc(buf[i]);
     return result;
 }
-
 
 /**
  * @brief test read file data
@@ -385,17 +384,17 @@ int32_t filesystem_test_read1(){
  * Coverage : read file data, zero offset, ELF, executable
  * @return ** int32_t 
  */
-int32_t filesystem_test_read2(){
+int32_t filesystem_test_read2() {
     int i;
     int result = PASS;
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if((f_len=readonly_fs.f_rw.read_data(10,0,buf,10))==-1){
+    if ((f_len = readonly_fs.f_rw.read_data(10, 0, buf, 10)) == -1) {
         return FAIL;
     }
-    printf("read file length : %d\n",f_len);
-    for(i=0;i<f_len;i++) putc(buf[i]);
+    printf("read file length : %d\n", f_len);
+    for (i = 0; i < f_len; i++) putc(buf[i]);
     return result;
 }
 /**
@@ -405,17 +404,17 @@ int32_t filesystem_test_read2(){
  * Coverage : read file data, zero offset, MAGIC NUMBER, executable
  * @return ** int32_t 
  */
-int32_t filesystem_test_read3(){
+int32_t filesystem_test_read3() {
     int i;
     int result = PASS;
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if((f_len=readonly_fs.f_rw.read_data(10,5309,buf,40))==-1){
+    if ((f_len = readonly_fs.f_rw.read_data(10, 5309, buf, 40)) == -1) {
         return FAIL;
     }
-    printf("read file length : %d\n",f_len);
-    for(i=0;i<f_len;i++) putc(buf[i]);
+    printf("read file length : %d\n", f_len);
+    for (i = 0; i < f_len; i++) putc(buf[i]);
     return result;
 }
 
@@ -426,15 +425,15 @@ int32_t filesystem_test_read3(){
  * Coverage : file system driver open
  * @return ** int32_t 
  */
-int32_t filesystem_ioctl_test1(){
+int32_t filesystem_ioctl_test1() {
     fd_t file_descriptor_item;
     int result = PASS;
 
-    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)".",0)==-1){
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
-    printf("pos=%d flag=%d ",file_descriptor_item.file_position,file_descriptor_item.flags);
-    printf("inode=%d\n",file_descriptor_item.inode);
+    printf("pos=%d flag=%d ", file_descriptor_item.file_position, file_descriptor_item.flags);
+    printf("inode=%d\n", file_descriptor_item.inode);
     return result;
 }
 /**
@@ -444,17 +443,17 @@ int32_t filesystem_ioctl_test1(){
  * Coverage : file system driver read directory
  * @return ** int32_t 
  */
-int32_t filesystem_ioctl_test2(){
+int32_t filesystem_ioctl_test2() {
     int i;
     fd_t file_descriptor_item;
     int result = PASS;
-    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)".",0)==-1){
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[100];
-    for(i=0;i<5;i++){
-        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item,buf,32);
-        puts((int8_t*)buf);
+    for (i = 0; i < 5; i++) {
+        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
+        puts((int8_t*) buf);
         putc(' ');
     }
     return result;
@@ -467,17 +466,17 @@ int32_t filesystem_ioctl_test2(){
  * Coverage : file system driver read file, with large file name and large file length
  * @return ** int32_t 
  */
-int32_t filesystem_ioctl_test3(){
+int32_t filesystem_ioctl_test3() {
     int i;
     fd_t file_descriptor_item;
     int result = PASS;
-    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)"verylargetextwithverylongname.txt",0)==-1){
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[100];
-    for(i=0;i<5;i++){
-        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item,buf,10);
-        puts((int8_t*)buf);
+    for (i = 0; i < 5; i++) {
+        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 10);
+        puts((int8_t*) buf);
         putc(' ');
     }
     return result;
@@ -520,7 +519,7 @@ terminal_io_test(void) {
  * @param None
  * @return ** void 
  */
-void launch_tests(){
+void launch_tests() {
     /* Checkpoint 1 tests */
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
     // TEST_OUTPUT("syscall inspection",syscall_inspection1());

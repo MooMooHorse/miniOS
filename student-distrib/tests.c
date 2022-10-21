@@ -2,6 +2,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystem.h"
+#include "terminal.h"
+
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
 #include "mmu.h"
@@ -39,7 +41,7 @@ int idt_test(){
     int i;
     int result = PASS;
     for (i = 0; i < 10; ++i){
-        if ((idt[i].offset_15_00 == NULL) && 
+        if ((idt[i].offset_15_00 == NULL) &&
             (idt[i].offset_31_16 == NULL)){
             assertion_failure();
             result = FAIL;
@@ -285,6 +287,8 @@ void rtc_test(uint32_t x){
     if(x==1023) test_interrupts();
 }
 
+/* Checkpoint 2 tests */
+
 /**
  * @brief display dentry item
  * Internal use
@@ -478,7 +482,34 @@ int32_t filesystem_ioctl_test3(){
     }
     return result;
 }
-/* Checkpoint 2 tests */
+
+/*!
+ * @brief This function repeatedly calls `terminal_read` and attempts to read 32 characters.
+ * Then it outputs the characters actually read from the `input` buffer.
+ * @param None.
+ * @return FAIL or does not return (PASS).
+ * @sideeffect Modifies input buffer and video memory contents.
+ */
+int32_t
+terminal_io_test(void) {
+    const int SIZE = 32;
+    uint8_t buf[SIZE];
+    int n;
+
+    while (1) {
+        n = terminal_read(buf, SIZE);
+        printf("`terminal_read`: # read = %d\n", n);
+        printf("`terminal_write`: ");
+        if (n != terminal_write(buf, n)) {
+            assertion_failure();
+            return FAIL;
+        }
+        putc('\n');
+    }
+
+    return PASS;
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -490,13 +521,12 @@ int32_t filesystem_ioctl_test3(){
  * @return ** void 
  */
 void launch_tests(){
-    // launch your tests here
+    /* Checkpoint 1 tests */
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
     // TEST_OUTPUT("syscall inspection",syscall_inspection1());
     // TEST_OUTPUT("idt_test",idt_test());
     // TEST_OUTPUT("exception_test",exception_test());
     // TEST_OUTPUT("idt_test", humble_idt_test());
-    
     /* TEST_OUTPUT("pgfault_test", pgfault_test()); */
     /* TEST_OUTPUT("vm_bound_test1", vm_bound_test1()); */
     /* TEST_OUTPUT("vm_bound_test2", vm_bound_test2()); */
@@ -504,6 +534,8 @@ void launch_tests(){
     /* TEST_OUTPUT("vm_bound_test4", vm_bound_test4()); */
     /* TEST_OUTPUT("vm_sanity_test", vm_sanity_test()); */
     // TEST_OUTPUT("page_flags_test", page_flags_test());
+
+    /* Checkpoint 2 tests */
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry1());
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry2());
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read_dentry3());
@@ -513,5 +545,6 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
+    TEST_OUTPUT("terminal_io_test", terminal_io_test());
 }
 

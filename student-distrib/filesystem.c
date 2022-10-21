@@ -467,6 +467,9 @@ read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
     {
         return -1;
     }
+    if(strlen((int8_t *)fname)>readonly_fs.filename_size){
+        return -1;
+    }
     uint32_t dentry_addr = readonly_fs.sys_st_addr + readonly_fs.boot_block_padding;
     if (fs_sanity_check(0, dentry_addr))
         return -1;
@@ -487,10 +490,11 @@ read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
         }
         if (!check_EOS)
             dentry->filename[readonly_fs.filename_size] = '\0'; /* no zero padding, add at the end */
-        if(strlen((int8_t *)fname)>=readonly_fs.filename_size){
-            if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, readonly_fs.filename_size) == 0)
-                return read_after_fname(dentry_addr, dentry);
-        }else if (strncmp((int8_t *)fname, (int8_t *)dentry->filename, strlen((int8_t *)fname) + 1) == 0)
+        // if(strlen((int8_t *)fname)>=readonly_fs.filename_size){
+        //     if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, readonly_fs.filename_size) == 0)
+        //         return read_after_fname(dentry_addr, dentry);
+        // }else 
+        if (strncmp((int8_t *)fname, (int8_t *)dentry->filename, strlen((int8_t *)fname) + 1) == 0)
         {
             /* strlen((int8_t*)fname)+1 : both string ends at the same time */
             return read_after_fname(dentry_addr, dentry);

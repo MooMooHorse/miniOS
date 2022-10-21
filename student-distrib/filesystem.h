@@ -4,8 +4,8 @@
 
 /* flags for file descriptor table */
 /* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
-#define DESCRIPTOR_ENTRY_DIR      0 
-#define DESCRIPTOR_ENTRY_RTC      1
+#define DESCRIPTOR_ENTRY_RTC      0
+#define DESCRIPTOR_ENTRY_DIR      1 
 #define DESCRIPTOR_ENTRY_FILE     2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
 
@@ -19,15 +19,7 @@ dentry{
     uint32_t reserved[6];
 }dentry_t;
 
-typedef struct file_operation_table fops_t;
-
-typedef struct file_descriptor_item{
-    fops_t file_operation_jump_table;
-    uint32_t inode;
-    uint32_t file_position;
-    uint32_t flags;
-} fd_t;
-
+struct file_descriptor_item;
 
 /**
  * @brief Each file operations are driver-specific, it doesn't know the file descriptor index.
@@ -45,27 +37,37 @@ typedef struct file_operation_table{
     * Return Val : Inode number (in RTC, return RTC index(which RTC(virtualized) 
     * you are opening), In terminal, STDIN or STDOUT.) -1 on failure
     */
-    int32_t (*open)(fd_t*, const uint8_t*,int32_t);
+    int32_t (*open)(struct file_descriptor_item*, const uint8_t*,int32_t);
 
     /* First arg  : file descriptor info : inode number (In RTC, RTC index. In termminal, garbage)
     *  Second arg : buffer <- your read result (In RTC, garbage. )
     *  Third arg  : n bytes to read (In RTC, how many rounds it wants you to wait)
     *  Return Val : Number of bytes you read (wait for RTC) -1 on failure
     */
-    int32_t (*read)(fd_t*,void*,int32_t);
+    int32_t (*read)(struct file_descriptor_item*,void*,int32_t);
     
     /* First arg  : file descriptor info : inode number (In RTC, which RTC do you want to read. In termminal, garbage)
      * Second arg : buffer <- your write source (In RTC, garbage. )
      * Third arg  : n bytes to read (In RTC, freqency you want to set)
      * Return Val : n bytes you wrote -1 on failure
      */
-    int32_t (*write)(fd_t*,void*,int32_t);
+    int32_t (*write)(struct file_descriptor_item*,void*,int32_t);
 
     /* First arg  : file descriptor table item, you need to CLEAN IT, some items can be discarded 
     *  by not cleaning it.
     */
-    int32_t (*close)(fd_t*);
+    int32_t (*close)(struct file_descriptor_item*);
 } fops_t;
+
+typedef struct file_descriptor_item{
+    fops_t file_operation_jump_table;
+    uint32_t inode;
+    uint32_t file_position;
+    uint32_t flags;
+} fd_t;
+
+
+
 
 /**
  * @brief jump table for file system read_write operation

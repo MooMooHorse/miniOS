@@ -13,13 +13,16 @@ static int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length);
 static int32_t fake_write(void);
-static int32_t open(fd_t* ret,const uint8_t* fname,int32_t findex);
+static int32_t openr(fd_t* ret,const uint8_t* fname,int32_t findex);
 static int32_t file_open(fd_t* ret,const uint8_t* fname,int32_t findex);
 static int32_t direcotry_open(fd_t* ret,const uint8_t* fname,int32_t findex);
 static int32_t file_read(fd_t* fd,void* buf,int32_t nbytes);
 static int32_t directory_read(fd_t* fd,void* buf,int32_t nbytes);
 static int32_t file_write(fd_t* fd,void* buf,int32_t nbytes);
 static int32_t directory_write(fd_t* fd,void* buf,int32_t nbytes);
+static int32_t file_close(fd_t* fd);
+static int32_t directory_close(fd_t* fd);
+
 
 /**
  * @brief read 4 Bytes from memory
@@ -80,7 +83,7 @@ open_fs(uint32_t addr)
     readonly_fs.f_ioctl.write=file_write;
     /* install ioctl for directory to file system */
     readonly_fs.d_ioctl.open=direcotry_open;
-    readonly_fs.d_ioctl.close=direcotry_close;
+    readonly_fs.d_ioctl.close=directory_close;
     readonly_fs.d_ioctl.read=directory_read;
     readonly_fs.d_ioctl.write=directory_write;
 
@@ -116,7 +119,7 @@ open_fs(uint32_t addr)
 static int32_t openr(fd_t* ret,const uint8_t* fname,int32_t findex){
     dentry_t dentry;
     readonly_fs.f_rw.read_dentry_by_name(fname,&dentry);
-    if(dentry.filetype==0) return direcotry_open(ret,fname,findex);
+    if(dentry.filetype==DESCRIPTOR_ENTRY_DIR) return direcotry_open(ret,fname,findex);
     return file_open(ret,fname,findex);
 }
 
@@ -125,13 +128,16 @@ static int32_t openr(fd_t* ret,const uint8_t* fname,int32_t findex){
  * For arguments : only ret, fname will be used
  * @param ret 
  * @param fname 
- * @param findex 
- * @return ** int32_t 
+ * @param findex - discarded
+ * @return ** int32_t 0 on sccess, -1 on failure
  */
 static int32_t
 file_open(fd_t* ret,const uint8_t* fname,int32_t findex){
     dentry_t dentry;
-    readonly_fs.f_rw.read_dentry_by_name(fname,&dentry);
+    if(ret==NULL||fname==NULL) return -1;
+    if(readonly_fs.f_rw.read_dentry_by_name(fname,&dentry)==-1){
+        return -1;
+    }
     ret->file_operation_jump_table.open=readonly_fs.f_ioctl.open;
     ret->file_operation_jump_table.close=readonly_fs.f_ioctl.close;
     ret->file_operation_jump_table.read=readonly_fs.f_ioctl.read;
@@ -140,18 +146,23 @@ file_open(fd_t* ret,const uint8_t* fname,int32_t findex){
     ret->file_position=0;
     ret->flags=DESCRIPTOR_ENTRY_FILE;
     ret->inode=dentry.inode_num;
+    return 0;
 }
 /**
  * @brief Open a directory in the file system
  * For arguments : only ret, fname will be used
  * @param ret 
  * @param fname 
- * @param findex 
- * @return ** int32_t 
+ * @param findex - discarded
+ * @return ** int32_t 0 on sccess, -1 on failure
  */
 static int32_t
 direcotry_open(fd_t* ret,const uint8_t* fname,int32_t findex){
     dentry_t dentry;
+    if(ret==NULL||fname==NULL) return -1;
+    if(readonly_fs.f_rw.read_dentry_by_name(fname,&dentry)==-1){
+        return -1;
+    }
     readonly_fs.f_rw.read_dentry_by_name(fname,&dentry);
     ret->file_operation_jump_table.open=readonly_fs.d_ioctl.open;
     ret->file_operation_jump_table.close=readonly_fs.d_ioctl.close;
@@ -160,6 +171,7 @@ direcotry_open(fd_t* ret,const uint8_t* fname,int32_t findex){
     ret->file_position=0;
     ret->flags=DESCRIPTOR_ENTRY_DIR;
     ret->inode=dentry.inode_num;
+    return 0;
 }
 
 /**
@@ -199,8 +211,9 @@ directory_read(fd_t* fd,void* buf,int32_t nbytes){
     ret=readonly_fs.f_rw.read_dentry_by_index(fd->file_position,&dentry);
     if(ret==-1) return -1;
     fd->file_position++;/* each time advance one file */
-    if(nbytes>strlen(dentry.filename)) nbytes=strlen(dentry.filename);
+    if(nbytes>strlen((int8_t*)dentry.filename)) nbytes=strlen((int8_t*)dentry.filename);
     for(i=0;i<nbytes;i++) ((uint8_t*)buf)[i]=dentry.filename[i];
+    ((uint8_t*)buf)[nbytes]='\0'; /* terminate with NUL */
     return nbytes;
 }
 
@@ -246,7 +259,7 @@ file_close(fd_t* fd){
  * @return ** int32_t 
  */
 static int32_t
-direcotry_close(fd_t* fd){
+directory_close(fd_t* fd){
     if(fd==NULL) return -1;
     if(fs_sanity_check(fd->inode,readonly_fs.sys_st_addr)) return -1;
     fd->inode=-1;
@@ -378,7 +391,6 @@ read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length)
     }
     return ret;
 }
-
 /**
  * @brief After reading filename into dentry, this function fills the rest of dentry fields
  * Internally used
@@ -475,7 +487,10 @@ read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
         }
         if (!check_EOS)
             dentry->filename[readonly_fs.filename_size] = '\0'; /* no zero padding, add at the end */
-        if (strncmp((int8_t *)fname, (int8_t *)dentry->filename, strlen((int8_t *)fname) + 1) == 0)
+        if(strlen((int8_t *)fname)>=readonly_fs.filename_size){
+            if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, readonly_fs.filename_size) == 0)
+                return read_after_fname(dentry_addr, dentry);
+        }else if (strncmp((int8_t *)fname, (int8_t *)dentry->filename, strlen((int8_t *)fname) + 1) == 0)
         {
             /* strlen((int8_t*)fname)+1 : both string ends at the same time */
             return read_after_fname(dentry_addr, dentry);

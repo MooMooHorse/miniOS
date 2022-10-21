@@ -415,6 +415,69 @@ int32_t filesystem_test_read3(){
     return result;
 }
 
+/**
+ * @brief test open file for file system
+ * INPUT : NONE
+ * OUTPUT : position of file at initialization, flag, inode number + PASS
+ * Coverage : file system driver open
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test1(){
+    fd_t file_descriptor_item;
+    int result = PASS;
+
+    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)".",0)==-1){
+        return FAIL;
+    }
+    printf("pos=%d flag=%d ",file_descriptor_item.file_position,file_descriptor_item.flags);
+    printf("inode=%d\n",file_descriptor_item.inode);
+    return result;
+}
+/**
+ * @brief test read directory for file system
+ * INPUT : NONE
+ * OUTPUT : a series of file name within directory
+ * Coverage : file system driver read directory
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test2(){
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)".",0)==-1){
+        return FAIL;
+    }
+    uint8_t buf[100];
+    for(i=0;i<5;i++){
+        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item,buf,32);
+        puts((int8_t*)buf);
+        putc(' ');
+    }
+    return result;
+}
+
+/**
+ * @brief test read file for file system
+ * INPUT : NONE
+ * OUTPUT : a series of file content within directory
+ * Coverage : file system driver read file, with large file name and large file length
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test3(){
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if(readonly_fs.openr(&file_descriptor_item,(uint8_t*)"verylargetextwithverylongname.txt",0)==-1){
+        return FAIL;
+    }
+    uint8_t buf[100];
+    for(i=0;i<5;i++){
+        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item,buf,10);
+        puts((int8_t*)buf);
+        putc(' ');
+    }
+    return result;
+}
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -447,5 +510,8 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read1());
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read2());
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read3());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
 }
 

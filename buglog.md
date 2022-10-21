@@ -13,6 +13,9 @@
 | :white_check_mark:                                   | `006`   |
 | :white_check_mark:                                   | `007`   |
 | :white_check_mark:                                   | `008`   |
+| :white_check_mark:                                   | `009`   |
+| :white_check_mark:                                   | `010`   |
+| :white_check_mark:                                   | `011`   |
 
 ### Bug `#000`
 **Description**  
@@ -114,3 +117,35 @@ All Handlers executed with page fault with certain probability
 
 * Misuse of STI
 * Don't use sti when there are no sti called before
+
+### Bug `#009` 
+
+**Description**
+
+Read inode number error
+
+**Resolution**  
+
+* Revise inode meaning in filesystem property
+
+### Bug `#010` 
+
+**Description**
+
+Wrong value when reading a file
+
+**Resolution**  
+
+* Forget to add offset for file system when trying to access datablock
+
+* Revise formulae for address.
+
+### Bug `#011`
+
+ **Description**
+
+Clear screen while loosing key focus
+
+**Resolution**  
+
+* didn't send eoi after branching in keyboard handler

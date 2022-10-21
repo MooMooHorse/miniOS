@@ -14,6 +14,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 
+
 /**
  * @brief Initialize the RTC
  * Should be ran when CLI is called 
@@ -51,4 +52,6 @@ rtc_handler(void) {
     outb(RTC_REG_C, RTC_PORT);
     inb(RTC_DATA_PORT);  // Discard contents of register C.
 }
+
+
 

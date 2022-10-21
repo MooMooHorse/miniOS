@@ -1,6 +1,7 @@
 #ifndef _RTC_H
 #define _RTC_H
 #include "types.h"
+#include "filesystem.h"
 
 #define RTC_PORT        0x70
 #define RTC_DATA_PORT   0x71
@@ -15,8 +16,9 @@
 extern void rtc_init(void);
 extern void rtc_handler(void);
 
-// typedef struct RTC{
-    
-// } rtc_t;
+typedef struct RTC{
+    fops_t ioctl;
+    uint32_t freq;
+} rtc_t;
 
 #endif

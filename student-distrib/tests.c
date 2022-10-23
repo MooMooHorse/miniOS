@@ -562,6 +562,31 @@ int32_t filesystem_ioctl_test6() {
     return FAIL;
 }
 
+/**
+ * @brief test read file for file system
+ * INPUT : NONE
+ * OUTPUT : a series of file content within directory
+ * Coverage : file system driver read file
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test7() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "frame0.txt", 0) == -1) {
+        return FAIL;
+    }
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    return result;
+}
+
 /*!
  * @brief This function repeatedly calls `terminal_read` and attempts to read 32 characters.
  * Then it outputs the characters actually read from the `input` buffer.
@@ -728,6 +753,7 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test7());
     // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());

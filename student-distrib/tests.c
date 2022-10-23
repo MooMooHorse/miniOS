@@ -523,9 +523,9 @@ terminal_io_test(void) {
  */
 int32_t rtc_test_open_read(){
     fd_t fd;
-    uint8_t buf[100];
 
-    rtc_open(&fd, buf, 0);
+    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0", 0); /* second arg discarded so arbitrary */
+    uint32_t buf[100];
 
     int i, j, k;
     k = 0;
@@ -534,16 +534,15 @@ int32_t rtc_test_open_read(){
     for (i = 1; i < 10; i++) {
         // loop 10 times
         for (j = 0; j < 10; j++) {
-            rtc_read(&fd, buf, 0);
+            rtc[0].ioctl.read(&fd, buf, 0);
             printf("!");
         }
         printf("\n");
-        rtc_write(&fd, buf, 2 << i);
+        buf[0]=(2<<i);
+        rtc[0].ioctl.write(&fd, buf, 4);
     }
 
-    printf("Please visually confirm the increasing frequency of the printed exclamation marks.\n");
-
-    rtc_close(&fd);
+    rtc[0].ioctl.close(&fd);
 
     return PASS;
 }
@@ -558,17 +557,20 @@ int32_t rtc_test_open_read(){
  */
 int32_t rtc_test_write() {
     fd_t fd;
-    uint8_t buf[100];
-    rtc_open(&fd, buf, 0);
+    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0" , 0);
+    uint32_t buf[100];
 
     printf("RTC test write 2 Hz\n");
-    int32_t test1 = rtc_write(&fd, buf, 2);
+    buf[0]=2;
+    int32_t test1 = rtc[0].ioctl.write(&fd, buf, 4);
     
     printf("RTC test write 2048 Hz\n");
-    int32_t test2 = rtc_write(&fd, buf, 2048);
+    buf[0]=2048;
+    int32_t test2 = rtc[0].ioctl.write(&fd, buf, 4);
 
     printf("RTC test write 31 Hz\n");
-    int32_t test3 = rtc_write(&fd, buf, 31);
+    buf[0]=31;
+    int32_t test3 = rtc[0].ioctl.write(&fd, buf, 4);
 
     // Test 1 should pass, all else should fail.
     if (test1 != -1 || test2 == -1 || test3 == -1) {
@@ -577,7 +579,7 @@ int32_t rtc_test_write() {
         return FAIL;
     }
 
-    rtc_close(&fd);
+    rtc[0].ioctl.close(&fd);
 
     return 0;
 }
@@ -591,13 +593,14 @@ int32_t rtc_test_write() {
  * 
  */
 int32_t rtc_sanity_check() {
-    uint8_t buf[100];
 
     printf("NULL FILE DESCRIPTOR TEST\n");
-    int32_t test1 = rtc_open(NULL, buf, 0);
-    int32_t test2 = rtc_read(NULL, buf, 0);
-    int32_t test3 = rtc_write(NULL, buf, 0);
-    int32_t test4 = rtc_close(NULL);
+    int32_t test1 = rtc[0].ioctl.open(NULL, (uint8_t*)"RTC0", 0);
+    uint8_t buf[100];
+    buf[0]=4;
+    int32_t test2 = rtc[0].ioctl.read(NULL, buf, 0);
+    int32_t test3 = rtc[0].ioctl.write(NULL, buf, 4);
+    int32_t test4 = rtc[0].ioctl.close(NULL);
 
     if (test1 == -1 && test2 == -1 && test3 == -1 && test4 == -1) {
         printf("We have gone insane. I mean...sanity checks blocked bad inputs...which is good.\n");
@@ -647,7 +650,7 @@ void launch_tests(){
     // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());
-    TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
+    // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
 
 }
 

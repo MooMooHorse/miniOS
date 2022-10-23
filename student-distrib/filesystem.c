@@ -453,7 +453,7 @@ read_after_fname(uint32_t dentry_addr, dentry_t *dentry)
 static int32_t
 read_dentry_by_index(uint32_t index, dentry_t *dentry)
 {
-    if (dentry == NULL || index > readonly_fs.iblock_num || index < 0)
+    if (dentry == NULL || index > readonly_fs.file_num || index < 0)
     {
         return -1;
     }

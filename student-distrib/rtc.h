@@ -18,17 +18,15 @@
 extern void rtc_init(void);
 extern void rtc_handler(void);
 
-int32_t fd_sanity_check(fd_t* fd);
-int32_t rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes);
-int32_t rtc_read(fd_t* fd, void* buf, int32_t nbytes);
-int32_t rtc_write(fd_t* fd, void* buf, int32_t nbytes);
-int32_t rtc_close(fd_t* fd);
+
 
 typedef struct RTC {
     fops_t ioctl;
     uint32_t freq;
     uint32_t count;
 } rtc_t;
+
+uint32_t virt_rtc;
 
 volatile rtc_t rtc[RTC_num];
 

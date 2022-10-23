@@ -455,7 +455,7 @@ int32_t filesystem_ioctl_test2() {
     for (i = 0; i < readonly_fs.file_num; i++) {
         file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
         puts((int8_t*) buf);
-        putc(' ');
+        putc('\n');
     }
     return result;
 }
@@ -471,18 +471,96 @@ int32_t filesystem_ioctl_test3() {
     int i;
     fd_t file_descriptor_item;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
         return FAIL;
     }
-    uint8_t buf[100];
-    for (i = 0; i < 5; i++) {
-        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 10);
-        puts((int8_t*) buf);
-        putc(' ');
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
     }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    return result;
+}
+/**
+ * @brief test read executable tail
+ * INPUT : NONE
+ * OUTPUT : a series of file content within executable file +  PASS/FAIL
+ * Coverage : file system driver read file, with executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test4() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+        return FAIL;
+    }
+    uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    //     putc(' ');
+    // }
+    return result;
+}
+/**
+ * @brief test read executable tail
+ * INPUT : NONE
+ * OUTPUT : a series of file content within executable file+  PASS/FAIL
+ * Coverage : file system driver read file, with executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test5() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+        return FAIL;
+    }
+    uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 20);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    //     putc(' ');
+    // }
     return result;
 }
 
+/**
+ * @brief test read file for file system
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * Coverage : file system driver read file, with large file name and large file length with illegal input filename
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test6() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+        return PASS;
+    }
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    return FAIL;
+}
 
 /*!
  * @brief This function repeatedly calls `terminal_read` and attempts to read 32 characters.
@@ -647,6 +725,9 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
     // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());

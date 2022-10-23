@@ -491,15 +491,16 @@ int32_t filesystem_ioctl_test3() {
  */
 int32_t
 terminal_io_test(void) {
-    const int SIZE = 32;
+    const int32_t SIZE = 32;
+    const int32_t fd = -1;  // Unused.
     uint8_t buf[SIZE];
     int n;
 
     while (1) {
-        n = terminal_read(buf, SIZE);
+        n = terminal_read(fd, buf, SIZE);
         printf("`terminal_read`: # read = %d\n", n);
         printf("`terminal_write`: ");
-        if (n != terminal_write(buf, n)) {
+        if (n != terminal_write(fd, buf, n)) {
             assertion_failure();
             return FAIL;
         }

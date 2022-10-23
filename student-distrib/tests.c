@@ -649,7 +649,9 @@ terminal_io_test(void) {
     uint8_t buf[SIZE];
     int n;
 
-    terminal_open(&fd, NULL, 0);  // Unused parameters.
+    if (0 != terminal_open(&fd, NULL, 0)) {  // Unused parameters.
+        return FAIL;  // Failed to open the terminal.
+    }
 
     while (1) {
         n = terminal_read(&fd, buf, SIZE);
@@ -662,7 +664,9 @@ terminal_io_test(void) {
         putc('\n');
     }
 
-    terminal_close(&fd);  // Unused parameters.
+    if (0 != terminal_close(&fd)) {  // Unused parameters.
+        return FAIL;  // Failed to close the terminal.
+    }
 
     return PASS;
 }

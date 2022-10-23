@@ -179,7 +179,7 @@ int32_t rtc_write(fd_t* fd, void* buf, int32_t nbytes){
     
     // Check if freq is a power of 2 and in valid range.
     if ((new_freq < 2 || new_freq > 1024) || (new_freq & (new_freq - 1)) != 0) {
-        printf("Bad frequency!\n");
+        printf("RTC Error: Bad frequency!\n");
         return -1;
     }
 

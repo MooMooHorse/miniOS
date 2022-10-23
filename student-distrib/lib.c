@@ -5,11 +5,11 @@
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
-#define ATTRIB      0x7
+#define ATTRIB      0x1E
 
 static int screen_x;
 static int screen_y;
-static char* video_mem = (char *)VIDEO;
+static char* const video_mem = (char *)VIDEO;
 
 /* void clear(void);
  * Inputs: void
@@ -21,6 +21,7 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1)) = ' ';
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
+    screen_x = screen_y = 0;
 }
 
 /* Standard printf().
@@ -162,20 +163,57 @@ int32_t puts(int8_t* s) {
     return index;
 }
 
+/* void vertical_scroll(void);
+ *   Inputs: None
+ *   Return Value: None
+ *    Function: Scroll the screen up by one row. Reset the y coordinate. */
+static void vertical_scroll(void) {
+    int32_t i;
+
+    --screen_y;  // Reset `screen_y` to the 23rd line.
+
+    // Shift rows up.
+    for (i = 0; i < (NUM_ROWS - 1) * NUM_COLS; i++) {
+        // Set current line to the next line, no need to change the color here.
+        *(uint8_t *)(video_mem + (i << 1)) = *(uint8_t *)(video_mem + ((i + NUM_COLS) << 1));
+    }
+
+    // Clear the last line.
+    for (i = (NUM_ROWS - 1) * NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+    }
+}
+
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
- *  Function: Output a character to the console */
+ *  Function: Output a character to the console. Scroll the screen whenever necessary. */
 void putc(uint8_t c) {
-    if(c == '\n' || c == '\r') {
-        screen_y++;
+    if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
         screen_x = 0;
+        if (NUM_ROWS == ++screen_y) {
+            vertical_scroll();
+        }
+    } else if ('\b' == c) {
+        if (0 == screen_x && 0 == screen_y) { return; }  // Nothing left.
+        if (0 == screen_x) {  // Go back to the previous line.
+            screen_x = NUM_COLS;
+            --screen_y;
+        }
+        // Clear the previous character.
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x - 1) << 1) + 1) = ATTRIB;
+        --screen_x;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        if (NUM_COLS == ++screen_x) {
+            screen_x = 0;
+            if (NUM_ROWS == ++screen_y) {
+                vertical_scroll();
+            }
+        }
     }
 }
 

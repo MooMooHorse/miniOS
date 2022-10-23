@@ -4,190 +4,136 @@
  * @brief keyboard related functions, including handler
  * @version 0.1
  * @date 2022-10-16
- * 
+ *
+ * @version 1.0
+ * @author Scharfrichter Qian
+ * @date 2022-10-21
+ * @brief Refactored code to support special characters and input buffer.
+ *
  * @copyright Copyright (c) 2022
  * 
  */
 #include "keyboard.h"
-// static uint32_t buffer_pt;
-static char buf[BUFFER_SIZE];
 
-// modifier key flags
-int shift_flag = 0;
-int caps_flag = 0;
-int ctrl_flag = 0;
-int alt_flag = 0;
-int keyCount = 0;
-// static compound_char[];
+#define ISLOWER(x)  ('a' <= (x) && (x) <= 'z')
+#define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
+#define TOLOWER(x)  ((x) + 'a' - 'A')
+#define TOUPPER(x)  ((x) + 'A' - 'a')
 
-static const char simple_char[SCAN_CODE_SIZE] = {
+// Global circular buffer with R/W/E indices.
+input_t input;
+
+// Modifiers flags.
+static uint8_t mod;
+
+static const uint8_t map_basics[MAP_SIZE] = {
     [2] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a',
     's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x',
-    'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0', '\0', '\0', ' '}; // 0x39 
+    'c', 'v', 'b', 'n', 'm', ',', '.', '/', [MAP_SIZE - 1] = ' '
+};
+
+static const uint8_t map_shift[MAP_SIZE] = {
+    [2] = '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A',
+    'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X',
+    'C', 'V', 'B', 'N', 'M', '<', '>', '?', [MAP_SIZE - 1] = ' '
+};
+
+#define C(x) ((x) - '@')
+static const uint8_t map_ctrl[MAP_SIZE] = {
+    [16] = C('Q'), C('W'), C('E'), C('R'), C('T'), C('Y'), C('U'), C('I'),
+    C('O'), C('P'), C('['), C(']'), '\n' /* \r */, '\0', C('A'), C('S'), C('D'),
+    C('F'), C('G'), C('H'), C('J'), C('K'), C('L'), [43] = C('\\'), C('Z'), C('X'),
+    C('C'), C('V'), C('B'), C('N'), C('M'), [53] = C('/')
+};
+
+// Scan Code --> Bitmask in `mod`.
+static const uint8_t map_mod_or[MOD_MAP_SIZE] = {
+    [0x2A] = SHIFT, [0x36] = SHIFT, [0x1D] = CTRL, [0x38] = ALT
+};
+
+// Scan Code --> Bitmask in `mod`.
+static const uint8_t map_mod_xor[MOD_MAP_SIZE] = {
+    [0x3A] = CAPSLOCK  // Others currently not supported.
+};
+
+// So we can use `code & (SHIFT | CTRL)` to select the corresponding map.
+static const uint8_t* const map[4] = {
+    map_basics, map_shift, map_ctrl, map_ctrl  // SHIFT ignored when CTRL is pressed.
+};
 
 /**
- * @brief Initialize the keyboard
- * Should be ran when CLI is called 
+ * @brief This function initializes the keyboard.
+ * NOTE: Should be called when IF is cleared.
+ * @param None.
+ * @return None.
+ * @sideeffect Enables IRQ for the keyboard!
  */
-void keyboard_init(void){
-    // enable IRQ1
-    enable_irq(KEYBOARD_IRQ);
+void keyboard_init(void) {
+    enable_irq(KEYBOARD_IRQ);  // Enable IRQ1.
 }
 
-/**
- * @brief keyboard interrupt handler
- *
+/*!
+ * @brief This function reads one scan code from the keyboard data port and convert
+ * it to an ASCII character or update the corresponding status variable (e.g. `mod`).
+ * @param None.
+ * @return (Sign-extended) ASCII character. -1 if error occurred.
+ * @sideeffect Consumes scan code in the keyboard data port and modifies `mod` vector.
  */
-void keyboard_handler(void){
-    uint8_t scan_code = inb(KEYBOARD_PORT); //first byte NOT IN ASCII
-    // if(val==0xe0){
-    //     // inb();//second byte;
-    //     // special character flag
-    //     // also check for array of flags
-    //     // currently does nothing due to cp1 not requiring it
-    // }
-    // if(singlechar(val)){
-    //     printf("%c");
-    //     buf[buffer_pt++]=val;
-    // }
-    //
-    /* ctrl + L, */
-    // if(){
-    //     send_eoi(KEYBOARD_IRQ);
-    //     sti();
-    //     return ;
-    // }
-    switch (scan_code) {
-        // "i will do scan codes" -- oz
+static int32_t
+kgetc(void) {
+    // Extract the least-significant byte.
+    uint8_t c;
+    uint8_t stat = inb(KEYBOARD_STAT);
+    if (!(stat & 0x01)) { return -1; }  // ERROR: Empty keyboard buffer!
+    uint8_t code = inb(KEYBOARD_DATA) & SCAN_MASK;
 
-        // Shift Press (L)
-        case (0x2A):
-            shift_flag = 1;
-            break;
-
-        // Shift Release (L)
-        case (0xAA):
-            shift_flag = 0;
-            break;
-
-        // Shift Press (R)
-        case (0x36):
-            shift_flag = 1;
-            break;
-
-        // Shift Release (R)
-        case (0xB6):
-            shift_flag = 0;
-            break;
-
-        // Ctrl Press (L/R)
-        case (0x1D):
-            ctrl_flag = 1;
-            break;
-
-        // Ctrl Release (L/R)
-        case (0x9D):
-            ctrl_flag = 0;
-            break;
-
-        // Alt Press (L/R)
-        case (0x38):
-            alt_flag = 1;
-            break;
-        
-        // Alt Release (L/R)
-        case (0xB8):
-            alt_flag = 0;
-            break;
-
-        // Caps Lock
-        case (0x3A):
-            caps_flag = !caps_flag;
-            break;
-        
-        // case (0xE0):
-        //     extended_flag = 1;
-        //     break;
+    // Scan codes indicating "key release" has the HIGHEST bit set.
+    if (code & RELEASE_MASK) {
+        // Extract the corresponding "pressed" scan code for modifier keys (no effects on other keys).
+        mod &= ~map_mod_or[code & ~RELEASE_MASK];
+        return 0;  // Done processing.
     }
 
-    if (scan_code < SCAN_CODE_SIZE) {
-        char c = simple_char[scan_code];
-        if (c != '\0') {
-            if (shift_flag ^ caps_flag) {
-                c = c - 32;
-            }
-            if (ctrl_flag) {
-                if (c == 'l') { // clear terminal (ctrl+l)
-                    clear_screen();
-                    send_eoi(KEYBOARD_IRQ);
-                    return;
-                }
-            }
+    // Update modifier key status. No effect if none is active.
+    mod |= map_mod_or[code];
+    mod ^= map_mod_xor[code];
+    c = map[mod & (SHIFT | CTRL)][code];
+    if (mod & CAPSLOCK) {  // CAPS LOCK reverts the cases of alphabetics.
+        c = ISLOWER(c) ? TOUPPER(c) : ISUPPER(c) ? TOLOWER(c) : c;
+    }
 
-            if (keyCount < 80) {
-                buf[keyCount++] = c;
-            }
-            else {
-                handle_vertical_scroll();
-                keyCount = 1;
-            }
+    return c;
+}
 
-            putc(c);
+/*!
+ * @brief This function handles the keyboard interrupt.
+ * @param None.
+ * @return None.
+ * @sideeffect Modifies `input` buffer and video memory.
+ */
+void
+keyboard_handler(void) {
+    int32_t c;
+    send_eoi(KEYBOARD_IRQ);
+    if (0 < (c = kgetc())) {  // Ignore NUL character.
+        switch (c) {
+            case '\b':  // Eliminate the last character in buffer & screen.
+                if (input.e != input.w) { --input.e; }
+                putc(c);
+                break;
+            case C('L'):
+                clear();
+                break;
+            default:
+                // Ignore NUL characters. Stop taking input when buffer is full.
+                putc(c);  // Print non-NUL character to the screen.
+                if (INPUT_SIZE == input.e - input.r + 1 && '\n' != c) { break; }
+                input.buf[input.e++ % INPUT_SIZE] = c;  // NOTE: Circular buffer!
+                // Update buffer write status when linefeed encountered so terminal can read.
+                if ('\n' == c) { input.w = input.e; }
+                break;
         }
     }
-
-    send_eoi(KEYBOARD_IRQ);
-}
-
-
-// to be added/integrated into terminal.c/h
-#define VIDEO_MEM_ADDR 0xB8000
-#define NUM_COLS 80
-#define NUM_ROWS 25
-
-static char* VIDEO_MEM = (char *)VIDEO_MEM_ADDR;
-static char buf[BUFFER_SIZE];
-
-void clear_buffer(void) {
-    int32_t i;
-    for (i = 0; i < BUFFER_SIZE; i++) {
-        buf[i] = '\0';
-    }
-    keyCount = 0;
-}
-
-void clear_screen (void) {
-    int32_t mem_index;
-
-    for (mem_index = 0; mem_index < NUM_ROWS * NUM_COLS; mem_index++) {
-        *(uint8_t *)(VIDEO_MEM + (mem_index << 1)) = ' ';
-        *(uint8_t *)(VIDEO_MEM + (mem_index << 1) + 1) = 0x7;
-    }
-
-    clear_buffer();
-    // // Hey Brant! I added this to reset cursor position when we clear the screen on terminal
-    // screen_x = 0;
-    // screen_y = 0;
-    return;
-}
-
-void handle_vertical_scroll(void) {
-    int32_t i;
-
-    // shift rows up
-    for (i = 0; i < (NUM_ROWS - 1) * NUM_COLS; i++) {
-        // set current line to the next line
-        *(uint8_t *)(VIDEO_MEM + (i << 1)) = *(uint8_t *)(VIDEO_MEM + ((i + NUM_COLS) << 1));
-        *(uint8_t *)(VIDEO_MEM + (i << 1) + 1) = 0x7;
-    }
-
-    // clear last line
-    for(i = (NUM_ROWS - 1) * NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
-        *(uint8_t *)(VIDEO_MEM + (i << 1)) = ' ';
-        *(uint8_t *)(VIDEO_MEM + (i << 1) + 1) = 0x7;
-    }
-    
-    // Hey Brant! You probably need to adjust the cursor/prompt here after the vertical scroll
-    return;
 }

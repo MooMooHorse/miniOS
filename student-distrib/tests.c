@@ -807,8 +807,8 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test7());
-    TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
-    TEST_OUTPUT("terminal_io_test", terminal_io_test());
+    // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
+    // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());
     // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());

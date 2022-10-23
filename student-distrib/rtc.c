@@ -17,7 +17,7 @@
 static int32_t fd_sanity_check(fd_t* fd);
 static int32_t rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes);
 static int32_t rtc_read(fd_t* fd, void* buf, int32_t nbytes);
-static int32_t rtc_write(fd_t* fd, void* buf, int32_t nbytes);
+static int32_t rtc_write(fd_t* fd, const void* buf, int32_t nbytes);
 static int32_t rtc_close(fd_t* fd);
 static void do_rtc(uint32_t i);
 
@@ -178,7 +178,7 @@ rtc_read(fd_t* fd, void* buf, int32_t nbytes) {
  * @return int32_t 
  */
 static int32_t 
-rtc_write(fd_t* fd, void* buf, int32_t nbytes){
+rtc_write(fd_t* fd, const void* buf, int32_t nbytes){
     uint32_t new_freq;
     // Check fd_t pointer validity
     if (fd_sanity_check(fd) == -1) {

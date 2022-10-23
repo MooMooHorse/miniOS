@@ -51,7 +51,7 @@ typedef struct file_operation_table{
      * Third arg  : n bytes to read (In RTC, freqency you want to set)
      * Return Val : n bytes you wrote -1 on failure
      */
-    int32_t (*write)(struct file_descriptor_item*,void*,int32_t);
+    int32_t (*write)(struct file_descriptor_item*,const void*,int32_t);
 
     /* First arg  : file descriptor table item, you need to CLEAN IT, some items can be discarded 
     *  by not cleaning it.

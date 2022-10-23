@@ -24,21 +24,22 @@ static int32_t _terminal_write(const uint8_t* buf, int32_t n);
  * @brief This function initializes the terminal to the expected initial state.
  * @param None.
  * @return None.
- * @sideeffect None.
+ * @sideeffect Initializes `input` buffer indices.
  */
 void
 terminal_init(void) {
-    // Nothing needs to be initialized for now.
+    input.r = input.w = input.e = 0;
 }
 
 /*!
  * @brief Device driver interface. Used to open the terminal.
  * @param Determined by OS device driver interface.
  * @return 0 on success, non-zero otherwise.
- * @sideeffect None.
+ * @sideeffect Initializes `input` buffer indices.
  */
 int32_t
 terminal_open(__attribute__((unused)) fd_t* fd, __attribute__((unused)) const uint8_t* buf, __attribute((unused)) int32_t nbytes) {
+    terminal_init();
     return 0;
 }
 

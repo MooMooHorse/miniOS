@@ -770,7 +770,7 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
-    TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
+    // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());

@@ -476,10 +476,12 @@ int32_t filesystem_ioctl_test2() {
         return FAIL;
     }
     uint8_t buf[100];
+    dentry_t dentry;
     for (i = 0; i < readonly_fs.file_num; i++) {
         file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
         puts((int8_t*) buf);
-        putc('\n');
+        readonly_fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
+        printf("          filetype=%d    inode=%d\n",dentry.filetype,dentry.inode_num);
     }
     return result;
 }

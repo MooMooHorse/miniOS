@@ -2,7 +2,8 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystem.h"
-#include "terminal.h"
+#include "rtc.h"
+#include "keyboard.h"
 
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
@@ -451,10 +452,10 @@ int32_t filesystem_ioctl_test2() {
         return FAIL;
     }
     uint8_t buf[100];
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < readonly_fs.file_num; i++) {
         file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
         puts((int8_t*) buf);
-        putc(' ');
+        putc('\n');
     }
     return result;
 }
@@ -470,15 +471,119 @@ int32_t filesystem_ioctl_test3() {
     int i;
     fd_t file_descriptor_item;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
         return FAIL;
     }
-    uint8_t buf[100];
-    for (i = 0; i < 5; i++) {
-        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 10);
-        puts((int8_t*) buf);
-        putc(' ');
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
     }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    return result;
+}
+/**
+ * @brief test read executable tail
+ * INPUT : NONE
+ * OUTPUT : a series of file content within executable file +  PASS/FAIL
+ * Coverage : file system driver read file, with executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test4() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+        return FAIL;
+    }
+    uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    //     putc(' ');
+    // }
+    return result;
+}
+/**
+ * @brief test read executable tail
+ * INPUT : NONE
+ * OUTPUT : a series of file content within executable file+  PASS/FAIL
+ * Coverage : file system driver read file, with executable
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test5() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+        return FAIL;
+    }
+    uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 20);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    //     putc(' ');
+    // }
+    return result;
+}
+
+/**
+ * @brief test read file for file system
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * Coverage : file system driver read file, with large file name and large file length with illegal input filename
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test6() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+        return PASS;
+    }
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    return FAIL;
+}
+
+/**
+ * @brief test read file for file system
+ * INPUT : NONE
+ * OUTPUT : a series of file content within directory
+ * Coverage : file system driver read file
+ * @return ** int32_t 
+ */
+int32_t filesystem_ioctl_test7() {
+    int i;
+    fd_t file_descriptor_item;
+    int result = PASS;
+    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "frame0.txt", 0) == -1) {
+        return FAIL;
+    }
+   uint8_t buf[40001];
+    uint32_t nbytes_read;
+    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    if(nbytes_read==-1){
+        return FAIL;
+    }
+    printf("%u\n",nbytes_read);
+    for(i=0;i<nbytes_read;i++) putc(buf[i]);
     return result;
 }
 
@@ -530,6 +635,106 @@ terminal_io_test(void) {
     return PASS;
 }
 
+/**
+ * @brief Test the RTC write and read functions by running a print test with
+ * increasing frequency.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * @return int32_t 
+ */
+int32_t rtc_test_open_read(){
+    fd_t fd;
+
+    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0", 0); /* second arg discarded so arbitrary */
+    uint32_t buf[100];
+
+    int i, j, k;
+    k = 0;
+
+    // iterate through different frequencies
+    for (i = 1; i < 10; i++) {
+        // loop 10 times
+        for (j = 0; j < 10; j++) {
+            rtc[0].ioctl.read(&fd, buf, 0);
+            printf("!");
+        }
+        printf("\n");
+        buf[0]=(2<<i);
+        rtc[0].ioctl.write(&fd, buf, 4);
+    }
+
+    rtc[0].ioctl.close(&fd);
+
+    return PASS;
+}
+
+/**
+ * @brief Test the RTC write function with legal and illegal frequencies.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * @return int32_t 
+ */
+int32_t rtc_test_write() {
+    fd_t fd;
+    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0" , 0);
+    uint32_t buf[100];
+
+    printf("RTC test write 2 Hz\n");
+    buf[0]=2;
+    int32_t test1 = rtc[0].ioctl.write(&fd, buf, 4);
+    
+    printf("RTC test write 2048 Hz\n");
+    buf[0]=2048;
+    int32_t test2 = rtc[0].ioctl.write(&fd, buf, 4);
+
+    printf("RTC test write 31 Hz\n");
+    buf[0]=31;
+    int32_t test3 = rtc[0].ioctl.write(&fd, buf, 4);
+
+    // Test 1 should pass, all else should fail.
+    if (test1 != -1 || test2 == -1 || test3 == -1) {
+        return PASS;
+    } else {
+        return FAIL;
+    }
+
+    rtc[0].ioctl.close(&fd);
+
+    return 0;
+}
+
+/**
+ * @brief Test sanity check for the RTC driver.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * 
+ */
+int32_t rtc_sanity_check() {
+
+    printf("NULL FILE DESCRIPTOR TEST\n");
+    int32_t test1 = rtc[0].ioctl.open(NULL, (uint8_t*)"RTC0", 0);
+    uint8_t buf[100];
+    buf[0]=4;
+    int32_t test2 = rtc[0].ioctl.read(NULL, buf, 0);
+    int32_t test3 = rtc[0].ioctl.write(NULL, buf, 4);
+    int32_t test4 = rtc[0].ioctl.close(NULL);
+
+    if (test1 == -1 && test2 == -1 && test3 == -1 && test4 == -1) {
+        printf("We have gone insane. I mean...sanity checks blocked bad inputs...which is good.\n");
+        return PASS;
+    } else {
+        printf("We are sane. Sanity checks allowed bad inputs...which is bad.\n");
+        return FAIL;
+    }
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -540,8 +745,8 @@ terminal_io_test(void) {
  * @param None
  * @return ** void 
  */
-void launch_tests() {
-    /* Checkpoint 1 tests */
+void launch_tests(){
+    // launch your tests here
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
     // TEST_OUTPUT("syscall inspection",syscall_inspection1());
     // TEST_OUTPUT("idt_test",idt_test());
@@ -566,6 +771,14 @@ void launch_tests() {
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
     TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
-    TEST_OUTPUT("terminal_io_test", terminal_io_test());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
+    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test7());
+    // TEST_OUTPUT("terminal_io_test", terminal_io_test());
+    // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
+    // TEST_OUTPUT("rtc_test_write", rtc_test_write());
+    // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
+
 }
 

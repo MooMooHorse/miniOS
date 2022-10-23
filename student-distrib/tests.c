@@ -423,7 +423,7 @@ int32_t filesystem_test_read3() {
  * @brief test open file for file system
  * INPUT : NONE
  * OUTPUT : position of file at initialization, flag, inode number + PASS
- * Coverage : file system driver open
+ * Coverage : file system driver open, directory close
  * @return ** int32_t 
  */
 int32_t filesystem_ioctl_test1() {
@@ -435,6 +435,9 @@ int32_t filesystem_ioctl_test1() {
     }
     printf("pos=%d flag=%d ", file_descriptor_item.file_position, file_descriptor_item.flags);
     printf("inode=%d\n", file_descriptor_item.inode);
+    if(-1==readonly_fs.d_ioctl.close(&file_descriptor_item)){
+        return FAIL;
+    }
     return result;
 }
 /**
@@ -464,7 +467,7 @@ int32_t filesystem_ioctl_test2() {
  * @brief test read file for file system
  * INPUT : NONE
  * OUTPUT : a series of file content within directory
- * Coverage : file system driver read file, with large file name and large file length
+ * Coverage : file system driver read file, with large file name and large file length file close
  * @return ** int32_t 
  */
 int32_t filesystem_ioctl_test3() {
@@ -482,6 +485,9 @@ int32_t filesystem_ioctl_test3() {
     }
     printf("%u\n",nbytes_read);
     for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    if(readonly_fs.f_ioctl.close(&file_descriptor_item)==-1){
+        return FAIL;
+    }
     return result;
 }
 /**
@@ -547,7 +553,6 @@ int32_t filesystem_ioctl_test5() {
 int32_t filesystem_ioctl_test6() {
     int i;
     fd_t file_descriptor_item;
-    int result = PASS;
     if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
         return PASS;
     }
@@ -769,7 +774,7 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_test_read",filesystem_test_read3());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
-    // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
+    TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
     // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());

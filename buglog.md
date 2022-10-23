@@ -16,6 +16,8 @@
 | :white_check_mark:                                   | `009`   |
 | :white_check_mark:                                   | `010`   |
 | :white_check_mark:                                   | `011`   |
+| :white_check_mark:                                   | `012`   |
+| :white_check_mark:                                   | `013`   |
 
 ### Bug `#000`
 **Description**  
@@ -149,3 +151,23 @@ Clear screen while loosing key focus
 **Resolution**  
 
 * didn't send eoi after branching in keyboard handler
+
+### Bug `#012`
+
+ **Description**
+
+When file index out-of-bound, it doesn't return -1 immediately
+
+**Resolution**  
+
+* Use directory number instead of inode number to do sanity check.
+
+### Bug `#013`
+
+**Description**
+
+Divide by zero in RTC
+
+**Resolution**  
+
+* Use int32_t as frequency type

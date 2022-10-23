@@ -452,7 +452,7 @@ int32_t filesystem_ioctl_test2() {
         return FAIL;
     }
     uint8_t buf[100];
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < readonly_fs.file_num; i++) {
         file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
         puts((int8_t*) buf);
         putc(' ');

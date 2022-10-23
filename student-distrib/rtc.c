@@ -82,7 +82,7 @@ rtc_handler(void) {
     virt_rtc++;
     int i;
     for (i = 0; i < RTC_num; i++){
-        if(rtc[i].freq>0 && virt_rtc%(1024/rtc[i].freq)==0){
+        if(rtc[i].freq>0 && (virt_rtc%(1024/rtc[i].freq))==0){
             do_rtc(i);
         }
     }

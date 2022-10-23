@@ -22,7 +22,7 @@ extern void rtc_handler(void);
 
 typedef struct RTC {
     fops_t ioctl;
-    uint32_t freq;
+    int32_t freq;
     uint32_t count;
 } rtc_t;
 

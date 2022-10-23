@@ -116,12 +116,21 @@ kgetc(void) {
 void
 keyboard_handler(void) {
     int32_t c;
+    int32_t i;
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
         switch (c) {
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (input.e != input.w) { --input.e; }
                 putc(c);
+                break;
+            case '\t':
+                // Enough space to place a tab (4 spaces + 1 linefeed)?
+                if (INPUT_SIZE < input.e - input.r + 5) { break; }
+                for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
+                    putc(' ');
+                    input.buf[input.e++ % INPUT_SIZE] = ' ';
+                }
                 break;
             case C('L'):
                 clear();

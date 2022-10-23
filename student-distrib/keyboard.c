@@ -129,9 +129,10 @@ keyboard_handler(void) {
             default:
                 // Ignore NUL characters. Stop taking input when buffer is full.
                 putc(c);  // Print non-NUL character to the screen.
-                if (INPUT_SIZE == input.e - input.r) { break; }
+                if (INPUT_SIZE == input.e - input.r + 1 && '\n' != c) { break; }
                 input.buf[input.e++ % INPUT_SIZE] = c;  // NOTE: Circular buffer!
-                if ('\n' == c) { input.w = input.e; } // Update buffer write status so terminal can read.
+                // Update buffer write status when linefeed encountered so terminal can read.
+                if ('\n' == c) { input.w = input.e; }
                 break;
         }
     }

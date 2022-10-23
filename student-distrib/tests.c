@@ -483,6 +483,26 @@ int32_t filesystem_ioctl_test3() {
 }
 
 /*!
+ * @brief This function tests the buffer overflow handling of `terminal_write`
+ * by passing it a 16-character long buffer and ask it to write 32 characters.
+ * @param None.
+ * @return PASS or FAIL.
+ * @sideeffect None.
+ */
+int32_t
+terminal_write_overflow_test(void) {
+    const int32_t fd = -1;  // Unused.
+    uint8_t buf[16] = "abcdefghijklmno";
+
+    if (-1 != terminal_write(fd, buf, 32)) {  // More # characters than buffer size!
+        assertion_failure();
+        return FAIL;
+    }
+
+    return PASS;
+}
+
+/*!
  * @brief This function repeatedly calls `terminal_read` and attempts to read 32 characters.
  * Then it outputs the characters actually read from the `input` buffer.
  * @param None.
@@ -545,6 +565,7 @@ void launch_tests() {
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
+    TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     TEST_OUTPUT("terminal_io_test", terminal_io_test());
 }
 

@@ -10,6 +10,13 @@
  */
 #include "terminal.h"
 
+terminal_t terminal = {
+    .ioctl.open = terminal_open,
+    .ioctl.close = terminal_close,
+    .ioctl.read = terminal_read,
+    .ioctl.write = terminal_write
+};
+
 static int32_t _terminal_read(uint8_t* buf, int32_t n);
 static int32_t _terminal_write(const uint8_t* buf, int32_t n);
 
@@ -17,32 +24,33 @@ static int32_t _terminal_write(const uint8_t* buf, int32_t n);
  * @brief This function initializes the terminal to the expected initial state.
  * @param None.
  * @return None.
- * @sideeffect None.
+ * @sideeffect Initializes `input` buffer indices.
  */
 void
 terminal_init(void) {
-    // Nothing currently needs to be initialized.
+    input.r = input.w = input.e = 0;
 }
 
 /*!
  * @brief Device driver interface. Used to open the terminal.
- * @param filename is a human-readable file name (unused).
+ * @param Determined by OS device driver interface.
  * @return 0 on success, non-zero otherwise.
- * @sideeffect None.
+ * @sideeffect Initializes `input` buffer indices.
  */
 int32_t
-terminal_open(__attribute__((unused)) const uint8_t* filename) {
+terminal_open(__attribute__((unused)) fd_t* fd, __attribute__((unused)) const uint8_t* buf, __attribute((unused)) int32_t nbytes) {
+    terminal_init();
     return 0;
 }
 
 /*!
  * @brief Device driver interface. Used to close the terminal.
- * @param fd is file descriptor (unused).
+ * @param Determined by OS device driver interface.
  * @return 0 on success, non-zero otherwise.
  * @sideeffect Discard remaining input characters in the `input` buffer.
  */
 int32_t
-terminal_close(__attribute__((unused)) int32_t fd) {
+terminal_close(__attribute__((unused)) fd_t* fd) {
     input.e = input.w;  // Discard unused characters in the input buffer.
     return 0;
 }
@@ -56,7 +64,7 @@ terminal_close(__attribute__((unused)) int32_t fd) {
  * @sideeffect See `_terminal_read` below.
  */
 int32_t
-terminal_read(__attribute__((unused)) int32_t fd, void* buf, int32_t nbytes) {
+terminal_read(__attribute__((unused)) fd_t* fd, void* buf, int32_t nbytes) {
     return _terminal_read((uint8_t*) buf, nbytes);
 }
 
@@ -69,7 +77,7 @@ terminal_read(__attribute__((unused)) int32_t fd, void* buf, int32_t nbytes) {
  * @sideeffect See `_terminal_write` below.
  */
 int32_t
-terminal_write(__attribute__((unused)) int32_t fd, const void* buf, int32_t nbytes) {
+terminal_write(__attribute__((unused)) fd_t* fd, const void* buf, int32_t nbytes) {
     return _terminal_write((const uint8_t*) buf, nbytes);
 }
 

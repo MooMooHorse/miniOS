@@ -17,8 +17,8 @@ static int32_t file_open(fd_t *ret, const uint8_t *fname, int32_t findex);
 static int32_t direcotry_open(fd_t *ret, const uint8_t *fname, int32_t findex);
 static int32_t file_read(fd_t *fd, void *buf, int32_t nbytes);
 static int32_t directory_read(fd_t *fd, void *buf, int32_t nbytes);
-static int32_t file_write(fd_t *fd, void *buf, int32_t nbytes);
-static int32_t directory_write(fd_t *fd, void *buf, int32_t nbytes);
+static int32_t file_write(fd_t *fd, const void *buf, int32_t nbytes);
+static int32_t directory_write(fd_t *fd, const void *buf, int32_t nbytes);
 static int32_t file_close(fd_t *fd);
 static int32_t directory_close(fd_t *fd);
 
@@ -240,7 +240,7 @@ directory_read(fd_t *fd, void *buf, int32_t nbytes)
  * @return ** int32_t
  */
 static int32_t
-file_write(fd_t *fd, void *buf, int32_t nbytes)
+file_write(fd_t *fd, const void *buf, int32_t nbytes)
 {
     return -1;
 }
@@ -252,7 +252,7 @@ file_write(fd_t *fd, void *buf, int32_t nbytes)
  * @return ** int32_t
  */
 static int32_t
-directory_write(fd_t *fd, void *buf, int32_t nbytes)
+directory_write(fd_t *fd, const void *buf, int32_t nbytes)
 {
     return -1;
 }

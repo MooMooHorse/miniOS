@@ -4,6 +4,8 @@
 #include "filesystem.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "terminal.h"
+
 
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
@@ -624,10 +626,10 @@ int32_t filesystem_ioctl_test7() {
  */
 int32_t
 terminal_write_overflow_test(void) {
-    const int32_t fd = -1;  // Unused.
+    fd_t fd;  // Unused.
     uint8_t buf[16] = "abcdefghijklmno";
 
-    if (-1 != terminal_write(fd, buf, 32)) {  // More # characters than buffer size!
+    if (-1 != terminal_write(&fd, buf, 32)) {  // More # characters than buffer size!
         assertion_failure();
         return FAIL;
     }
@@ -645,20 +647,24 @@ terminal_write_overflow_test(void) {
 int32_t
 terminal_io_test(void) {
     const int32_t SIZE = 32;
-    const int32_t fd = -1;  // Unused.
+    fd_t fd;  // Unused.
     uint8_t buf[SIZE];
     int n;
 
+    terminal_open(&fd, NULL, 0);  // Unused parameters.
+
     while (1) {
-        n = terminal_read(fd, buf, SIZE);
+        n = terminal_read(&fd, buf, SIZE);
         printf("`terminal_read`: # read = %d\n", n);
         printf("`terminal_write`: ");
-        if (n != terminal_write(fd, buf, n)) {
+        if (n != terminal_write(&fd, buf, n)) {
             assertion_failure();
             return FAIL;
         }
         putc('\n');
     }
+
+    terminal_close(&fd);  // Unused parameters.
 
     return PASS;
 }
@@ -799,11 +805,11 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
-    // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test4());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test7());
+    // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());

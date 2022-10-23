@@ -12,13 +12,24 @@
 #define RTC_IRQ         8
 #define RTC_DEF_FREQ    1024  // Default frequency.
 
+#define RTC_num 1
+
 /* RTC init and handler */
 extern void rtc_init(void);
 extern void rtc_handler(void);
 
-typedef struct RTC{
+int32_t fd_sanity_check(fd_t* fd);
+int32_t rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes);
+int32_t rtc_read(fd_t* fd, void* buf, int32_t nbytes);
+int32_t rtc_write(fd_t* fd, void* buf, int32_t nbytes);
+int32_t rtc_close(fd_t* fd);
+
+typedef struct RTC {
     fops_t ioctl;
     uint32_t freq;
+    uint32_t count;
 } rtc_t;
+
+volatile rtc_t rtc[RTC_num];
 
 #endif

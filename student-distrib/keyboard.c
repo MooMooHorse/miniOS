@@ -120,6 +120,7 @@ void keyboard_handler(void){
             if (ctrl_flag) {
                 if (c == 'l') { // clear terminal (ctrl+l)
                     clear_screen();
+                    send_eoi(KEYBOARD_IRQ);
                     return;
                 }
             }
@@ -165,9 +166,9 @@ void clear_screen (void) {
     }
 
     clear_buffer();
-    // Hey Brant! I added this to reset cursor position when we clear the screen on terminal
-    // x_screen = 0;
-    // y_screen = 0;
+    // // Hey Brant! I added this to reset cursor position when we clear the screen on terminal
+    // screen_x = 0;
+    // screen_y = 0;
     return;
 }
 

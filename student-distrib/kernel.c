@@ -161,10 +161,11 @@ void entry(unsigned long magic, unsigned long addr) {
      * without showing you any output */
     sti();
 
-#ifdef RUN_TESTS
-    /* Run tests */
-    launch_tests();
-#endif
+    #ifdef RUN_TESTS
+        /* Run tests */
+        launch_tests();
+    #endif
+
     /* Execute the first program ("shell") ... */
     
     // Brief clear_screen() and handle_verticle_scoll() tests -- REMOVE LATER

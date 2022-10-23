@@ -2,6 +2,9 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "filesystem.h"
+#include "rtc.h"
+#include "keyboard.h"
+
 /* Include constants for testing purposes. */
 #ifndef _MMU_H
 #include "mmu.h"
@@ -478,7 +481,110 @@ int32_t filesystem_ioctl_test3(){
     }
     return result;
 }
+
 /* Checkpoint 2 tests */
+/**
+ * @brief Test the RTC write and read functions by running a print test with
+ * increasing frequency.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * @return int32_t 
+ */
+int32_t rtc_test_open_read(){
+    fd_t fd;
+    uint8_t buf[100];
+
+    rtc_open(&fd, buf, 0);
+
+    clear_screen();
+
+    int i, j, k;
+    k = 0;
+
+    // iterate through different frequencies
+    for (i = 1; i < 10; i++) {
+        // loop 10 times
+        for (j = 0; j < 10; j++) {
+            rtc_read(&fd, buf, 0);
+            printf("!");
+        }
+        handle_vertical_scroll();
+        rtc_write(&fd, buf, 2 << i);
+    }
+
+    rtc_close(&fd);
+
+    return PASS;
+}
+
+/**
+ * @brief Test the RTC write function with legal and illegal frequencies.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * @return int32_t 
+ */
+int32_t rtc_test_write() {
+    fd_t fd;
+    uint8_t buf[100];
+    rtc_open(&fd, buf, 0);
+
+    clear_screen();
+
+    printf("RTC test write 2 Hz\n");
+    int32_t test1 = rtc_write(&fd, buf, 2);
+    
+    printf("RTC test write 2048 Hz\n");
+    int32_t test2 = rtc_write(&fd, buf, 2048);
+
+    printf("RTC test write 31 Hz\n");
+    int32_t test3 = rtc_write(&fd, buf, 31);
+
+    // Test 1 should pass, all else should fail.
+    if (test1 != -1 || test2 == -1 || test3 == -1) {
+        return PASS;
+    } else {
+        return FAIL;
+    }
+
+    rtc_close(&fd);
+
+    return 0;
+}
+
+/**
+ * @brief Test sanity check for the RTC driver.
+ * 
+ * INPUT : NONE
+ * OUTPUT : PASS/FAIL
+ * SIDE EFFECT : Virtual RTC 0 will be instantiated.
+ * 
+ */
+int32_t rtc_sanity_check() {
+    fd_t fd;
+    uint8_t buf[100];
+
+    clear_screen();
+
+    printf("NULL FILE DESCRIPTOR TEST\n");
+    int32_t test1 = rtc_open(NULL, buf, 0);
+    int32_t test2 = rtc_read(NULL, buf, 0);
+    int32_t test3 = rtc_write(NULL, buf, 0);
+    int32_t test4 = rtc_close(NULL);
+
+    if (test1 == -1 && test2 == -1 && test3 == -1 && test4 == -1) {
+        printf("We have gone insane. I mean...sanity checks blocked bad inputs...which is good.\n");
+        return PASS;
+    } else {
+        printf("We are sane. Sanity checks allowed bad inputs...which is bad.\n");
+        return FAIL;
+    }
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -490,7 +596,7 @@ int32_t filesystem_ioctl_test3(){
  * @return ** void 
  */
 void launch_tests(){
-    // launch your tests here
+    // launch your tests here 
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
     // TEST_OUTPUT("syscall inspection",syscall_inspection1());
     // TEST_OUTPUT("idt_test",idt_test());
@@ -513,5 +619,8 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test1());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test2());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test3());
+    // TEST_OUTPUT("rtc_test_open_read",rtc_test_open_read());
+    // TEST_OUTPUT("rtc_test_write",rtc_test_write());
+    TEST_OUTPUT("rtc_sanity_check",rtc_sanity_check());
 }
 

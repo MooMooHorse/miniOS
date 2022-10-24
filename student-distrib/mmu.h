@@ -29,7 +29,7 @@
 #define PAGE_D          (1L << 6)           // Dirty
 #define PAGE_PS         (1L << 7)           // Page size (0 indicates 4 KB)
 #define PAGE_PAT        (1L << 7)           // Page table attribute index
-#define PAGE_G          (1L << 8)           // Global page (ignored)
+#define PAGE_G          (1L << 8)           // Global page
 #define VIDEO           0xB8000             // Copied from `lib.c`.
 
 // Control registers setting.

@@ -24,7 +24,7 @@ void
 vm_init(void)
 {
     pgdir[0] |= (unsigned long) pgtbl | PAGE_P | PAGE_RW;  // Map the first page table.
-    pgdir[1] |= (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS;  // PDE #1 --> 4M ~ 8M
+    pgdir[1] |= (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
     pgtbl[PTX(VIDEO)] |= VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
     // Turn on page size extension for 4MB pages.

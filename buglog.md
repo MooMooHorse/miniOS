@@ -18,6 +18,8 @@
 | :white_check_mark:                                   | `011`   |
 | :white_check_mark:                                   | `012`   |
 | :white_check_mark:                                   | `013`   |
+| :white_check_mark:                                   | `014`   |
+| :white_check_mark:                                   | `015`   |
 
 ### Bug `#000`
 **Description**  
@@ -171,3 +173,24 @@ Divide by zero in RTC
 **Resolution**  
 
 * Use int32_t as frequency type
+
+### Bug `#014`
+
+**Description**
+
+The keyboard is pressed but no character is printed on the screen.
+
+**Resolution**  
+
+* Always call `send_eoi` after handling a keyboard interrupt!
+
+### Bug `#015`
+
+**Description**
+
+When a *non-special* key (e.g., A) is pressed, `terminal_read` reports a 2-character read. After careful examination of the content of `input` buffer, the 2-character read consists of the original character (e.g., an `'A'`) *and* a NUL character (displayed as a space on the screen). 
+A NUL character may have been sent by the `kgetc` function after handling the key release interrupt.
+
+**Resolution**  
+
+* Filter out all the NUL character in the keyboard handler while loop.

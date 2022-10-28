@@ -27,6 +27,20 @@
 /* Number of entries in a page directory or a page table. */
 #define NUM_ENT     1024
 
+/* number of system call for system call table */
+#define SYS_NUM 20
+
+/* stipulated in document, the maximum number of file descriptor array entries is 8 */
+#define FD_ARRAY_MAX 8
+/* stipulated in document, the maximum number of PCB entries is 8*/
+#define PCB_MAX 8
+
+/* size of one PCB block is 8 KB */
+#define PCB_SIZE (8<<10)
+
+/* base address of bottom PCB */
+#define PCB_BASE (8<<20)
+
 #ifndef ASM
 
 /* This structure is used to load descriptor base registers
@@ -116,10 +130,11 @@ typedef struct __attribute__((packed)) tss_t {
     uint16_t io_base_addr;
 } tss_t;
 
+
 /* Some external descriptors declared in .S files */
 extern x86_desc_t gdt_desc;
 
-extern uint32_t virt_rtc;
+extern uint32_t virt_rtc; /* public virtualized RTC counter */
 
 extern uint16_t ldt_desc;
 extern uint32_t ldt_size;
@@ -172,6 +187,75 @@ typedef union idt_desc_t {
         uint16_t offset_31_16;
     } __attribute__ ((packed));
 } idt_desc_t;
+
+
+
+struct file_descriptor_item;
+
+/**
+ * @brief Each file operations are driver-specific, it doesn't know the file descriptor index.
+ * It just fills related fields that are passed into it or are originally into it,
+ * and perform the task to (virtualized) devices.
+ * This is ioctl between kernel and module.
+ */
+typedef struct file_operation_table{
+    /* First arg : file descriptor table item, 
+    * you need to FILL IT, some items can be discarded 
+    * by filling garbage . 
+    * second arg : open file by filename
+    * third arg  : open file by index(inode)
+    * You can choose to support either or both.
+    * Return Val : Inode number (in RTC, return RTC index(which RTC(virtualized) 
+    * you are opening), In terminal, STDIN or STDOUT.) -1 on failure
+    */
+    int32_t (*open)(struct file_descriptor_item*, const uint8_t*,int32_t);
+
+    /* First arg  : file descriptor info : inode number (In RTC, RTC index. In termminal, garbage)
+    *  Second arg : buffer <- your read result (In RTC, garbage. )
+    *  Third arg  : n bytes to read (In RTC, how many rounds it wants you to wait)
+    *  Return Val : Number of bytes you read (wait for RTC) -1 on failure
+    */
+    int32_t (*read)(struct file_descriptor_item*,void*,int32_t);
+    
+    /* First arg  : file descriptor info : inode number (In RTC, which RTC do you want to read. In termminal, garbage)
+     * Second arg : buffer <- your write source (In RTC, garbage. )
+     * Third arg  : n bytes to read (In RTC, freqency you want to set)
+     * Return Val : n bytes you wrote -1 on failure
+     */
+    int32_t (*write)(struct file_descriptor_item*,const void*,int32_t);
+
+    /* First arg  : file descriptor table item, you need to CLEAN IT, some items can be discarded 
+    *  by not cleaning it.
+    */
+    int32_t (*close)(struct file_descriptor_item*);
+} fops_t;
+
+
+/* Entries in file descriptor array */
+/* located in PCB Block */
+typedef struct file_descriptor_item{
+    fops_t file_operation_jump_table; /* 16 B */
+    uint32_t inode; /* 4 B */
+    uint32_t file_position; /* 4 B */
+    uint32_t flags; /* 4 B */
+} fd_t;
+
+typedef struct PCB{
+    uint32_t pid;
+    uint32_t eip;
+    uint32_t esp;
+    uint8_t pname[33]; 
+    uint32_t fdnum; /* number of file descriptor */
+    /* Below is file descriptor array (open file table) */
+    fd_t fd_entry[FD_ARRAY_MAX];
+
+    /* after PCB, we have kernel stack for each process */
+} pcb_t;
+
+
+extern uint32_t syscall_table[SYS_NUM]; 
+
+extern uint32_t PCB_ptr; /* PCB pointer pointing at the top-most PCB */
 
 /* The IDT itself (declared in x86_desc.S */
 extern idt_desc_t idt[NUM_VEC];

@@ -1,3 +1,13 @@
+/**
+ * @file filesystem.c
+ * @author haor2
+ * @brief File system supporting file open,read write, close, load program
+ * @version 0.1
+ * @date 2022-10-26
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "filesystem.h"
 #include "multiboot.h"
 #include "lib.h"
@@ -6,7 +16,8 @@ static int32_t close_fs();
 
 fs_t readonly_fs = {
     .open_fs = open_fs,
-    .close_fs = close_fs};
+    .close_fs = close_fs
+};
 
 static int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
@@ -21,6 +32,7 @@ static int32_t file_write(fd_t *fd, const void *buf, int32_t nbytes);
 static int32_t directory_write(fd_t *fd, const void *buf, int32_t nbytes);
 static int32_t file_close(fd_t *fd);
 static int32_t directory_close(fd_t *fd);
+static int32_t load_prog(const uint8_t* prog_name,uint32_t addr,uint32_t nbytes);
 
 /**
  * @brief read 4 Bytes from memory
@@ -65,6 +77,9 @@ open_fs(uint32_t addr)
 {
     module_t *_addr = (module_t *)addr;
     // load all functions into struct
+
+    /* extended functionality : program loader */
+    readonly_fs.load_prog = load_prog;
 
     /* install lower-level r/w control to file system */
     readonly_fs.f_rw.write = fake_write;
@@ -371,6 +386,7 @@ read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length)
 {
     uint32_t data_block_num, buf_ptr = 0, read_length, ret;
     uint32_t inode_addr, file_length, data_block_offset, data_block_entry_addr;
+    uint32_t max_read_length;
     if (buf == NULL)
         return -1;
     if (fs_sanity_check(inode, readonly_fs.sys_st_addr))
@@ -385,8 +401,10 @@ read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length)
 
     /* extract file length */
     file_length = read_4B(inode_addr);
-    if (offset >= file_length)
-        return -1; /* invalid index for reading */
+    if (offset >= file_length){
+        return 0; /* invalid index for reading */
+    }
+    max_read_length=file_length-offset;
 
     /* calculate in-block offset*/
     data_block_offset = offset / readonly_fs.block_size;
@@ -400,7 +418,7 @@ read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length)
         return -1;
 
     /* !This always assume length in inode is accurate! */
-    length = file_length > length ? length : file_length; /* Actual reading length : length = min(length, file_length) */
+    length = (max_read_length) > length ? length : (max_read_length); /* Actual reading length */
     ret = length;                                         /* set return value to this length */
     while (length > 0)
     {
@@ -526,3 +544,47 @@ read_dentry_by_name(const uint8_t *fname, dentry_t *dentry)
     }
     return -1;
 }
+
+
+/**
+ * @brief Load the image. Read the WHOLE executable.
+ * Illegal condition are:
+ *      Exectuable size exceeds 4MB
+ *      Illegal operands for memory read
+ *      Read Failure
+ * 
+ * Internal implementation note: 
+ *      Copy 4KB at a time, because this is how inside copy works, 
+ *      so no overhead will be generated in this way.
+ * @param prog_name - program name to read
+ * @param addr  - virtual memory address you want to copy to
+ * @param nbytes - number of bytes you want to copy to
+ * @return ** int32_t - number of bytes you load
+ * -1 on failure
+ */
+static int32_t 
+load_prog(const uint8_t* prog_name,uint32_t addr,uint32_t nbytes){
+    uint32_t read_block_size=(4<<10); /* each time, try 4KB blocks, no time overhead */
+    dentry_t dentry;
+    if(read_dentry_by_name(prog_name,&dentry)==-1){
+        return -1;
+    }
+    int32_t ret=0,offset=0,bytes_read;
+    /* read the whole executable */
+    while(1){
+        bytes_read=readonly_fs.f_rw.read_data(dentry.inode_num,offset,(uint8_t*)addr,read_block_size);
+        if(bytes_read==-1) return -1;
+        if(bytes_read==0) return bytes_read;
+        /* read next data block */
+        addr+=bytes_read;
+        ret+=bytes_read;
+        offset+=bytes_read;
+        nbytes-=bytes_read;
+        if(nbytes<0){
+            printf("executable too large\n");
+            return -1;
+        }
+    }
+    return ret;
+}
+

@@ -53,3 +53,24 @@ vm_init(void)
     );
 }
 
+
+/**
+ * @brief Open paging for program image
+ * @param addr - physical address where you want to map from 128MB (0x08000000) to
+ * @return ** int32_t - -1 on illegal memory (besides 8 MB and 12MB)
+ * 0 on open page success 
+ */
+int32_t
+open_page(uint32_t addr){
+    if(addr!=(8<<20)&&addr!=(12<<20)){
+        return -1;
+    }
+    pgdir[PDX(VPROG_START_ADDR)]=addr|PAGE_P|PAGE_RW|PAGE_PS|PAGE_U; /* remap address starting from 128MB */
+    // check open paging 
+    // printf("open page : dir=%d, to address %x\n",PDX(VPROG_START_ADDR),addr);
+    // printf("%d\n",*(uint32_t*)(VPROG_START_ADDR-1));
+    // printf("%d\n",*(uint32_t*)(VPROG_START_ADDR+1));
+    lcr3((uint32_t)pgdir); /* flush TLB */
+    return 0;
+}
+

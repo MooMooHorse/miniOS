@@ -50,6 +50,8 @@
 #define PGROUNDUP(x)        (((x) + PGSIZE - 1) & ~(PGSIZE - 1))
 #define PGROUNDDOWN(x)      ((x) & ~(PGSIZE - 1))
 
+#define VPROG_START_ADDR    0x08048000
+
 typedef uint32_t pte_t;
 typedef uint32_t pde_t;
 typedef uint32_t* pgdir_t;      // 1024 PDEs or a 4MB page.
@@ -57,6 +59,9 @@ typedef uint32_t* pgtbl_t;      // 1024 PTEs.
 
 /* Set up page dir and page table. Enable paging. */
 void vm_init(void);
+
+/* open a page for program starting at PHYSICAL memory address addr */
+extern int32_t open_page(uint32_t addr);
 
 
 #endif /* _MMU_H */

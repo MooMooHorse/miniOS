@@ -13,7 +13,9 @@
 .globl gdt_desc_ptr # used for lgdt parameter in boot.S (continue:)
 .globl pgdir, pgtbl
 .globl virt_rtc
-
+.globl syscall_table
+.globl kernel_stk_ptr
+.globl PCB_ptr
 .align 4
 
 
@@ -132,3 +134,15 @@ pgtbl_bottom:
 
 virt_rtc:
 .long 0
+
+
+
+syscall_table:
+_syscall_table:
+    .rept SYS_NUM
+    .long 0
+    .endr
+syscal_bottom:
+
+PCB_ptr:
+.long 0x800000 # 8MB - PCBnum*8KB

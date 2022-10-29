@@ -34,7 +34,7 @@ int32_t halt (uint8_t status){
  * @return ** int32_t 
  */
 int32_t execute (const uint8_t* command){
-    uint32_t pid=(PCB_ptr-PCB_BASE)/PCB_SIZE;
+    uint32_t pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1;
     /* check if this file is a program (NULL check included) : TODO */
 
 

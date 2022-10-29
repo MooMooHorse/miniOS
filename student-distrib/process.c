@@ -24,10 +24,10 @@
  */
 int32_t 
 pcb_create(uint32_t pid){
-    if(pid<0||pid>=8){
+    if(pid<=0||pid>8){
         return -1;
     }
-    PCB_ptr=PCB_BASE-(pid+1)*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
+    PCB_ptr=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
     return 0;
 }
 

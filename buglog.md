@@ -18,6 +18,8 @@
 | :white_check_mark:                                   | `011`   |
 | :white_check_mark:                                   | `012`   |
 | :white_check_mark:                                   | `013`   |
+| Waiting for good fix                                 | `014`   |
+| :white_check_mark:                                   | `015`   |
 
 ### Bug `#000`
 **Description**  
@@ -171,3 +173,27 @@ Divide by zero in RTC
 **Resolution**  
 
 * Use int32_t as frequency type
+
+### Bug `#014`
+
+**Description**
+
+Why, everytime I switch from user program to kernel system call linkage, IF=0? I explicitly or eflags with 0x200 for IRET. But when it switches back to kernel with system call, IF is somehow cleared, can anyone explain this?
+
+- I even have tss.eflags|=0x200 everytime I execute program.
+- I have eflags with eflgas|=0x200 as parameter for IRET
+- I checked, in user level program, at the start of main, I have IF set correctly.
+
+**Resolution**  
+
+My brute force fix, is to `sti` when enter system call, and recover flags when out, but I don’t think this is a good fix.
+
+### Bug `#015`
+
+**Description**
+
+PID index out of bound
+
+**Resolution**  
+
+Base address of PID is larger than PID top.

@@ -22,7 +22,6 @@ syscall_entry:
     pushal
     pushfl
     sti
-    ; cli
     pushl %edx # 3rd argument
     pushl %ecx # 2nd argument
     pushl %ebx # 1st argument

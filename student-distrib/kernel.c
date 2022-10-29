@@ -153,7 +153,7 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
-    rtc_init();
+    // rtc_init();
     keyboard_init();
     
     /* Enable interrupts */

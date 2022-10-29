@@ -140,7 +140,7 @@ setup_tss(){
     /* only need to set up esp0 */
     /* NEVER let this overflow outside the kernel page*/
     tss.esp0=PCB_ptr+PCB_SIZE-0x04; /* you can see it as esp=stack_size-0x04 for each process */
-    // tss.eflags|=0x200;
+    tss.eflags|=0x200;
     /* e.g. if you push an element into KERNEL stack, esp-=pushed_size_in_bytes to allocate space */
     /* now it's empty with some garbage because of alignment and the danger mentioned before */
 }

@@ -103,12 +103,12 @@ switch_user(){
     /* Our user_DS is 0x2B instead of 0x23 */
     /* besides that, we need to explicitly enable interrupt by setting 9-th bit on eflgas */
     /* http://www.c-jump.com/CIS77/ASM/Instructions/I77_0070_eflags_bits.htm */
+        // mov     %%ax, %%es     \n
+        // mov     %%ax, %%fs     \n
+        // mov     %%ax, %%gs     \n
     asm volatile ("            \n\
         andl    $0x00ff, %%eax \n\
         movw    %%ax, %%ds     \n\
-        mov     %%ax, %%es     \n\
-        mov     %%ax, %%fs     \n\
-        mov     %%ax, %%gs     \n\
                                  \
         pushl   %%eax          \n\
         pushl   %%edx          \n\
@@ -140,6 +140,7 @@ setup_tss(){
     /* only need to set up esp0 */
     /* NEVER let this overflow outside the kernel page*/
     tss.esp0=PCB_ptr+PCB_SIZE-0x04; /* you can see it as esp=stack_size-0x04 for each process */
+    // tss.eflags|=0x200;
     /* e.g. if you push an element into KERNEL stack, esp-=pushed_size_in_bytes to allocate space */
     /* now it's empty with some garbage because of alignment and the danger mentioned before */
 }

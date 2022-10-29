@@ -21,6 +21,7 @@ _orig_eax:
 syscall_entry:
     pushal
     pushfl
+    sti
     ; cli
     pushl %edx # 3rd argument
     pushl %ecx # 2nd argument

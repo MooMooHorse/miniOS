@@ -25,13 +25,7 @@ syscall_entry:
     pushl %edx # 3rd argument
     pushl %ecx # 2nd argument
     pushl %ebx # 1st argument
-    # TO DO : try to see why syscall_table(0,%eax,4) will give compilation error 
-    leal  syscall_table,%ebx
-    movl  %eax,%ecx
-    addl  %ecx,%ecx
-    addl  %ecx,%ecx
-    addl  %ecx,%ebx
-    call  *(%ebx)
+    call  *syscall_table(,%eax,4)
     movl  %eax,_orig_eax
     addl $12, %esp # pop 4 arguments  
     popfl

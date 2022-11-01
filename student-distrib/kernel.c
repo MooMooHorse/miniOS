@@ -175,8 +175,10 @@ void entry(unsigned long magic, unsigned long addr) {
 
     // printf("Lord have mercy, I'm about to clear the screen!\n");
     // clear_screen();
-
-    execute((uint8_t*)"shell");
+    // while(1){   
+    //     execute((uint8_t*)"shell");
+    // }
+    execute("hello");
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

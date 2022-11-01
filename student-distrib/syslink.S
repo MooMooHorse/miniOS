@@ -19,9 +19,11 @@ _orig_eax:
 
 
 syscall_entry:
+    # TO Do : check eax in correct range (1~10)
+
     pushal
     pushfl
-    sti
+#   sti        # might have problems on context switch : better sti() in do_system_call function 
     pushl %edx # 3rd argument
     pushl %ecx # 2nd argument
     pushl %ebx # 1st argument

@@ -23,9 +23,16 @@
  * @return ** int32_t 
  */
 int32_t halt (uint8_t status){
-    printf("start halting, but I haven't finished it yet\n");
-    while(1);
-    return 0;
+    printf("start halting : trail\n");
+    uint32_t pid=get_ppid();
+    if(-1==discard_proc(pid,status)){
+        printf("discard process error\n");
+        return -1; /* errono to be defined */
+    }
+
+
+    /* errono to be defined */
+    return -1; /* If you reach here, you fail halt */ 
 }
 /** TODO sanity check 
  * @brief currently only support command without parameters
@@ -34,17 +41,27 @@ int32_t halt (uint8_t status){
  * @return ** int32_t 
  */
 int32_t execute (const uint8_t* command){
-    uint32_t pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1;
+    uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    strcpy((int8_t*)_command,(int8_t*)command);
+
+    uint32_t pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; /* new pid */
+    
+    uint32_t ppid;
+
+    int32_t ret;
     /* check if this file is a program (NULL check included) : TODO */
 
+    ppid=get_ppid();
 
     /* program is under PCB base */
-    open_page(pid*PROG_SIZE+PCB_BASE); /* assume never fail, TLB flushed */
+    open_page((pid-1)*PROG_SIZE+PCB_BASE); /* assume never fail, TLB flushed */
+
     /* program loader */
-    if(readonly_fs.load_prog(command,VPROG_START_ADDR,PROG_SIZE)==-1){
+    if(readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE)==-1){
         printf("illegal command\n");
         return -1; /* errono to be defined */
     }
+
 
     /* check if executable has magic number starting from VPROG_START_ADDR : TO DO*/
     
@@ -53,21 +70,26 @@ int32_t execute (const uint8_t* command){
         printf("illegal pid\n");
         return -1; /* errono to be defined */
     }
+
+
     /* open PCB */
-    if(pcb_open(pid,command)==-1){
+    if(pcb_open(ppid,pid,_command)==-1){
         printf("not enough space for PCB\n");
         return -1; /* errono to be defined */
     }
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss();
+    // printf("PCB_ptr=%x tss.esp0=%x\n",PCB_ptr, tss.esp0);
     /* iret */
-    switch_user();
-
-    return 0;
+    ret=switch_user();
+    // printf("%d\n",ret);
+    /* TO DO parse the halt return value */
+    return ret;
 
 }
 int32_t read (uint32_t fd, void* buf, uint32_t nbytes){
     fd_t* fd_entry;
+    sti();
     if((fd_entry=get_fd_entry(fd))==NULL){
         printf("invalid file descriptor\n");
         return -1; /* errono to be defined */
@@ -76,6 +98,7 @@ int32_t read (uint32_t fd, void* buf, uint32_t nbytes){
 }
 int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
     fd_t* fd_entry;
+    sti();
     if((fd_entry=get_fd_entry(fd))==NULL){
         printf("invalid file descriptor\n");
         return -1; /* errono to be defined */

@@ -32,14 +32,7 @@
 
 /* stipulated in document, the maximum number of file descriptor array entries is 8 */
 #define FD_ARRAY_MAX 8
-/* stipulated in document, the maximum number of PCB entries is 8*/
-#define PCB_MAX 8
 
-/* size of one PCB block is 8 KB */
-#define PCB_SIZE (8<<10)
-
-/* base address of bottom PCB */
-#define PCB_BASE (8<<20)
 
 #ifndef ASM
 
@@ -240,17 +233,7 @@ typedef struct file_descriptor_item{
     uint32_t flags; /* 4 B */
 } fd_t;
 
-typedef struct PCB{
-    uint32_t pid;
-    uint32_t eip;
-    uint32_t esp;
-    uint8_t pname[33]; 
-    uint32_t fdnum; /* number of file descriptor */
-    /* Below is file descriptor array (open file table) */
-    fd_t fd_entry[FD_ARRAY_MAX];
 
-    /* after PCB, we have kernel stack for each process */
-} pcb_t;
 
 
 extern uint32_t syscall_table[SYS_NUM]; 

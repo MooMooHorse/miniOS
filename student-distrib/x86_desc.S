@@ -2,7 +2,7 @@
 
 #define ASM     1
 #include "x86_desc.h"
-
+#include "process.h"
 .text
 
 .globl ldt_size, tss_size
@@ -145,4 +145,4 @@ _syscall_table:
 syscal_bottom:
 
 PCB_ptr:
-.long 0x800000 # 8MB - PCBnum*8KB
+.long PCB_BASE # 8MB - PCBnum*8KB

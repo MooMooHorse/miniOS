@@ -86,7 +86,6 @@ int32_t execute (const uint8_t* command){
     }
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
-    // printf("PCB_ptr=%x tss.esp0=%x\n",PCB_ptr, tss.esp0);
     /* iret */
     ret=switch_user(pid);
     if(ret==0){
@@ -95,8 +94,6 @@ int32_t execute (const uint8_t* command){
     else{
         printf("Your last program exits with return value %d\n",ret);
     }
-    // printf("%d\n",ret);
-    /* TO DO parse the halt return value */
     return ret;
 
 }

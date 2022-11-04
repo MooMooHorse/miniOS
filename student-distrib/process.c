@@ -51,7 +51,7 @@ init_fd_entry(pcb_t* _pcb_ptr, int32_t i){
     }
     /* for terminal those arguments are gargbage */
     _pcb_ptr->fd_entry[i].file_position=0;
-    _pcb_ptr->fd_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL;
+    _pcb_ptr->fd_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL|F_OPEN;
     _pcb_ptr->fd_entry[i].inode=-1; /* won't be used */
     _pcb_ptr->fd_entry[i].file_operation_jump_table.read=terminal.ioctl.read;
     _pcb_ptr->fd_entry[i].file_operation_jump_table.write=terminal.ioctl.write;

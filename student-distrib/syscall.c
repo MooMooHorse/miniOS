@@ -14,6 +14,7 @@
 #include "syscall.h"
 #include "process.h"
 #include "filesystem.h"
+#include "rtc.h"
 #include "mmu.h"
 
 /**
@@ -118,10 +119,46 @@ int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
 }
 
 int32_t open (const uint8_t* filename){
-    return 0;
+    /* terminal is opened in exec, not in this system call */
+    fd_t* fd_entry;
+    uint32_t pid=get_pid(),i,fdnum;
+    uint8_t if_fd_empty=0;
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* search for all file descriptors, trying to find one that is not occupied */
+    for(i=0;i<_pcb_ptr->fdnum;i++){
+        if(!(_pcb_ptr->fd_entry[i].flags&F_OPEN)){
+            if((fd_entry=get_fd_entry(fdnum=i))==NULL){
+                printf("invalid file descriptor\n");
+                return -1; /* errono to be defined */
+            }
+            if_fd_empty=1;
+            break;
+        }
+    }
+    if(!if_fd_empty){
+        fdnum=_pcb_ptr->fdnum++;
+        if((fd_entry=get_fd_entry(fdnum))==NULL){
+            printf("invalid file descriptor\n");
+            return -1; /* errono to be defined */
+        }
+    }
+    if(strncmp((int8_t*)"RTC",(int8_t*)filename,4)==0){
+        if(rtc[0].ioctl.open(fd_entry,filename,2)==-1){
+            return -1;
+        }
+    }
+    else{
+        printf("normal\n");
+        if(readonly_fs.openr(fd_entry,filename,0)==-1){
+            return -1;
+        }
+    }
+    return fdnum;
 }
 int32_t close (uint32_t fd){
-    return 0;
+    fd_t* fd_entry;
+    fd_entry=get_fd_entry(fd);
+    return fd_entry->file_operation_jump_table.close(fd_entry);
 }
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
     return 0;

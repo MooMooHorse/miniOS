@@ -8,6 +8,8 @@
 #define DESCRIPTOR_ENTRY_DIR      1 
 #define DESCRIPTOR_ENTRY_FILE     2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
+#define F_OPEN                    (1<<2)
+#define F_CLOSE                   0
 
 
 /* directory entry, 64 Bytes*/

@@ -124,7 +124,7 @@ rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes) {
     fd->file_operation_jump_table = rtc[nbytes].ioctl;
     fd->inode = nbytes;
     fd->file_position = 0;
-    fd->flags = DESCRIPTOR_ENTRY_RTC;
+    fd->flags = DESCRIPTOR_ENTRY_RTC|F_OPEN;
 
     rtc[fd->inode].freq = 2; // Default frequency is 2 Hz.
 
@@ -222,6 +222,9 @@ rtc_close(fd_t* fd) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
+    fd->inode = -1;
+    fd->file_position = 0;
+    fd->flags = F_CLOSE;
     return 0;
 }
 

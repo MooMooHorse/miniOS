@@ -159,7 +159,7 @@ file_open(fd_t *ret, const uint8_t *fname, int32_t findex)
     ret->file_operation_jump_table.write = readonly_fs.f_ioctl.write;
 
     ret->file_position = 0;
-    ret->flags = DESCRIPTOR_ENTRY_FILE;
+    ret->flags = DESCRIPTOR_ENTRY_FILE|F_OPEN;
     ret->inode = dentry.inode_num;
     return 0;
 }
@@ -187,7 +187,7 @@ direcotry_open(fd_t *ret, const uint8_t *fname, int32_t findex)
     ret->file_operation_jump_table.read = readonly_fs.d_ioctl.read;
     ret->file_operation_jump_table.write = readonly_fs.d_ioctl.write;
     ret->file_position = 0;
-    ret->flags = DESCRIPTOR_ENTRY_DIR;
+    ret->flags = DESCRIPTOR_ENTRY_DIR|F_OPEN;
     ret->inode = dentry.inode_num;
     return 0;
 }
@@ -285,7 +285,8 @@ file_close(fd_t *fd)
     if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
         return -1;
     fd->inode = -1;
-    fd->file_position = fd->flags = 0;
+    fd->file_position = 0;
+    fd->flags = F_CLOSE;
     return 0;
 }
 /**
@@ -301,7 +302,8 @@ directory_close(fd_t *fd)
     if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
         return -1;
     fd->inode = -1;
-    fd->file_position = fd->flags = 0;
+    fd->file_position = 0;
+    fd->flags = F_CLOSE;
     return 0;
 }
 

@@ -66,10 +66,6 @@ open_page(uint32_t addr){
         return -1;
     }
     pgdir[PDX(VPROG_START_ADDR)]=addr|PAGE_P|PAGE_RW|PAGE_PS|PAGE_U; /* remap address starting from 128MB */
-    // check open paging 
-    // printf("open page : dir=%d, to address %x\n",PDX(VPROG_START_ADDR),addr);
-    // printf("%d\n",*(uint32_t*)(VPROG_START_ADDR-1));
-    // printf("%d\n",*(uint32_t*)(VPROG_START_ADDR+1));
     lcr3((uint32_t)pgdir); /* flush TLB */
     return 0;
 }

@@ -82,6 +82,12 @@ int32_t execute (const uint8_t* command){
     // printf("PCB_ptr=%x tss.esp0=%x\n",PCB_ptr, tss.esp0);
     /* iret */
     ret=switch_user();
+    if(ret==0){
+        printf("Your last program exits normally with return value 0\n");
+    }
+    else{
+        printf("Your last program exits with return value %d\n",ret);
+    }
     // printf("%d\n",ret);
     /* TO DO parse the halt return value */
     return ret;

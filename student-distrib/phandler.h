@@ -31,6 +31,7 @@ typedef struct old_regs {
     uint32_t oedx;
     uint32_t oecx;
     uint32_t oeax;
+    uint32_t oflags;
     // uint32_t ods,oes,ofs;
     uint32_t orig_eax;
 } old_regs_t;

@@ -178,7 +178,7 @@ void entry(unsigned long magic, unsigned long addr) {
     // while(1){   
     //     execute((uint8_t*)"shell");
     // }
-    execute("hello");
+    execute((uint8_t*)"hello");
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

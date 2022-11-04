@@ -237,9 +237,13 @@ discard_proc(uint32_t pid,uint32_t status){
     pcb_t* _pcb_ptr;
     uint32_t ppid;
     uint32_t cur_esp,cur_ebp;
-    if(pid<=0||pid>8){
+    if(pid<0||pid>8){
         printf("illegal pid\n");
         return -1;
+    }else if(pid==0){
+        PCB_ptr=PCB_BASE; /* discard all process */
+        printf("shell respawn\n");
+        execute("shell");
     }
     _pcb_ptr=(pcb_t*)PCB_ptr; /* old pcb */
     _pcb_ptr->active=0; /* turn off old pcb */

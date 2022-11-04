@@ -59,8 +59,8 @@ do_exception(old_regs_t *oldregs) {
         printf("invalid pointer old_regs\n");
         return -1;
     }
-    /* negate this value : reason explained in exception.S : label divide_zero_exception */
-    uint32_t exception_index = (~oldregs->orig_eax);
+    /* label divide_zero_exception */
+    uint32_t exception_index = (oldregs->orig_eax);
     if (exception_index < 0 || exception_index > 20) {
         printf("wrong exception index: %d, you will double fault!\n", exception_index);
         return exception_index;

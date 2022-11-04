@@ -774,6 +774,20 @@ int32_t rtc_sanity_check() {
 
 
 /* Checkpoint 3 tests */
+
+/**
+ * @brief Try to have a divide by zero exception
+ * @param none
+ * Input : none
+ * Output : If shell activates normally, then squashing program for exception suceed, otherwise
+ * it failed. 
+ * @return ** not important 
+ */
+int32_t 
+exception_squash_program_test(){
+    volatile int x = 0;
+    return 1 / x;
+}
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -818,6 +832,8 @@ void launch_tests(){
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());
     // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
+    
+    TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
 
 }
 

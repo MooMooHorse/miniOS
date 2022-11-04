@@ -24,7 +24,7 @@
  */
 int32_t halt (uint8_t status){
     printf("start halting : trail\n");
-    uint32_t pid=get_ppid();
+    uint32_t pid=get_pid();
     if(-1==discard_proc(pid,status)){
         printf("discard process error\n");
         return -1; /* errono to be defined */
@@ -42,16 +42,24 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    uint32_t pid,ppid,i;
+    int32_t ret;
     strcpy((int8_t*)_command,(int8_t*)command);
 
-    uint32_t pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; /* new pid */
+    /* Attemp to find new pid, if none of in-stack pcb is availabe, allocate space for it */
+    pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; 
+    for(i=pid-1;i>=1;i--){
+        pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
+        if(0==_pcb_ptr->active){
+            pid=i;
+            break;
+        }
+    }
     
-    uint32_t ppid;
 
-    int32_t ret;
     /* check if this file is a program (NULL check included) : TODO */
 
-    ppid=get_ppid();
+    ppid=get_pid();
 
     /* program is under PCB base */
     open_page((pid-1)*PROG_SIZE+PCB_BASE); /* assume never fail, TLB flushed */
@@ -61,7 +69,6 @@ int32_t execute (const uint8_t* command){
         printf("illegal command\n");
         return -1; /* errono to be defined */
     }
-
 
     /* check if executable has magic number starting from VPROG_START_ADDR : TO DO*/
     
@@ -78,10 +85,10 @@ int32_t execute (const uint8_t* command){
         return -1; /* errono to be defined */
     }
     /* set up TSS, only esp0 is needed to be modified */
-    setup_tss();
+    setup_tss(pid);
     // printf("PCB_ptr=%x tss.esp0=%x\n",PCB_ptr, tss.esp0);
     /* iret */
-    ret=switch_user();
+    ret=switch_user(pid);
     if(ret==0){
         printf("Your last program exits normally with return value 0\n");
     }

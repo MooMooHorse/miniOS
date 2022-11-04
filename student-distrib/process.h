@@ -46,10 +46,10 @@ typedef struct PCB{
 
 extern int32_t pcb_create(uint32_t pid);
 extern int32_t pcb_open(uint32_t ppid, uint32_t pid,const uint8_t* prog_name);
-extern int32_t switch_user();
-extern void setup_tss();
+extern int32_t switch_user(uint32_t pid);
+extern void setup_tss(uint32_t pid);
 extern fd_t* get_fd_entry(uint32_t fd);
-extern uint32_t get_ppid();
+extern uint32_t get_pid();
 extern int32_t discard_proc(uint32_t pid,uint32_t status);
 
 #endif

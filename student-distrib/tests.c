@@ -833,7 +833,7 @@ void launch_tests(){
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());
     // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
     
-    TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
+    // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
 
 }
 

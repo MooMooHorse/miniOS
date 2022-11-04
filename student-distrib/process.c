@@ -29,7 +29,9 @@ pcb_create(uint32_t pid){
     if(pid<=0||pid>8){
         return -1;
     }
-    PCB_ptr=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
+    if(PCB_BASE-pid*PCB_SIZE<PCB_ptr)
+        PCB_ptr=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
+    // printf("%x\n",PCB_ptr);
     return 0;
 }
 
@@ -60,11 +62,11 @@ init_fd_entry(pcb_t* _pcb_ptr, int32_t i){
 
 
 /**
- * @brief From esp for current kernel stack, we can know who calls the execute program
- * 
+ * @brief From esp for current kernel stack, get current pid
  * @return ** uint32_t ppid index ; -1 on failure
  */
-uint32_t get_ppid(){
+uint32_t 
+get_pid(){
     uint32_t cur_esp;
     if(PCB_ptr==PCB_BASE){
         return 0; /* kernel spawn shell, kernel with "pid" 0*/
@@ -77,11 +79,7 @@ uint32_t get_ppid(){
     :
     :"memory"
     );
-    if(((cur_esp&(0xf000))>>12)>=16){
-        printf("wrong current esp\n");
-        return -1;
-    }
-    return (16-((cur_esp&(0xf000))>>12));
+    return ((0xff-((cur_esp&(0xff000))>>12))>>1)+1;
 }
 
 /**
@@ -94,7 +92,7 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     if(prog_name==NULL){
         return -1;
     }
-    pcb_t* _pcb_ptr=(pcb_t*)PCB_ptr; /* cast pointer to dereference memory */
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* cast pointer to dereference memory */
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->active=1;
@@ -122,7 +120,7 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     return 0;
 }
 
-/** Halt to do
+/**
  * @brief switch to user mode 
  * Called in exec (and halt possibly)
  * Input : none
@@ -130,8 +128,8 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
  * @return ** status  
  */
 int32_t
-switch_user(){
-    pcb_t* _pcb_ptr=(pcb_t*)PCB_ptr;
+switch_user(uint32_t pid){
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     // printf("%d\n",*(uint32_t*)(_pcb_ptr->eip+10));
     /* EIP, CS, EFLAGS, ESP, SS */
     /* http://jamesmolloy.co.uk/tutorial_html/10.-User%20Mode.html */
@@ -191,11 +189,11 @@ switch_user(){
  * @return ** void 
  */
 void
-setup_tss(){
+setup_tss(uint32_t pid){
     /* ss is set for us */
     /* only need to set up esp0 */
     /* NEVER let this overflow outside the kernel page*/
-    tss.esp0=PCB_ptr+PCB_SIZE-0x04; /* you can see it as esp=stack_size-0x04 for each process */
+    tss.esp0=PCB_BASE-(pid-1)*PCB_SIZE-0x4; /* you can see it as esp=stack_size-0x04 for each process */
     /* e.g. if you push an element into KERNEL stack, esp-=pushed_size_in_bytes to allocate space */
     /* now it's empty with some garbage because of alignment and the danger mentioned before */
 }
@@ -219,9 +217,11 @@ recover_tss(pcb_t* _pcb_ptr){
  */
 fd_t* 
 get_fd_entry(uint32_t fd){
-    pcb_t* _pcb_ptr=(pcb_t*)PCB_ptr;
+    pcb_t* _pcb_ptr;
+    uint32_t pid;
+    pid=get_pid();
+    _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if(fd<0||fd>=_pcb_ptr->fdnum) return NULL;
-    
     return &(_pcb_ptr->fd_entry[fd]);
 }
 
@@ -245,7 +245,7 @@ discard_proc(uint32_t pid,uint32_t status){
         printf("shell respawn\n");
         execute("shell");
     }
-    _pcb_ptr=(pcb_t*)PCB_ptr; /* old pcb */
+    _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
     _pcb_ptr->active=0; /* turn off old pcb */
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
     cur_esp=_pcb_ptr->kesp;
@@ -263,9 +263,9 @@ discard_proc(uint32_t pid,uint32_t status){
         execute("shell");
     }
     else{
-        /* TO DO : Print status message here */
-        
-        PCB_ptr+=PCB_SIZE; /* discard current process */
+        if((PCB_BASE-pid*PCB_SIZE)==PCB_ptr)
+            PCB_ptr+=PCB_SIZE; /* discard current process */
+
         _pcb_ptr=(pcb_t*)(PCB_BASE-ppid*PCB_SIZE); /* recover pid */
         recover_tss(_pcb_ptr); /* recover tss */
         open_page(PCB_BASE+(_pcb_ptr->pid-1)*PROG_SIZE); /* re-open last program */

@@ -139,7 +139,7 @@ virt_rtc:
 
 syscall_table:
 _syscall_table:
-    .rept SYS_NUM
+    .rept SYSTABLE_NUM
     .long 0
     .endr
 syscal_bottom:

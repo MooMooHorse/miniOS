@@ -28,7 +28,7 @@
 #define NUM_ENT     1024
 
 /* number of system call for system call table */
-#define SYS_NUM 20
+#define SYSTABLE_NUM 20
 
 /* stipulated in document, the maximum number of file struct array entries is 8 */
 #define FILE_ARRAY_MAX 8
@@ -236,7 +236,7 @@ typedef struct file{
 
 
 
-extern uint32_t syscall_table[SYS_NUM];
+extern uint32_t syscall_table[SYSTABLE_NUM];
 
 extern uint32_t PCB_ptr; /* PCB pointer pointing at the top-most PCB */
 

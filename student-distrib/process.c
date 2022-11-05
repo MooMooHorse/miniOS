@@ -15,6 +15,7 @@
 #include "lib.h"
 #include "syscall.h"
 #include "mmu.h"
+#include "err.h"
 /**
  * @brief Create PID by modifying PCB_ptr
  * 
@@ -229,17 +230,18 @@ get_file_entry(uint32_t fd){
  * @brief Discard the current process given pid and return status
  * 
  * @param pid - current process index 
- * @param status - return status 
- * @return ** int32_t - return status
+ * @param status - return status defined in err.h
+ * @return ** int32_t - return status defined in err.h
  */
 int32_t 
 discard_proc(uint32_t pid,uint32_t status){
     pcb_t* _pcb_ptr;
     uint32_t ppid;
     uint32_t cur_esp,cur_ebp;
+    status=handle_error(status);
     if(pid<0||pid>8){
-        printf("illegal pid\n");
-        return -1;
+        printf("halt-failed : illegal pid\n");
+        while(1);
     }else if(pid==0){
         PCB_ptr=PCB_BASE; /* discard all process */
         printf("shell respawn\n");
@@ -259,7 +261,6 @@ discard_proc(uint32_t pid,uint32_t status){
         /* tss and paging isn't necessary here, for execute will help us set them up */
         /* interrupt isn't turned on during this process (process here doesn't mean task) */
         printf("shell respawn\n");
-        /* TODO : think about return value here */
         /* enforce shell to boot here, because execute restart the stack, regardless of */
         /* what you leave on stack right now, you don't need recover stack frame now */
         execute((uint8_t*)"shell");

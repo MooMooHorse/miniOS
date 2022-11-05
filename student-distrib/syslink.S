@@ -19,7 +19,10 @@ _orig_eax:
 
 
 syscall_entry:
-    # TO Do : check eax in correct range (1~10)
+    cmpl $1,%eax
+    jl   syscall_done
+    cmpl $SYSCALL_NUM,%eax
+    jg   syscall_done
 
     pushal
     pushfl
@@ -33,6 +36,7 @@ syscall_entry:
     popfl
     popal
     movl _orig_eax,%eax # make return value in eax
+syscall_done:
     iret
 
 

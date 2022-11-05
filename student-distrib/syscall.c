@@ -16,39 +16,44 @@
 #include "filesystem.h"
 #include "rtc.h"
 #include "mmu.h"
+#include "err.h"
+#include "tests.h"
 
 /**
- * @brief TODO
+ * @brief halt the program, return value is passed via eax to exec
  * 
- * @param status 
+ * @param status - return status
  * @return ** int32_t 
  */
 int32_t halt (uint8_t status){
     uint32_t pid=get_pid();
     if(-1==discard_proc(pid,status)){
-        printf("discard process error\n");
-        return -1; /* errono to be defined */
+        printf("halt failed : discard process error\n");
+        while(1);
     }
-
-
-    /* errono to be defined */
-    return -1; /* If you reach here, you fail halt */ 
+    printf("halt failed : unkown\n");
+    while(1);
+    
 }
-/** TODO sanity check 
+/** 
  * @brief currently only support command without parameters
  * 
  * @param command - executable file name 
- * @return ** int32_t 
+ * @return ** int32_t - errno 
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint32_t pid,ppid,i;
     int32_t ret;
     if(strlen((int8_t*) command)>=CMD_MAX_LEN){
-        printf("command too long\n");
-        return -1;
+        printf("command too long : ");
+        return ERR_NO_CMD;
     }
     strcpy((int8_t*)_command,(int8_t*)command);
+
+    if(readonly_fs.check_exec(_command)!=1){
+        return ERR_NO_CMD;
+    }
 
     /* Attemp to find new pid, if none of in-stack pcb is availabe, allocate space for it */
     pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; 
@@ -61,7 +66,6 @@ int32_t execute (const uint8_t* command){
     }
     
 
-    /* check if this file is a program (NULL check included) : TODO */
 
     ppid=get_pid();
 
@@ -70,30 +74,29 @@ int32_t execute (const uint8_t* command){
 
     /* program loader */
     if(readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE)==-1){
-        printf("illegal command\n");
-        return -1; /* errono to be defined */
+        return ERR_FS_READ; 
     }
-
-    /* check if executable has magic number starting from VPROG_START_ADDR : TO DO*/
     
     /* create PCB */
     if(pcb_create(pid)==-1){
         printf("illegal pid\n");
-        return -1; /* errono to be defined */
+        return ERR_BAD_PID; /* errono to be defined */
     }
 
 
     /* open PCB */
     if(pcb_open(ppid,pid,_command)==-1){
         printf("not enough space for PCB\n");
-        return -1; /* errono to be defined */
+        return ERR_BAD_PID; /* errono to be defined */
     }
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
     /* iret */
     ret=switch_user(pid);
     if(ret==0){
+    #ifdef RUN_TESTS
         printf("Your last program exits normally with return value 0\n");
+    #endif
     }
     else{
         printf("Your last program exits with return value %d\n",ret);

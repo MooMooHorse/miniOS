@@ -60,7 +60,7 @@ common_exception_handler:
 
 wrapup_common_exception:
     popl %eax 
-    pushl %eax # parameter to halt (status)
+    pushl $255 # parameter to halt (status=255)
     call halt 
 # You should never enter area below 
 exception_error_loop:

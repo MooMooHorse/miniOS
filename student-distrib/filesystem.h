@@ -63,6 +63,7 @@ filesystem {
     int32_t (* open_fs)(uint32_t addr); /* this installs ioctl to file system */
     int32_t (* close_fs)(void);
     int32_t (* load_prog)(const uint8_t*, uint32_t, uint32_t);
+    int32_t (* check_exec)(const uint8_t*);
     /* A series of shared variables you might want to make use of */
     uint32_t file_num;
     uint32_t r_times, w_times;

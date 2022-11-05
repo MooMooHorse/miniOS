@@ -109,9 +109,9 @@ rtc_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
     }
 
     // unsure if file struct initialization is correct
-    file->file_operation_jump_table = rtc[nbytes].ioctl;
+    file->fops = rtc[nbytes].ioctl;
     file->inode = nbytes;
-    file->file_position = 0;
+    file->pos = 0;
     file->flags = DESCRIPTOR_ENTRY_RTC | F_OPEN;
 
     rtc[file->inode].freq = 2; // Default frequency is 2 Hz.
@@ -210,12 +210,12 @@ rtc_close(file_t* file) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
-    file->file_operation_jump_table.close = NULL;
-    file->file_operation_jump_table.read = NULL;
-    file->file_operation_jump_table.write = NULL;
-    file->file_operation_jump_table.open = NULL;
+    file->fops.close = NULL;
+    file->fops.read = NULL;
+    file->fops.write = NULL;
+    file->fops.open = NULL;
     file->inode = -1;
-    file->file_position = 0;
+    file->pos = 0;
     file->flags = F_CLOSE;
     return 0;
 }

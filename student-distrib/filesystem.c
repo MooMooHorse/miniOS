@@ -150,12 +150,12 @@ file_open(file_t* ret, const uint8_t* fname, int32_t findex) {
     if (readonly_fs.f_rw.read_dentry_by_name(fname, &dentry) == -1) {
         return -1;
     }
-    ret->file_operation_jump_table.open = readonly_fs.f_ioctl.open;
-    ret->file_operation_jump_table.close = readonly_fs.f_ioctl.close;
-    ret->file_operation_jump_table.read = readonly_fs.f_ioctl.read;
-    ret->file_operation_jump_table.write = readonly_fs.f_ioctl.write;
+    ret->fops.open = readonly_fs.f_ioctl.open;
+    ret->fops.close = readonly_fs.f_ioctl.close;
+    ret->fops.read = readonly_fs.f_ioctl.read;
+    ret->fops.write = readonly_fs.f_ioctl.write;
 
-    ret->file_position = 0;
+    ret->pos = 0;
     ret->flags = DESCRIPTOR_ENTRY_FILE | F_OPEN;
     ret->inode = dentry.inode_num;
     return 0;
@@ -177,11 +177,11 @@ directory_open(file_t* ret, const uint8_t* fname, int32_t findex) {
         return -1;
     }
     readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
-    ret->file_operation_jump_table.open = readonly_fs.d_ioctl.open;
-    ret->file_operation_jump_table.close = readonly_fs.d_ioctl.close;
-    ret->file_operation_jump_table.read = readonly_fs.d_ioctl.read;
-    ret->file_operation_jump_table.write = readonly_fs.d_ioctl.write;
-    ret->file_position = 0;
+    ret->fops.open = readonly_fs.d_ioctl.open;
+    ret->fops.close = readonly_fs.d_ioctl.close;
+    ret->fops.read = readonly_fs.d_ioctl.read;
+    ret->fops.write = readonly_fs.d_ioctl.write;
+    ret->pos = 0;
     ret->flags = DESCRIPTOR_ENTRY_DIR | F_OPEN;
     ret->inode = dentry.inode_num;
     return 0;
@@ -203,10 +203,10 @@ file_read(file_t* file, void* buf, int32_t nbytes) {
         return -1;
     if (nbytes <= 0)
         return 0;
-    ret = readonly_fs.f_rw.read_data(file->inode, file->file_position, (uint8_t*) buf, nbytes);
+    ret = readonly_fs.f_rw.read_data(file->inode, file->pos, (uint8_t*) buf, nbytes);
     if (ret == -1)
         return -1;
-    file->file_position += ret; /* update file offset */
+    file->pos += ret; /* update file offset */
     return ret;
 }
 
@@ -228,10 +228,10 @@ directory_read(file_t* file, void* buf, int32_t nbytes) {
     if (nbytes <= 0)
         return 0;
     dentry_t dentry;
-    ret = readonly_fs.f_rw.read_dentry_by_index(file->file_position, &dentry);
+    ret = readonly_fs.f_rw.read_dentry_by_index(file->pos, &dentry);
     if (ret == -1)
         return -1;
-    file->file_position++; /* each time advance one file */
+    file->pos++; /* each time advance one file */
     if (nbytes > strlen((int8_t*) dentry.filename))
         nbytes = strlen((int8_t*) dentry.filename);
     for (i = 0; i < nbytes; i++)
@@ -274,12 +274,12 @@ file_close(file_t* file) {
         return -1;
     if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
-    file->file_operation_jump_table.close = NULL;
-    file->file_operation_jump_table.read = NULL;
-    file->file_operation_jump_table.write = NULL;
-    file->file_operation_jump_table.open = NULL;
+    file->fops.close = NULL;
+    file->fops.read = NULL;
+    file->fops.write = NULL;
+    file->fops.open = NULL;
     file->inode = -1;
-    file->file_position = 0;
+    file->pos = 0;
     file->flags = F_CLOSE;
     return 0;
 }
@@ -294,12 +294,12 @@ directory_close(file_t* file) {
         return -1;
     if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
-    file->file_operation_jump_table.close = NULL;
-    file->file_operation_jump_table.read = NULL;
-    file->file_operation_jump_table.write = NULL;
-    file->file_operation_jump_table.open = NULL;
+    file->fops.close = NULL;
+    file->fops.read = NULL;
+    file->fops.write = NULL;
+    file->fops.open = NULL;
     file->inode = -1;
-    file->file_position = 0;
+    file->pos = 0;
     file->flags = F_CLOSE;
     return 0;
 }

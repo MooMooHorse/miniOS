@@ -50,13 +50,13 @@ init_file_entry(pcb_t* _pcb_ptr, int32_t i){
         return -1;
     }
     /* for terminal those arguments are gargbage */
-    _pcb_ptr->file_entry[i].file_position=0;
+    _pcb_ptr->file_entry[i].pos=0;
     _pcb_ptr->file_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL|F_OPEN;
     _pcb_ptr->file_entry[i].inode=-1; /* won't be used */
-    _pcb_ptr->file_entry[i].file_operation_jump_table.read=terminal.ioctl.read;
-    _pcb_ptr->file_entry[i].file_operation_jump_table.write=terminal.ioctl.write;
-    _pcb_ptr->file_entry[i].file_operation_jump_table.close=terminal.ioctl.close;
-    _pcb_ptr->file_entry[i].file_operation_jump_table.open=terminal.ioctl.open;
+    _pcb_ptr->file_entry[i].fops.read=terminal.ioctl.read;
+    _pcb_ptr->file_entry[i].fops.write=terminal.ioctl.write;
+    _pcb_ptr->file_entry[i].fops.close=terminal.ioctl.close;
+    _pcb_ptr->file_entry[i].fops.open=terminal.ioctl.open;
     return 0;
 }
 

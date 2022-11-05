@@ -434,7 +434,7 @@ int32_t filesystem_ioctl_test0() {
     if (readonly_fs.openr(&file, (uint8_t*) "fish", 0) == -1) {
         return FAIL;
     }
-    printf("pos=%d flag=%d ", file.file_position, file.flags);
+    printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
     if(-1==readonly_fs.f_ioctl.close(&file)){
         return FAIL;
@@ -456,7 +456,7 @@ int32_t filesystem_ioctl_test1() {
     if (readonly_fs.openr(&file, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
-    printf("pos=%d flag=%d ", file.file_position, file.flags);
+    printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
     if(-1==readonly_fs.d_ioctl.close(&file)){
         return FAIL;
@@ -480,7 +480,7 @@ int32_t filesystem_ioctl_test2() {
     uint8_t buf[100];
     dentry_t dentry;
     for (i = 0; i < readonly_fs.file_num; i++) {
-        file.file_operation_jump_table.read(&file, buf, 32);
+        file.fops.read(&file, buf, 32);
         puts((int8_t*) buf);
         readonly_fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
         printf("          filetype=%d    inode=%d\n",dentry.filetype,dentry.inode_num);
@@ -504,7 +504,7 @@ int32_t filesystem_ioctl_test3() {
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
+    nbytes_read=file.fops.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -531,7 +531,7 @@ int32_t filesystem_ioctl_test4() {
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
+    nbytes_read=file.fops.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -557,7 +557,7 @@ int32_t filesystem_ioctl_test5() {
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.file_operation_jump_table.read(&file, buf, 20);
+    nbytes_read=file.fops.read(&file, buf, 20);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -583,7 +583,7 @@ int32_t filesystem_ioctl_test6() {
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
+    nbytes_read=file.fops.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -608,7 +608,7 @@ int32_t filesystem_ioctl_test7() {
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
+    nbytes_read=file.fops.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }

@@ -108,7 +108,7 @@ int32_t read (uint32_t file, void* buf, uint32_t nbytes){
         printf("invalid file struct\n");
         return -1; /* errono to be defined */
     }
-    return file_entry->file_operation_jump_table.read(file_entry,buf,nbytes);
+    return file_entry->fops.read(file_entry, buf, nbytes);
 }
 int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
     file_t* file_entry;
@@ -117,7 +117,7 @@ int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
         printf("invalid file struct\n");
         return -1; /* errono to be defined */
     }
-    return file_entry->file_operation_jump_table.write(file_entry,buf,nbytes);
+    return file_entry->fops.write(file_entry, buf, nbytes);
     
 }
 
@@ -160,7 +160,7 @@ int32_t open (const uint8_t* filename){
 int32_t close (uint32_t fd){
     file_t* file_entry;
     file_entry=get_file_entry(fd);
-    return file_entry->file_operation_jump_table.close(file_entry);
+    return file_entry->fops.close(file_entry);
 }
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
     return 0;

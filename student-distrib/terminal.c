@@ -51,12 +51,12 @@ terminal_open(__attribute__((unused)) file_t* file, __attribute__((unused)) cons
  */
 int32_t
 terminal_close(file_t* file) {
-    file->file_operation_jump_table.close = NULL;
-    file->file_operation_jump_table.read = NULL;
-    file->file_operation_jump_table.write = NULL;
-    file->file_operation_jump_table.open = NULL;
+    file->fops.close = NULL;
+    file->fops.read = NULL;
+    file->fops.write = NULL;
+    file->fops.open = NULL;
     file->flags = F_CLOSE;
-    file->file_position = 0;
+    file->pos = 0;
     file->inode = -1;
     input.e = input.w;  // Discard unused characters in the input buffer.
     return 0;

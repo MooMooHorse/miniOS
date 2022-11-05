@@ -227,9 +227,9 @@ typedef struct file_operation_table{
 /* Entries in file struct array */
 /* located in PCB Block */
 typedef struct file{
-    fops_t file_operation_jump_table; /* 16 B */
+    fops_t fops; /* 16 B */
     uint32_t inode; /* 4 B */
-    uint32_t file_position; /* 4 B */
+    uint32_t pos; /* 4 B */
     uint32_t flags; /* 4 B */
 } file_t;
 

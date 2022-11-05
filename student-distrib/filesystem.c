@@ -284,6 +284,10 @@ file_close(fd_t *fd)
         return -1;
     if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
         return -1;
+    fd->file_operation_jump_table.close=NULL;
+    fd->file_operation_jump_table.read=NULL;
+    fd->file_operation_jump_table.write=NULL;
+    fd->file_operation_jump_table.open=NULL;
     fd->inode = -1;
     fd->file_position = 0;
     fd->flags = F_CLOSE;
@@ -301,6 +305,10 @@ directory_close(fd_t *fd)
         return -1;
     if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
         return -1;
+    fd->file_operation_jump_table.close=NULL;
+    fd->file_operation_jump_table.read=NULL;
+    fd->file_operation_jump_table.write=NULL;
+    fd->file_operation_jump_table.open=NULL;
     fd->inode = -1;
     fd->file_position = 0;
     fd->flags = F_CLOSE;

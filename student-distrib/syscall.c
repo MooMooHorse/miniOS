@@ -24,7 +24,6 @@
  * @return ** int32_t 
  */
 int32_t halt (uint8_t status){
-    printf("start halting : trail\n");
     uint32_t pid=get_pid();
     if(-1==discard_proc(pid,status)){
         printf("discard process error\n");

@@ -222,6 +222,10 @@ rtc_close(fd_t* fd) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
+    fd->file_operation_jump_table.close=NULL;
+    fd->file_operation_jump_table.read=NULL;
+    fd->file_operation_jump_table.write=NULL;
+    fd->file_operation_jump_table.open=NULL;
     fd->inode = -1;
     fd->file_position = 0;
     fd->flags = F_CLOSE;

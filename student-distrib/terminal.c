@@ -50,7 +50,14 @@ terminal_open(__attribute__((unused)) fd_t* fd, __attribute__((unused)) const ui
  * @sideeffect Discard remaining input characters in the `input` buffer.
  */
 int32_t
-terminal_close(__attribute__((unused)) fd_t* fd) {
+terminal_close(fd_t* fd) {
+    fd->file_operation_jump_table.close=NULL;
+    fd->file_operation_jump_table.read=NULL;
+    fd->file_operation_jump_table.write=NULL;
+    fd->file_operation_jump_table.open=NULL;
+    fd->flags=F_CLOSE;
+    fd->file_position=0;
+    fd->inode=-1;
     input.e = input.w;  // Discard unused characters in the input buffer.
     return 0;
 }

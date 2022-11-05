@@ -44,7 +44,7 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint32_t pid,ppid,i;
     int32_t ret;
-    if(strlen(command)>=CMD_MAX_LEN){
+    if(strlen((int8_t*) command)>=CMD_MAX_LEN){
         printf("command too long\n");
         return -1;
     }

@@ -121,8 +121,10 @@ keyboard_handler(void) {
     if (0 < (c = kgetc())) {  // Ignore NUL character.
         switch (c) {
             case '\b':  // Eliminate the last character in buffer & screen.
-                if (input.e != input.w) { --input.e; }
-                putc(c);
+                if (input.e != input.w) {
+                    putc(c);
+                    --input.e;
+                }
                 break;
             case '\t':
                 // Enough space to place a tab (4 spaces + 1 linefeed)?

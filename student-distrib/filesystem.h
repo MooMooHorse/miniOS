@@ -38,28 +38,28 @@ filesystem_jump_table{
 
 /**
  * @brief File system structure.
- * This struct provdies namespace, compatibility, virtualization for filesystem.
- * f_rw - a series of read/wriet operations
+ * This struct provides namespace, compatibility, virtualization for filesystem.
+ * f_rw - a series of read/write operations
  * open_fs - initialize file system
  * close_fs - close file system
  * file_num - number of files this system contain, including directory itself
- * r_times - number of this reads this system has perfomed
- * w_times - number of this writes this system has perfomed
+ * r_times - number of this reads this system has performed
+ * w_times - number of this writes this system has performed
  * sys_st_addr - starting address in memory for file system
  * sys_ed_addr - ending address in memory for file system
  * iblock_num - N, total number of iblocks available (can be unfilled)
  * block_size - size of one block
  * dblock_entry_size - size of each entry to data block (stored in inode)
  * dblock_entry_offset - size of metadata (in this case, length) before dblock_entry
- * dblock_offset - address of the first datablock
+ * dblock_offset - address of the first data block
  * boot_block_padding - padding for dentry (the address of the first dentry)
  * dentry_size - the size of one dentry
  * filename_size - the size of a filename stored in dentry 
- * (Note we can miss '/0' accoding to Appendix A, so we need 33 bytes to store the filename)
+ * (Note we can miss '/0' according to Appendix A, so we need 33 bytes to store the filename)
  */
 typedef struct 
 filesystem{
-    fsjmp_t f_rw; /* file system read/wriet operations*/
+    fsjmp_t f_rw; /* file system read/write operations*/
     int32_t (*openr)(file_t*, const uint8_t*, int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
     fops_t f_ioctl; /* file system ioctl */
     fops_t d_ioctl;

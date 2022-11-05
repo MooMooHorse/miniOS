@@ -33,6 +33,7 @@ static int32_t directory_write(file_t* file, const void* buf, int32_t nbytes);
 static int32_t file_close(file_t* file);
 static int32_t directory_close(file_t* file);
 static int32_t load_prog(const uint8_t* prog_name, uint32_t addr, uint32_t nbytes);
+static int32_t check_exec(const uint8_t* prog_name);
 
 /**
  * @brief read 4 Bytes from memory
@@ -85,6 +86,7 @@ open_fs(uint32_t addr) {
     readonly_fs.f_rw.read_dentry_by_name = read_dentry_by_name;
 
     readonly_fs.openr = openr; /* open file/directory as read-oonly*/
+    readonly_fs.check_exec = check_exec; /* check if file is exec */ 
 
     /* install ioctl for file to file system */
     readonly_fs.f_ioctl.open = file_open;
@@ -565,12 +567,35 @@ load_prog(const uint8_t* prog_name, uint32_t addr, uint32_t nbytes) {
         addr += bytes_read;
         ret += bytes_read;
         offset += bytes_read;
-        nbytes -= bytes_read;
-        if (nbytes < 0) {
+        if (ret > nbytes) {
             printf("executable too large\n");
             return -1;
         }
     }
     return ret;
+}
+
+/**
+ * @brief check whether program is executable or not
+ * 
+ * @param prog_name - program name
+ * @return ** int32_t - 
+ * 1 : is executable
+ * else : not executable  
+ * -1 : file doesn't exist 
+ * 0 : file not executable
+ */
+static int32_t
+check_exec(const uint8_t* prog_name){
+    dentry_t dentry;
+    if(-1==readonly_fs.f_rw.read_dentry_by_name(prog_name,&dentry)){
+        return -1;
+    }
+    uint8_t buf[5];
+    if(-1==readonly_fs.f_rw.read_data(dentry.inode_num,0,buf,4)){
+        return 0;
+    }else{
+        return (buf[0]==0x7f)&&(buf[1]==0x45)&&(buf[2]==0x4c)&&(buf[3]==0x46);
+    }
 }
 

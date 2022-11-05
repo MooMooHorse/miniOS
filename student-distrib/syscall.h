@@ -15,6 +15,8 @@
 #define CMD_MAX_LEN 128
 #define ARG_MAX_NUM 10
 
+#define SYSCALL_NUM 10
+
 #ifndef ASM
 #include "types.h"
 

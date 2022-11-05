@@ -466,7 +466,7 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_index(uint32_t index, dentry_t* dentry) {
-    if (dentry == NULL || index > readonly_fs.file_num || index < 0) {
+    if (dentry == NULL || index > readonly_fs.file_num) {
         return -1;
     }
     uint32_t dentry_addr = readonly_fs.sys_st_addr + readonly_fs.boot_block_padding + index * readonly_fs.dentry_size;

@@ -42,11 +42,16 @@ static const uint8_t map_shift[MAP_SIZE] = {
 
 #define C(x) ((x) - '@')
 static const uint8_t map_ctrl[MAP_SIZE] = {
-    [16] = C('Q'), C('W'), C('E'), C('R'), C('T'), C('Y'), C('U'), C('I'),
-    C('O'), C('P'), C('['), C(']'), '\n' /* \r */, '\0', C('A'), C('S'), C('D'),
-    C('F'), C('G'), C('H'), C('J'), C('K'), C('L'), [43] = C('\\'), C('Z'), C('X'),
-    C('C'), C('V'), C('B'), C('N'), C('M'), [53] = C('/')
+    [28] = '\n' /* \r */, [38] = C('L'), [46] = C('C')
 };
+
+// Complete CTRL map.
+/* static const uint8_t map_ctrl[MAP_SIZE] = { */
+/*     [16] = C('Q'), C('W'), C('E'), C('R'), C('T'), C('Y'), C('U'), C('I'), */
+/*     C('O'), C('P'), C('['), C(']'), '\n' /1* \r *1/, '\0', C('A'), C('S'), C('D'), */
+/*     C('F'), C('G'), C('H'), C('J'), C('K'), C('L'), [43] = C('\\'), C('Z'), C('X'), */
+/*     C('C'), C('V'), C('B'), C('N'), C('M'), [53] = C('/') */
+/* }; */
 
 // Scan Code --> Bitmask in `mod`.
 static const uint8_t map_mod_or[MOD_MAP_SIZE] = {

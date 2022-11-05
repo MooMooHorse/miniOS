@@ -30,8 +30,8 @@
 /* number of system call for system call table */
 #define SYS_NUM 20
 
-/* stipulated in document, the maximum number of file descriptor array entries is 8 */
-#define FD_ARRAY_MAX 8
+/* stipulated in document, the maximum number of file struct array entries is 8 */
+#define FILE_ARRAY_MAX 8
 
 
 #ifndef ASM
@@ -183,16 +183,16 @@ typedef union idt_desc_t {
 
 
 
-struct file_descriptor_item;
+struct file;
 
 /**
- * @brief Each file operations are driver-specific, it doesn't know the file descriptor index.
+ * @brief Each file operations are driver-specific, it doesn't know the file struct index.
  * It just fills related fields that are passed into it or are originally into it,
  * and perform the task to (virtualized) devices.
  * This is ioctl between kernel and module.
  */
 typedef struct file_operation_table{
-    /* First arg : file descriptor table item, 
+    /* First arg : file struct table item,
     * you need to FILL IT, some items can be discarded 
     * by filling garbage . 
     * second arg : open file by filename
@@ -201,42 +201,42 @@ typedef struct file_operation_table{
     * Return Val : Inode number (in RTC, return RTC index(which RTC(virtualized) 
     * you are opening), In terminal, STDIN or STDOUT.) -1 on failure
     */
-    int32_t (*open)(struct file_descriptor_item*, const uint8_t*,int32_t);
+    int32_t (*open)(struct file*, const uint8_t*, int32_t);
 
-    /* First arg  : file descriptor info : inode number (In RTC, RTC index. In termminal, garbage)
+    /* First arg  : file struct info : inode number (In RTC, RTC index. In termminal, garbage)
     *  Second arg : buffer <- your read result (In RTC, garbage. )
     *  Third arg  : n bytes to read (In RTC, how many rounds it wants you to wait)
     *  Return Val : Number of bytes you read (wait for RTC) -1 on failure
     */
-    int32_t (*read)(struct file_descriptor_item*,void*,int32_t);
-    
-    /* First arg  : file descriptor info : inode number (In RTC, which RTC do you want to read. In termminal, garbage)
+    int32_t (*read)(struct file*, void*, int32_t);
+
+    /* First arg  : file struct info : inode number (In RTC, which RTC do you want to read. In termminal, garbage)
      * Second arg : buffer <- your write source (In RTC, garbage. )
      * Third arg  : n bytes to read (In RTC, freqency you want to set)
      * Return Val : n bytes you wrote -1 on failure
      */
-    int32_t (*write)(struct file_descriptor_item*,const void*,int32_t);
+    int32_t (*write)(struct file*, const void*, int32_t);
 
-    /* First arg  : file descriptor table item, you need to CLEAN IT, some items can be discarded 
+    /* First arg  : file struct table item, you need to CLEAN IT, some items can be discarded
     *  by not cleaning it.
     */
-    int32_t (*close)(struct file_descriptor_item*);
+    int32_t (*close)(struct file*);
 } fops_t;
 
 
-/* Entries in file descriptor array */
+/* Entries in file struct array */
 /* located in PCB Block */
-typedef struct file_descriptor_item{
+typedef struct file{
     fops_t file_operation_jump_table; /* 16 B */
     uint32_t inode; /* 4 B */
     uint32_t file_position; /* 4 B */
     uint32_t flags; /* 4 B */
-} fd_t;
+} file_t;
 
 
 
 
-extern uint32_t syscall_table[SYS_NUM]; 
+extern uint32_t syscall_table[SYS_NUM];
 
 extern uint32_t PCB_ptr; /* PCB pointer pointing at the top-most PCB */
 

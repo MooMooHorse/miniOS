@@ -23,10 +23,10 @@ extern terminal_t terminal;
 
 // Device driver interfaces.
 void terminal_init(void);
-int32_t terminal_open(fd_t* fd, const uint8_t* buf, int32_t nbytes);
-int32_t terminal_close(fd_t* fd);
-int32_t terminal_read(fd_t* fd, void* buf, int32_t nbytes);
-int32_t terminal_write(fd_t* fd, const void* buf, int32_t nbytes);
+int32_t terminal_open(file_t* file, const uint8_t* buf, int32_t nbytes);
+int32_t terminal_close(file_t* file);
+int32_t terminal_read(file_t* file, void* buf, int32_t nbytes);
+int32_t terminal_write(file_t* file, const void* buf, int32_t nbytes);
 
 
 #endif  /* _TERMINAL_H */

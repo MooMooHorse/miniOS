@@ -2,7 +2,7 @@
 #define _FILESYSTEM_H
 #include "types.h"
 #include "x86_desc.h"
-/* flags for file descriptor table */
+/* flags for file struct table */
 /* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
 #define DESCRIPTOR_ENTRY_RTC      0
 #define DESCRIPTOR_ENTRY_DIR      1 
@@ -60,7 +60,7 @@ filesystem_jump_table{
 typedef struct 
 filesystem{
     fsjmp_t f_rw; /* file system read/wriet operations*/
-    int32_t (*openr)(fd_t*, const uint8_t*,int32_t); /* Open file/directory as read-only this installs ioctl to file descriptor table */
+    int32_t (*openr)(file_t*, const uint8_t*, int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
     fops_t f_ioctl; /* file system ioctl */
     fops_t d_ioctl;
     int32_t (*open_fs)(uint32_t addr); /* this installs ioctl to file system */

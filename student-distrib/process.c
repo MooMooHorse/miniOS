@@ -38,25 +38,25 @@ pcb_create(uint32_t pid){
 
 /* lack of open function in terminal.c , have to do in this way */
 /** Internal use
- * @brief Open terminal : initialize file descriptor table for terminal
+ * @brief Open terminal : initialize file struct table for terminal
  * 
  * @param _pcb_ptr - pointer to pcb block for current process
- * @param i - index for file descriptor table
+ * @param i - index for file struct table
  * @return ** int32_t 
  */
 static int32_t 
-init_fd_entry(pcb_t* _pcb_ptr, int32_t i){
-    if(_pcb_ptr==NULL || terminal.ioctl.open(&_pcb_ptr->fd_entry[i],(uint8_t*)"terminal",0)==-1){
+init_file_entry(pcb_t* _pcb_ptr, int32_t i){
+    if(_pcb_ptr==NULL || terminal.ioctl.open(&_pcb_ptr->file_entry[i],(uint8_t*)"terminal",0)==-1){
         return -1;
     }
     /* for terminal those arguments are gargbage */
-    _pcb_ptr->fd_entry[i].file_position=0;
-    _pcb_ptr->fd_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL|F_OPEN;
-    _pcb_ptr->fd_entry[i].inode=-1; /* won't be used */
-    _pcb_ptr->fd_entry[i].file_operation_jump_table.read=terminal.ioctl.read;
-    _pcb_ptr->fd_entry[i].file_operation_jump_table.write=terminal.ioctl.write;
-    _pcb_ptr->fd_entry[i].file_operation_jump_table.close=terminal.ioctl.close;
-    _pcb_ptr->fd_entry[i].file_operation_jump_table.open=terminal.ioctl.open;
+    _pcb_ptr->file_entry[i].file_position=0;
+    _pcb_ptr->file_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL|F_OPEN;
+    _pcb_ptr->file_entry[i].inode=-1; /* won't be used */
+    _pcb_ptr->file_entry[i].file_operation_jump_table.read=terminal.ioctl.read;
+    _pcb_ptr->file_entry[i].file_operation_jump_table.write=terminal.ioctl.write;
+    _pcb_ptr->file_entry[i].file_operation_jump_table.close=terminal.ioctl.close;
+    _pcb_ptr->file_entry[i].file_operation_jump_table.open=terminal.ioctl.open;
     return 0;
 }
 
@@ -96,10 +96,10 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->active=1;
-    _pcb_ptr->fdnum=2; /* STDIN and STDOUT */
-    init_fd_entry(_pcb_ptr,0);
-    init_fd_entry(_pcb_ptr,1);
-    /* following fd entries are not opened yet, not initialized */
+    _pcb_ptr->filenum=2; /* STDIN and STDOUT */
+    init_file_entry(_pcb_ptr,0);
+    init_file_entry(_pcb_ptr,1);
+    /* following file entries are not opened yet, not initialized */
     strncpy((int8_t*)_pcb_ptr->pname,(int8_t*)prog_name,32);
     dentry_t dentry;
     uint8_t buf[5];
@@ -210,19 +210,19 @@ recover_tss(pcb_t* _pcb_ptr){
 
 
 /**
- * @brief given file descriptor index, extract corresponding entry from file descriptor array
+ * @brief given file struct index, extract corresponding entry from file struct array
  * 
- * @param fd - file descriptor index
- * @return ** fd_t* NULL will illegal fd
+ * @param fd - file struct index
+ * @return ** file_t* NULL will illegal fd
  */
-fd_t* 
-get_fd_entry(uint32_t fd){
+file_t*
+get_file_entry(uint32_t fd){
     pcb_t* _pcb_ptr;
     uint32_t pid;
     pid=get_pid();
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(fd<0||fd>=_pcb_ptr->fdnum) return NULL;
-    return &(_pcb_ptr->fd_entry[fd]);
+    if(fd<0||fd>=_pcb_ptr->filenum) return NULL;
+    return &(_pcb_ptr->file_entry[fd]);
 }
 
 /**

@@ -23,15 +23,15 @@ static int32_t read_dentry_by_name(const uint8_t *fname, dentry_t *dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t *dentry);
 static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t length);
 static int32_t fake_write(void);
-static int32_t openr(fd_t *ret, const uint8_t *fname, int32_t findex);
-static int32_t file_open(fd_t *ret, const uint8_t *fname, int32_t findex);
-static int32_t direcotry_open(fd_t *ret, const uint8_t *fname, int32_t findex);
-static int32_t file_read(fd_t *fd, void *buf, int32_t nbytes);
-static int32_t directory_read(fd_t *fd, void *buf, int32_t nbytes);
-static int32_t file_write(fd_t *fd, const void *buf, int32_t nbytes);
-static int32_t directory_write(fd_t *fd, const void *buf, int32_t nbytes);
-static int32_t file_close(fd_t *fd);
-static int32_t directory_close(fd_t *fd);
+static int32_t openr(file_t *ret, const uint8_t *fname, int32_t findex);
+static int32_t file_open(file_t *ret, const uint8_t *fname, int32_t findex);
+static int32_t direcotry_open(file_t *ret, const uint8_t *fname, int32_t findex);
+static int32_t file_read(file_t *file, void *buf, int32_t nbytes);
+static int32_t directory_read(file_t *file, void *buf, int32_t nbytes);
+static int32_t file_write(file_t *file, const void *buf, int32_t nbytes);
+static int32_t directory_write(file_t *file, const void *buf, int32_t nbytes);
+static int32_t file_close(file_t *file);
+static int32_t directory_close(file_t *file);
 static int32_t load_prog(const uint8_t* prog_name,uint32_t addr,uint32_t nbytes);
 
 /**
@@ -126,7 +126,7 @@ open_fs(uint32_t addr)
  * @param findex
  * @return ** int32_t
  */
-static int32_t openr(fd_t *ret, const uint8_t *fname, int32_t findex)
+static int32_t openr(file_t *ret, const uint8_t *fname, int32_t findex)
 {
     dentry_t dentry;
     readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
@@ -144,7 +144,7 @@ static int32_t openr(fd_t *ret, const uint8_t *fname, int32_t findex)
  * @return ** int32_t 0 on sccess, -1 on failure
  */
 static int32_t
-file_open(fd_t *ret, const uint8_t *fname, int32_t findex)
+file_open(file_t *ret, const uint8_t *fname, int32_t findex)
 {
     dentry_t dentry;
     if (ret == NULL || fname == NULL)
@@ -172,7 +172,7 @@ file_open(fd_t *ret, const uint8_t *fname, int32_t findex)
  * @return ** int32_t 0 on sccess, -1 on failure
  */
 static int32_t
-direcotry_open(fd_t *ret, const uint8_t *fname, int32_t findex)
+direcotry_open(file_t *ret, const uint8_t *fname, int32_t findex)
 {
     dentry_t dentry;
     if (ret == NULL || fname == NULL)
@@ -193,52 +193,52 @@ direcotry_open(fd_t *ret, const uint8_t *fname, int32_t findex)
 }
 
 /**
- * @brief Read n bytes from the file into buf, file offset (position) is given in fd
- * @param fd - file descriptor
+ * @brief Read n bytes from the file into buf, file offset (position) is given in file struct
+ * @param file - file struct
  * @param buf - read result will go to buf
  * @param nbytes - n bytes to read
  * @return ** int32_t
  */
 static int32_t
-file_read(fd_t *fd, void *buf, int32_t nbytes)
+file_read(file_t *file, void *buf, int32_t nbytes)
 {
     int32_t ret;
-    if (fd == NULL || buf == NULL)
+    if (file == NULL || buf == NULL)
         return -1;
-    if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
     if (nbytes <= 0)
         return 0;
-    ret = readonly_fs.f_rw.read_data(fd->inode, fd->file_position, (uint8_t *)buf, nbytes);
+    ret = readonly_fs.f_rw.read_data(file->inode, file->file_position, (uint8_t *)buf, nbytes);
     if (ret == -1)
         return -1;
-    fd->file_position += ret; /* update file offset */
+    file->file_position += ret; /* update file offset */
     return ret;
 }
 
 /**
  * @brief Read file(directory) name
  * According to hint 3.2 read_dir should read one byte at a time
- * @param fd - file descriptor
+ * @param file - file struct
  * @param buf - read result will go to buf
  * @param nbytes - n bytes to read
  * @return ** int32_t number of bytes read for file name -1 on failure
  */
 static int32_t
-directory_read(fd_t *fd, void *buf, int32_t nbytes)
+directory_read(file_t *file, void *buf, int32_t nbytes)
 {
     int32_t ret, i;
-    if (fd == NULL || buf == NULL)
+    if (file == NULL || buf == NULL)
         return -1;
-    if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
     if (nbytes <= 0)
         return 0;
     dentry_t dentry;
-    ret = readonly_fs.f_rw.read_dentry_by_index(fd->file_position, &dentry);
+    ret = readonly_fs.f_rw.read_dentry_by_index(file->file_position, &dentry);
     if (ret == -1)
         return -1;
-    fd->file_position++; /* each time advance one file */
+    file->file_position++; /* each time advance one file */
     if (nbytes > strlen((int8_t *)dentry.filename))
         nbytes = strlen((int8_t *)dentry.filename);
     for (i = 0; i < nbytes; i++)
@@ -249,69 +249,69 @@ directory_read(fd_t *fd, void *buf, int32_t nbytes)
 
 /**
  * @brief Read only system doesn's support write
- * @param fd - discarded
+ * @param file - discarded
  * @param buf - discarded
  * @param nbytes - discarded
  * @return ** int32_t
  */
 static int32_t
-file_write(fd_t *fd, const void *buf, int32_t nbytes)
+file_write(file_t *file, const void *buf, int32_t nbytes)
 {
     return -1;
 }
 /**
  * @brief Read only system doesn't support write
- * @param fd - discarded
+ * @param file - discarded
  * @param buf - discarded
  * @param nbytes - discarded
  * @return ** int32_t
  */
 static int32_t
-directory_write(fd_t *fd, const void *buf, int32_t nbytes)
+directory_write(file_t *file, const void *buf, int32_t nbytes)
 {
     return -1;
 }
 
 /**
  * @brief close file
- * @param fd
+ * @param file
  * @return ** int32_t
  */
 static int32_t
-file_close(fd_t *fd)
+file_close(file_t *file)
 {
-    if (fd == NULL)
+    if (file == NULL)
         return -1;
-    if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
-    fd->file_operation_jump_table.close=NULL;
-    fd->file_operation_jump_table.read=NULL;
-    fd->file_operation_jump_table.write=NULL;
-    fd->file_operation_jump_table.open=NULL;
-    fd->inode = -1;
-    fd->file_position = 0;
-    fd->flags = F_CLOSE;
+    file->file_operation_jump_table.close=NULL;
+    file->file_operation_jump_table.read=NULL;
+    file->file_operation_jump_table.write=NULL;
+    file->file_operation_jump_table.open=NULL;
+    file->inode = -1;
+    file->file_position = 0;
+    file->flags = F_CLOSE;
     return 0;
 }
 /**
  * @brief close file
- * @param fd
+ * @param file
  * @return ** int32_t
  */
 static int32_t
-directory_close(fd_t *fd)
+directory_close(file_t *file)
 {
-    if (fd == NULL)
+    if (file == NULL)
         return -1;
-    if (fs_sanity_check(fd->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
         return -1;
-    fd->file_operation_jump_table.close=NULL;
-    fd->file_operation_jump_table.read=NULL;
-    fd->file_operation_jump_table.write=NULL;
-    fd->file_operation_jump_table.open=NULL;
-    fd->inode = -1;
-    fd->file_position = 0;
-    fd->flags = F_CLOSE;
+    file->file_operation_jump_table.close=NULL;
+    file->file_operation_jump_table.read=NULL;
+    file->file_operation_jump_table.write=NULL;
+    file->file_operation_jump_table.open=NULL;
+    file->inode = -1;
+    file->file_position = 0;
+    file->flags = F_CLOSE;
     return 0;
 }
 

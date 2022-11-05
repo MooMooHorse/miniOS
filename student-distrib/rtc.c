@@ -14,22 +14,11 @@
 #include "tests.h"
 #include "x86_desc.h"
 
-static int32_t fd_sanity_check(fd_t* fd);
-static int32_t rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes);
-static int32_t rtc_read(fd_t* fd, void* buf, int32_t nbytes);
-static int32_t rtc_write(fd_t* fd, const void* buf, int32_t nbytes);
-static int32_t rtc_close(fd_t* fd);
+static int32_t rtc_open(file_t* file, const uint8_t* buf, int32_t nbytes);
+static int32_t rtc_read(file_t* file, void* buf, int32_t nbytes);
+static int32_t rtc_write(file_t* file, const void* buf, int32_t nbytes);
+static int32_t rtc_close(file_t* file);
 static void do_rtc(uint32_t i);
-
-static int32_t
-fd_sanity_check(fd_t *fd) {
-    // Check if fd_t pointer is valid
-    if (fd == NULL) {
-        printf("RTC Error: File descriptor pointer is NULL.\n");
-        return -1;
-    }
-    return 0;
-}
 
 /**
  * @brief virtualized RTC handler
@@ -37,17 +26,16 @@ fd_sanity_check(fd_t *fd) {
  * @param i 
  * @return ** void 
  */
-static void 
-do_rtc(uint32_t i){
+static void
+do_rtc(uint32_t i) {
     rtc[i].count++;
 }
-
 
 /**
  * @brief Initialize the RTC
  * Should be ran when CLI is called 
  */
-void 
+void
 rtc_init(void) {
     int i;
     // ENABLE PERIODIC INTERRUPTS
@@ -76,13 +64,13 @@ rtc_init(void) {
  * @brief RTC interrupt handler
  *
  */
-void 
+void
 rtc_handler(void) {
     // Handle RTC interrupt.
     virt_rtc++;
     int i;
-    for (i = 0; i < RTC_num; i++){
-        if(rtc[i].freq>0 && (virt_rtc%(1024/rtc[i].freq))==0){
+    for (i = 0; i < RTC_num; i++) {
+        if (rtc[i].freq > 0 && (virt_rtc % (1024 / rtc[i].freq)) == 0) {
             do_rtc(i);
         }
     }
@@ -94,23 +82,23 @@ rtc_handler(void) {
 }
 
 /**
- * @brief Open RTC by intitializing the file descriptor table entry, frequency,
+ * @brief Open RTC by intitializing the file struct table entry, frequency,
  * and tick counter in the rtc_t struct.
  * 
- * INPUT : fd_t* fd, const uint8_t* buf, int32_t nbytes
+ * INPUT : file_t* file, const uint8_t* buf, int32_t nbytes
  * OUTPUT : 0 on success, -1 on failure
  * SIDE EFFECTS : Insatntiates RTC to usable state.
  * 
- * @param fd File descriptor table entry pointer
+ * @param file file struct table entry pointer
  * @param buf Buffer to read from
  * @param nbytes Number of bytes to read
  * @return int32_t 
  */
 static int32_t
-rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes) {
+rtc_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
 
-    // Check fd_t pointer validity
-    if (fd_sanity_check(fd) == -1) {
+    // Check file_t pointer validity
+    if (NULL == file) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
@@ -120,13 +108,13 @@ rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes) {
         return -1;
     }
 
-    // unsure if FD initialization is correct
-    fd->file_operation_jump_table = rtc[nbytes].ioctl;
-    fd->inode = nbytes;
-    fd->file_position = 0;
-    fd->flags = DESCRIPTOR_ENTRY_RTC|F_OPEN;
+    // unsure if file struct initialization is correct
+    file->file_operation_jump_table = rtc[nbytes].ioctl;
+    file->inode = nbytes;
+    file->file_position = 0;
+    file->flags = DESCRIPTOR_ENTRY_RTC | F_OPEN;
 
-    rtc[fd->inode].freq = 2; // Default frequency is 2 Hz.
+    rtc[file->inode].freq = 2; // Default frequency is 2 Hz.
 
     return 0;
 }
@@ -135,31 +123,31 @@ rtc_open(fd_t* fd, const uint8_t* buf, int32_t nbytes) {
  * @brief Read RTC by waiting for the next interrupt based on virtual RTC
  * frequency and tick counter.
  * 
- * INPUT : fd_t* fd, uint8_t* buf, int32_t nbytes
+ * INPUT : file_t* file, uint8_t* buf, int32_t nbytes
  * OUTPUT : 0 on success, -1 on failure
  * SIDE EFFECTS : Resets virtual RTC tick counter.
  * 
- * @param fd File descriptor table entry pointer
+ * @param file file struct table entry pointer
  * @param buf Buffer to read from
  * @param nbytes Number of bytes to read
  * @return int32_t 
  */
-static int32_t 
-rtc_read(fd_t* fd, void* buf, int32_t nbytes) {
+static int32_t
+rtc_read(file_t* file, void* buf, int32_t nbytes) {
 
     // Check fd_t pointer validity
-    if (fd_sanity_check(fd) == -1) {
+    if (NULL == file) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
 
-    rtc[fd->inode].count = 0;
+    rtc[file->inode].count = 0;
     // Wait for next interrupt.
-    while (rtc[fd->inode].count==0) {
+    while (rtc[file->inode].count == 0) {
         // Do nothing.
     }
-    
-    rtc[fd->inode].count = 0;  // Reset counter.
+
+    rtc[file->inode].count = 0;  // Reset counter.
 
     return 0;
 }
@@ -172,28 +160,28 @@ rtc_read(fd_t* fd, void* buf, int32_t nbytes) {
  * OUTPUT : Value written to virtual RTC on success , -1 on failure
  * SIDE EFFECTS : Sets virtual RTC frequency.
  * 
- * @param fd File descriptor table entry pointer
+ * @param file file struct table entry pointer
  * @param buf Buffer to read from
  * @param nbytes Number of bytes to read (can only be 0,1,2,4)
  * @return int32_t 
  */
-static int32_t 
-rtc_write(fd_t* fd, const void* buf, int32_t nbytes){
+static int32_t
+rtc_write(file_t* file, const void* buf, int32_t nbytes) {
     uint32_t new_freq;
     // Check fd_t pointer validity
-    if (fd_sanity_check(fd) == -1) {
+    if (NULL == file) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
-    if(nbytes==0) return 0;
-    else{
-        if(nbytes==1) new_freq=((uint8_t*)buf)[0];
-        else if(nbytes==2) new_freq=((uint16_t*)buf)[0];
-        else if(nbytes==4) new_freq=((uint32_t*)buf)[0];
-        else return -1; 
+    if (nbytes == 0) return 0;
+    else {
+        if (nbytes == 1) new_freq = ((uint8_t*) buf)[0];
+        else if (nbytes == 2) new_freq = ((uint16_t*) buf)[0];
+        else if (nbytes == 4) new_freq = ((uint32_t*) buf)[0];
+        else return -1;
     }
 
-    
+
     // Check if freq is a power of 2 and in valid range.
     if ((new_freq < 2 || new_freq > 1024) || (new_freq & (new_freq - 1)) != 0) {
         printf("RTC Error: Bad frequency!\n");
@@ -201,7 +189,7 @@ rtc_write(fd_t* fd, const void* buf, int32_t nbytes){
     }
 
     // Set the frequency.
-    rtc[fd->inode].freq = new_freq;
+    rtc[file->inode].freq = new_freq;
     return nbytes;
 }
 
@@ -212,23 +200,23 @@ rtc_write(fd_t* fd, const void* buf, int32_t nbytes){
  * OUTPUT : 0 on success, -1 on failure
  * SIDE EFFECTS : None.
  * 
- * @param fd 
+ * @param file
  * @return int32_t 
  */
-static int32_t 
-rtc_close(fd_t* fd) {
+static int32_t
+rtc_close(file_t* file) {
     // Check fd_t pointer validity
-    if (fd_sanity_check(fd) == -1) {
+    if (NULL == file) {
         printf("RTC Error: Sanity check failed.\n");
         return -1;
     }
-    fd->file_operation_jump_table.close=NULL;
-    fd->file_operation_jump_table.read=NULL;
-    fd->file_operation_jump_table.write=NULL;
-    fd->file_operation_jump_table.open=NULL;
-    fd->inode = -1;
-    fd->file_position = 0;
-    fd->flags = F_CLOSE;
+    file->file_operation_jump_table.close = NULL;
+    file->file_operation_jump_table.read = NULL;
+    file->file_operation_jump_table.write = NULL;
+    file->file_operation_jump_table.open = NULL;
+    file->inode = -1;
+    file->file_position = 0;
+    file->flags = F_CLOSE;
     return 0;
 }
 

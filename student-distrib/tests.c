@@ -428,15 +428,15 @@ int32_t filesystem_test_read3() {
  * @return ** int32_t 
  */
 int32_t filesystem_ioctl_test0() {
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
 
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "fish", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) "fish", 0) == -1) {
         return FAIL;
     }
-    printf("pos=%d flag=%d ", file_descriptor_item.file_position, file_descriptor_item.flags);
-    printf("inode=%d\n", file_descriptor_item.inode);
-    if(-1==readonly_fs.f_ioctl.close(&file_descriptor_item)){
+    printf("pos=%d flag=%d ", file.file_position, file.flags);
+    printf("inode=%d\n", file.inode);
+    if(-1==readonly_fs.f_ioctl.close(&file)){
         return FAIL;
     }
     return result;
@@ -450,15 +450,15 @@ int32_t filesystem_ioctl_test0() {
  * @return ** int32_t 
  */
 int32_t filesystem_ioctl_test1() {
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
 
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) ".", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
-    printf("pos=%d flag=%d ", file_descriptor_item.file_position, file_descriptor_item.flags);
-    printf("inode=%d\n", file_descriptor_item.inode);
-    if(-1==readonly_fs.d_ioctl.close(&file_descriptor_item)){
+    printf("pos=%d flag=%d ", file.file_position, file.flags);
+    printf("inode=%d\n", file.inode);
+    if(-1==readonly_fs.d_ioctl.close(&file)){
         return FAIL;
     }
     return result;
@@ -472,15 +472,15 @@ int32_t filesystem_ioctl_test1() {
  */
 int32_t filesystem_ioctl_test2() {
     int i;
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) ".", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[100];
     dentry_t dentry;
     for (i = 0; i < readonly_fs.file_num; i++) {
-        file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 32);
+        file.file_operation_jump_table.read(&file, buf, 32);
         puts((int8_t*) buf);
         readonly_fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
         printf("          filetype=%d    inode=%d\n",dentry.filetype,dentry.inode_num);
@@ -497,20 +497,20 @@ int32_t filesystem_ioctl_test2() {
  */
 int32_t filesystem_ioctl_test3() {
     int i;
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
         return FAIL;
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
     printf("%u\n",nbytes_read);
     for(i=0;i<nbytes_read;i++) putc(buf[i]);
-    if(readonly_fs.f_ioctl.close(&file_descriptor_item)==-1){
+    if(readonly_fs.f_ioctl.close(&file)==-1){
         return FAIL;
     }
     return result;
@@ -524,14 +524,14 @@ int32_t filesystem_ioctl_test3() {
  */
 int32_t filesystem_ioctl_test4() {
     int i;
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -550,14 +550,14 @@ int32_t filesystem_ioctl_test4() {
  */
 int32_t filesystem_ioctl_test5() {
     int i;
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "hello", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 20);
+    nbytes_read=file.file_operation_jump_table.read(&file, buf, 20);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -577,13 +577,13 @@ int32_t filesystem_ioctl_test5() {
  */
 int32_t filesystem_ioctl_test6() {
     int i;
-    fd_t file_descriptor_item;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+    file_t file;
+    if (readonly_fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
         return PASS;
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -601,14 +601,14 @@ int32_t filesystem_ioctl_test6() {
  */
 int32_t filesystem_ioctl_test7() {
     int i;
-    fd_t file_descriptor_item;
+    file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file_descriptor_item, (uint8_t*) "frame0.txt", 0) == -1) {
+    if (readonly_fs.openr(&file, (uint8_t*) "frame0.txt", 0) == -1) {
         return FAIL;
     }
    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file_descriptor_item.file_operation_jump_table.read(&file_descriptor_item, buf, 40000);
+    nbytes_read=file.file_operation_jump_table.read(&file, buf, 40000);
     if(nbytes_read==-1){
         return FAIL;
     }
@@ -626,10 +626,10 @@ int32_t filesystem_ioctl_test7() {
  */
 int32_t
 terminal_write_overflow_test(void) {
-    fd_t fd;  // Unused.
+    file_t file;  // Unused.
     uint8_t buf[16] = "abcdefghijklmno";
 
-    if (-1 != terminal_write(&fd, buf, 32)) {  // More # characters than buffer size!
+    if (-1 != terminal_write(&file, buf, 32)) {  // More # characters than buffer size!
         assertion_failure();
         return FAIL;
     }
@@ -647,26 +647,26 @@ terminal_write_overflow_test(void) {
 int32_t
 terminal_io_test(void) {
     const int32_t SIZE = 32;
-    fd_t fd;  // Unused.
+    file_t file;  // Unused.
     uint8_t buf[SIZE];
     int n;
 
-    if (0 != terminal_open(&fd, NULL, 0)) {  // Unused parameters.
+    if (0 != terminal_open(&file, NULL, 0)) {  // Unused parameters.
         return FAIL;  // Failed to open the terminal.
     }
 
     while (1) {
-        n = terminal_read(&fd, buf, SIZE);
+        n = terminal_read(&file, buf, SIZE);
         printf("`terminal_read`: # read = %d\n", n);
         printf("`terminal_write`: ");
-        if (n != terminal_write(&fd, buf, n)) {
+        if (n != terminal_write(&file, buf, n)) {
             assertion_failure();
             return FAIL;
         }
         putc('\n');
     }
 
-    if (0 != terminal_close(&fd)) {  // Unused parameters.
+    if (0 != terminal_close(&file)) {  // Unused parameters.
         return FAIL;  // Failed to close the terminal.
     }
 
@@ -683,9 +683,9 @@ terminal_io_test(void) {
  * @return int32_t 
  */
 int32_t rtc_test_open_read(){
-    fd_t fd;
+    file_t file;
 
-    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0", 0); /* second arg discarded so arbitrary */
+    rtc[0].ioctl.open(&file, (uint8_t*)"RTC0", 0); /* second arg discarded so arbitrary */
     uint32_t buf[100];
 
     int i, j, k;
@@ -695,15 +695,15 @@ int32_t rtc_test_open_read(){
     for (i = 1; i < 10; i++) {
         // loop 10 times
         for (j = 0; j < 10; j++) {
-            rtc[0].ioctl.read(&fd, buf, 0);
+            rtc[0].ioctl.read(&file, buf, 0);
             printf("!");
         }
         printf("\n");
         buf[0]=(2<<i);
-        rtc[0].ioctl.write(&fd, buf, 4);
+        rtc[0].ioctl.write(&file, buf, 4);
     }
 
-    rtc[0].ioctl.close(&fd);
+    rtc[0].ioctl.close(&file);
 
     return PASS;
 }
@@ -717,21 +717,21 @@ int32_t rtc_test_open_read(){
  * @return int32_t 
  */
 int32_t rtc_test_write() {
-    fd_t fd;
-    rtc[0].ioctl.open(&fd, (uint8_t*)"RTC0" , 0);
+    file_t file;
+    rtc[0].ioctl.open(&file, (uint8_t*)"RTC0" , 0);
     uint32_t buf[100];
 
     printf("RTC test write 2 Hz\n");
     buf[0]=2;
-    int32_t test1 = rtc[0].ioctl.write(&fd, buf, 4);
+    int32_t test1 = rtc[0].ioctl.write(&file, buf, 4);
     
     printf("RTC test write 2048 Hz\n");
     buf[0]=2048;
-    int32_t test2 = rtc[0].ioctl.write(&fd, buf, 4);
+    int32_t test2 = rtc[0].ioctl.write(&file, buf, 4);
 
     printf("RTC test write 31 Hz\n");
     buf[0]=31;
-    int32_t test3 = rtc[0].ioctl.write(&fd, buf, 4);
+    int32_t test3 = rtc[0].ioctl.write(&file, buf, 4);
 
     // Test 1 should pass, all else should fail.
     if (test1 != -1 || test2 == -1 || test3 == -1) {
@@ -740,7 +740,7 @@ int32_t rtc_test_write() {
         return FAIL;
     }
 
-    rtc[0].ioctl.close(&fd);
+    rtc[0].ioctl.close(&file);
 
     return 0;
 }
@@ -755,7 +755,7 @@ int32_t rtc_test_write() {
  */
 int32_t rtc_sanity_check() {
 
-    printf("NULL FILE DESCRIPTOR TEST\n");
+    printf("NULL FILE STRUCT TEST\n");
     int32_t test1 = rtc[0].ioctl.open(NULL, (uint8_t*)"RTC0", 0);
     uint8_t buf[100];
     buf[0]=4;

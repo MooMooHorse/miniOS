@@ -101,66 +101,66 @@ int32_t execute (const uint8_t* command){
     return ret;
 
 }
-int32_t read (uint32_t fd, void* buf, uint32_t nbytes){
-    fd_t* fd_entry;
+int32_t read (uint32_t file, void* buf, uint32_t nbytes){
+    file_t* file_entry;
     sti();
-    if((fd_entry=get_fd_entry(fd))==NULL){
-        printf("invalid file descriptor\n");
+    if((file_entry=get_file_entry(file))==NULL){
+        printf("invalid file struct\n");
         return -1; /* errono to be defined */
     }
-    return fd_entry->file_operation_jump_table.read(fd_entry,buf,nbytes);
+    return file_entry->file_operation_jump_table.read(file_entry,buf,nbytes);
 }
 int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
-    fd_t* fd_entry;
+    file_t* file_entry;
     sti();
-    if((fd_entry=get_fd_entry(fd))==NULL){
-        printf("invalid file descriptor\n");
+    if((file_entry=get_file_entry(fd))==NULL){
+        printf("invalid file struct\n");
         return -1; /* errono to be defined */
     }
-    return fd_entry->file_operation_jump_table.write(fd_entry,buf,nbytes);
+    return file_entry->file_operation_jump_table.write(file_entry,buf,nbytes);
     
 }
 
 int32_t open (const uint8_t* filename){
     /* terminal is opened in exec, not in this system call */
-    fd_t* fd_entry;
-    uint32_t pid=get_pid(),i,fdnum;
-    uint8_t if_fd_empty=0;
+    file_t* file_entry;
+    uint32_t pid=get_pid(),i,filenum;
+    uint8_t if_file_empty=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    /* search for all file descriptors, trying to find one that is not occupied */
-    for(i=0;i<_pcb_ptr->fdnum;i++){
-        if(!(_pcb_ptr->fd_entry[i].flags&F_OPEN)){
-            if((fd_entry=get_fd_entry(fdnum=i))==NULL){
-                printf("invalid file descriptor\n");
+    /* search for all file structs, trying to find one that is not occupied */
+    for(i=0;i<_pcb_ptr->filenum;i++){
+        if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
+            if((file_entry=get_file_entry(filenum=i))==NULL){
+                printf("invalid file struct\n");
                 return -1; /* errono to be defined */
             }
-            if_fd_empty=1;
+            if_file_empty=1;
             break;
         }
     }
-    if(!if_fd_empty){
-        fdnum=_pcb_ptr->fdnum++;
-        if((fd_entry=get_fd_entry(fdnum))==NULL){
-            printf("invalid file descriptor\n");
+    if(!if_file_empty){
+        filenum=_pcb_ptr->filenum++;
+        if((file_entry=get_file_entry(filenum))==NULL){
+            printf("invalid file struct\n");
             return -1; /* errono to be defined */
         }
     }
     if(strncmp((int8_t*)"RTC",(int8_t*)filename,4)==0){
-        if(rtc[0].ioctl.open(fd_entry,filename,2)==-1){
+        if(rtc[0].ioctl.open(file_entry,filename,2)==-1){
             return -1;
         }
     }
     else{
-        if(readonly_fs.openr(fd_entry,filename,0)==-1){
+        if(readonly_fs.openr(file_entry,filename,0)==-1){
             return -1;
         }
     }
-    return fdnum;
+    return filenum;
 }
 int32_t close (uint32_t fd){
-    fd_t* fd_entry;
-    fd_entry=get_fd_entry(fd);
-    return fd_entry->file_operation_jump_table.close(fd_entry);
+    file_t* file_entry;
+    file_entry=get_file_entry(fd);
+    return file_entry->file_operation_jump_table.close(file_entry);
 }
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
     return 0;

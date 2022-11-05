@@ -38,7 +38,7 @@ terminal_init(void) {
  * @sideeffect Initializes `input` buffer indices.
  */
 int32_t
-terminal_open(__attribute__((unused)) fd_t* fd, __attribute__((unused)) const uint8_t* buf, __attribute((unused)) int32_t nbytes) {
+terminal_open(__attribute__((unused)) file_t* file, __attribute__((unused)) const uint8_t* buf, __attribute((unused)) int32_t nbytes) {
     terminal_init();
     return 0;
 }
@@ -50,41 +50,41 @@ terminal_open(__attribute__((unused)) fd_t* fd, __attribute__((unused)) const ui
  * @sideeffect Discard remaining input characters in the `input` buffer.
  */
 int32_t
-terminal_close(fd_t* fd) {
-    fd->file_operation_jump_table.close=NULL;
-    fd->file_operation_jump_table.read=NULL;
-    fd->file_operation_jump_table.write=NULL;
-    fd->file_operation_jump_table.open=NULL;
-    fd->flags=F_CLOSE;
-    fd->file_position=0;
-    fd->inode=-1;
+terminal_close(file_t* file) {
+    file->file_operation_jump_table.close=NULL;
+    file->file_operation_jump_table.read=NULL;
+    file->file_operation_jump_table.write=NULL;
+    file->file_operation_jump_table.open=NULL;
+    file->flags=F_CLOSE;
+    file->file_position=0;
+    file->inode=-1;
     input.e = input.w;  // Discard unused characters in the input buffer.
     return 0;
 }
 
 /*!
  * @brief Device driver interface. Used to read `nbytes` bytes from the terminal.
- * @param fd is file descriptor (unused).
+ * @param file is file struct (unused).
  * @param buf is pointer to input buffer.
  * @param nbytes is number of characters the caller intended to read.
  * @return number of characters actually read.
  * @sideeffect See `_terminal_read` below.
  */
 int32_t
-terminal_read(__attribute__((unused)) fd_t* fd, void* buf, int32_t nbytes) {
+terminal_read(__attribute__((unused)) file_t* file, void* buf, int32_t nbytes) {
     return _terminal_read((uint8_t*) buf, nbytes);
 }
 
 /*!
  * @brief Device driver interface. Used to write `nbytes` bytes to the terminal.
- * @param fd is file descriptor (unused).
+ * @param file is file struct (unused).
  * @param buf is pointer to input buffer.
  * @param nbytes is number of character the caller intended to write.
  * @return number of characters actually wrote.
  * @sideeffect See `_terminal_write` below.
  */
 int32_t
-terminal_write(__attribute__((unused)) fd_t* fd, const void* buf, int32_t nbytes) {
+terminal_write(__attribute__((unused)) file_t* file, const void* buf, int32_t nbytes) {
     return _terminal_write((const uint8_t*) buf, nbytes);
 }
 

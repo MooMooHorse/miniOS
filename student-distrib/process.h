@@ -39,7 +39,7 @@ typedef struct PCB{
     /* Below is file struct array (open file table) */
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */
     file_t file_entry[FILE_ARRAY_MAX];
-
+    int8_t args[128]; /* arguments */
     /* after PCB, we have kernel stack for each process */
 } pcb_t;
 

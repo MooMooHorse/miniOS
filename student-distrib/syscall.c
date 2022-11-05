@@ -49,13 +49,43 @@ int32_t execute (const uint8_t* command){
         printf("command too long : ");
         return ERR_NO_CMD;
     }
-    strcpy((int8_t*)_command,(int8_t*)command);
+    // strcpy((int8_t*)_command,(int8_t*)command);
 
+    // parse arguments from raw command stored in pcb_t
+    uint8_t args[128];
+    uint8_t start, end;
+
+    // parse command
+    start = end = 0;
+
+    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+        end++;
+    }
+
+    for (i = start; i < end; i++) {
+        _command[i - start] = command[i];
+    }
+    _command[end - start] = '\0';
+
+    // Parse argument
+    start = end + 1;
+    end = start;
+
+    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+        end++;
+    }
+    
+    for (i = start; i < end; i++) {
+        args[i - start] = command[i];
+    }
+    args[end - start] = '\0';
+
+    // Command validation
     if(readonly_fs.check_exec(_command)!=1){
         return ERR_NO_CMD;
     }
 
-    /* Attemp to find new pid, if none of in-stack pcb is availabe, allocate space for it */
+    /* Attempt to find new pid, if none of in-stack pcb is availabe, allocate space for it */
     pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; 
     for(i=pid-1;i>=1;i--){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
@@ -64,8 +94,6 @@ int32_t execute (const uint8_t* command){
             break;
         }
     }
-    
-
 
     ppid=get_pid();
 
@@ -89,6 +117,11 @@ int32_t execute (const uint8_t* command){
         printf("not enough space for PCB\n");
         return ERR_BAD_PID; /* errono to be defined */
     }
+
+    /* copy arguments to PCB */
+    pcb_t *arg_pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+    strcpy((int8_t*)arg_pcb_ptr->args, (int8_t*)args);
+
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
     /* iret */
@@ -165,9 +198,32 @@ int32_t close (uint32_t fd){
     file_entry=get_file_entry(fd);
     return file_entry->fops.close(file_entry);
 }
+
+/**
+ * @brief Reads program's arguments from its respective pcb_t into a user-level buffer.
+ * 
+ * @param buf Pointer to the buffer to be filled with the arguments.
+ * @param nbytes Number of bytes to be read.
+ * @return int32_t 0 on success, -1 on failure.
+ * SIDE EFFECT: buf is filled with the arguments.
+ */
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
+    // super quick sanity check
+    if (buf == NULL) {
+        // if buf is NULL, return -1
+        return -1;
+    }
+
+    // get pointer to pcb_t
+    uint32_t pid = get_pid();
+    pcb_t* _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+
+    // copy args to pcb_ptr->args
+    strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);
+
     return 0;
 }
+
 int32_t vidmap (uint8_t** screen_start){
     return 0;
 }

@@ -134,6 +134,9 @@ keyboard_handler(void) {
                     input.buf[input.e++ % INPUT_SIZE] = ' ';
                 }
                 break;
+            case C('C'):
+                halt(0);  // Assume normal termination for now.
+                break;
             case C('L'):
                 clear();
                 printf("391OS> ");

@@ -243,10 +243,12 @@ discard_proc(uint32_t pid,uint32_t status){
     }else if(pid==0){
         PCB_ptr=PCB_BASE; /* discard all process */
         printf("shell respawn\n");
-        execute("shell");
+        execute((uint8_t*)"shell");
     }
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
     _pcb_ptr->active=0; /* turn off old pcb */
+    close(0);
+    close(1);
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;
@@ -260,7 +262,7 @@ discard_proc(uint32_t pid,uint32_t status){
         /* TODO : think about return value here */
         /* enforce shell to boot here, because execute restart the stack, regardless of */
         /* what you leave on stack right now, you don't need recover stack frame now */
-        execute("shell");
+        execute((uint8_t*)"shell");
     }
     else{
         if((PCB_BASE-pid*PCB_SIZE)==PCB_ptr)

@@ -148,7 +148,6 @@ int32_t open (const uint8_t* filename){
         }
     }
     else{
-        printf("normal\n");
         if(readonly_fs.openr(fd_entry,filename,0)==-1){
             return -1;
         }

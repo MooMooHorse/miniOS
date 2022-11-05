@@ -25,8 +25,9 @@
  */
 
 extern void install_syscall();
-extern int32_t execute (const uint8_t* command);
-extern int32_t halt (uint8_t status);
+extern int32_t execute(const uint8_t* command);
+extern int32_t halt(uint8_t status);
+extern int32_t close(uint32_t fd);
 #endif
 
 #endif

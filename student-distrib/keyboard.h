@@ -18,6 +18,7 @@
 
 #include "types.h"
 #include "i8259.h"
+#include "syscall.h"
 #include "lib.h"
 
 #define KEYBOARD_IRQ    0x01

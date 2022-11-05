@@ -25,7 +25,7 @@ static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t *buf, uint32_t
 static int32_t fake_write(void);
 static int32_t openr(file_t *ret, const uint8_t *fname, int32_t findex);
 static int32_t file_open(file_t *ret, const uint8_t *fname, int32_t findex);
-static int32_t direcotry_open(file_t *ret, const uint8_t *fname, int32_t findex);
+static int32_t directory_open(file_t *ret, const uint8_t *fname, int32_t findex);
 static int32_t file_read(file_t *file, void *buf, int32_t nbytes);
 static int32_t directory_read(file_t *file, void *buf, int32_t nbytes);
 static int32_t file_write(file_t *file, const void *buf, int32_t nbytes);
@@ -95,7 +95,7 @@ open_fs(uint32_t addr)
     readonly_fs.f_ioctl.read = file_read;
     readonly_fs.f_ioctl.write = file_write;
     /* install ioctl for directory to file system */
-    readonly_fs.d_ioctl.open = direcotry_open;
+    readonly_fs.d_ioctl.open = directory_open;
     readonly_fs.d_ioctl.close = directory_close;
     readonly_fs.d_ioctl.read = directory_read;
     readonly_fs.d_ioctl.write = directory_write;
@@ -131,7 +131,7 @@ static int32_t openr(file_t *ret, const uint8_t *fname, int32_t findex)
     dentry_t dentry;
     readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
     if (dentry.filetype == DESCRIPTOR_ENTRY_DIR)
-        return direcotry_open(ret, fname, findex);
+        return directory_open(ret, fname, findex);
     return file_open(ret, fname, findex);
 }
 
@@ -172,7 +172,7 @@ file_open(file_t *ret, const uint8_t *fname, int32_t findex)
  * @return ** int32_t 0 on sccess, -1 on failure
  */
 static int32_t
-direcotry_open(file_t *ret, const uint8_t *fname, int32_t findex)
+directory_open(file_t *ret, const uint8_t *fname, int32_t findex)
 {
     dentry_t dentry;
     if (ret == NULL || fname == NULL)

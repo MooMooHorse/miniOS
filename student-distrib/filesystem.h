@@ -5,36 +5,31 @@
 /* flags for file struct table */
 /* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
 #define DESCRIPTOR_ENTRY_RTC      0
-#define DESCRIPTOR_ENTRY_DIR      1 
+#define DESCRIPTOR_ENTRY_DIR      1
 #define DESCRIPTOR_ENTRY_FILE     2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
 #define F_OPEN                    (1<<2)
 #define F_CLOSE                   0
 
-
 /* directory entry, 64 Bytes*/
-typedef struct 
-dentry{
+typedef struct
+dentry {
     uint8_t filename[33];
     uint32_t filetype;
     uint32_t inode_num;
     uint32_t reserved[6];
-}dentry_t;
-
-
-
+} dentry_t;
 
 /**
  * @brief jump table for file system read_write operation
  */
-typedef struct 
-filesystem_jump_table{
-    int32_t (*read_dentry_by_name) (const uint8_t*, dentry_t*);
-	int32_t (*read_dentry_by_index) (uint32_t, dentry_t*);
-	int32_t (*read_data) (uint32_t, uint32_t, uint8_t*, uint32_t);
-    int32_t (*write) (void);
+typedef struct
+filesystem_jump_table {
+    int32_t (* read_dentry_by_name)(const uint8_t*, dentry_t*);
+    int32_t (* read_dentry_by_index)(uint32_t, dentry_t*);
+    int32_t (* read_data)(uint32_t, uint32_t, uint8_t*, uint32_t);
+    int32_t (* write)(void);
 } fsjmp_t;
-
 
 /**
  * @brief File system structure.
@@ -57,18 +52,20 @@ filesystem_jump_table{
  * filename_size - the size of a filename stored in dentry 
  * (Note we can miss '/0' according to Appendix A, so we need 33 bytes to store the filename)
  */
-typedef struct 
-filesystem{
+typedef struct
+filesystem {
     fsjmp_t f_rw; /* file system read/write operations*/
-    int32_t (*openr)(file_t*, const uint8_t*, int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
+    int32_t (* openr)(file_t*,
+                      const uint8_t*,
+                      int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
     fops_t f_ioctl; /* file system ioctl */
     fops_t d_ioctl;
-    int32_t (*open_fs)(uint32_t addr); /* this installs ioctl to file system */
-    int32_t (*close_fs)(void);
-    int32_t (*load_prog)(const uint8_t*,uint32_t,uint32_t);
+    int32_t (* open_fs)(uint32_t addr); /* this installs ioctl to file system */
+    int32_t (* close_fs)(void);
+    int32_t (* load_prog)(const uint8_t*, uint32_t, uint32_t);
     /* A series of shared variables you might want to make use of */
-    uint32_t file_num; 
-    uint32_t r_times,w_times;
+    uint32_t file_num;
+    uint32_t r_times, w_times;
     uint32_t sys_st_addr;
     uint32_t sys_ed_addr;
     uint32_t iblock_num;

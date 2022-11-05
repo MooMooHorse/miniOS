@@ -12,7 +12,7 @@
 #define SYS_SET_HANDLER  9
 #define SYS_SIGRETURN  10
 
-#define CMD_MAX_LEN 30
+#define CMD_MAX_LEN 128
 #define ARG_MAX_NUM 10
 
 #ifndef ASM

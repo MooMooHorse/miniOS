@@ -274,7 +274,6 @@ discard_proc(uint32_t pid,uint32_t status){
         open_page(PCB_BASE+(_pcb_ptr->pid-1)*PROG_SIZE); /* re-open last program */
         /* recover stack frame, return in exec() */
         asm volatile("            \n\
-        andl $0xff,%%eax          \n\
         movl %%ebx,%%esp          \n\
         movl %%ecx,%%ebp          \n\
         leave                     \n\

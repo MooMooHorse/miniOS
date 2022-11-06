@@ -71,7 +71,7 @@ int32_t execute (const uint8_t* command){
     start = end + 1;
     end = start;
 
-    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+    while(command[end] != '\0' && command[end] != NULL) {
         end++;
     }
     

@@ -124,8 +124,8 @@ static int32_t
 _terminal_write(const uint8_t* buf, int32_t n) {
     int i;
 
-    if (NULL == buf || n > strlen((const int8_t*) buf)) {
-        return -1;  // Invalid buffer or `n` greater than size of buffer!
+    if (NULL == buf) {
+        return -1;  // Invalid buffer.
     }
 
     for (i = 0; i < n; ++i) {

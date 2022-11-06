@@ -43,17 +43,15 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint32_t pid,ppid,i;
-    int32_t ret;
+    uint8_t args[CMD_MAX_LEN];
+    uint32_t pid,ppid,i,ret;
+    uint8_t start, end;
     if(strlen((int8_t*) command)>=CMD_MAX_LEN){
         printf("command too long : ");
         return ERR_NO_CMD;
     }
     // strcpy((int8_t*)_command,(int8_t*)command);
 
-    // parse arguments from raw command stored in pcb_t
-    uint8_t args[128];
-    uint8_t start, end;
 
     // parse command
     start = end = 0;

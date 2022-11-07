@@ -138,16 +138,22 @@ int32_t execute (const uint8_t* command){
     return ret;
 
 }
-int32_t read (uint32_t file, void* buf, uint32_t nbytes){
+int32_t read (int32_t fd, void* buf, uint32_t nbytes){
+    if(fd<0||fd>=FILE_ARRAY_MAX){
+        return -1;
+    }
     file_t* file_entry;
     sti();
-    if((file_entry=get_file_entry(file))==NULL){
+    if((file_entry=get_file_entry(fd))==NULL){
         printf("invalid file struct\n");
         return -1; /* errono to be defined */
     }
     return file_entry->fops.read(file_entry, buf, nbytes);
 }
-int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
+int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
+    if(fd<0||fd>=FILE_ARRAY_MAX){
+        return -1;
+    }
     file_t* file_entry;
     sti();
     if((file_entry=get_file_entry(fd))==NULL){
@@ -165,6 +171,19 @@ int32_t open (const uint8_t* filename){
     uint8_t if_file_empty=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     /* search for all file structs, trying to find one that is not occupied */
+    // dentry_t dentry;
+    // if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
+    //     printf("no such file\n");
+    //     return -1;
+    // }
+    // for(i=0;i<FILE_ARRAY_MAX;i++){
+    //     if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
+    //     return -1;
+    //     }
+    // }
+    if(filename[0]=='\0'){
+        return -1;
+    }
     for(i=0;i<_pcb_ptr->filenum;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
             if((file_entry=get_file_entry(filenum=i))==NULL){
@@ -194,7 +213,10 @@ int32_t open (const uint8_t* filename){
     }
     return filenum;
 }
-int32_t close (uint32_t fd){
+int32_t close (int32_t fd){
+    if(fd<0||fd>=FILE_ARRAY_MAX){
+        return -1;
+    }
     file_t* file_entry;
     file_entry=get_file_entry(fd);
     return file_entry->fops.close(file_entry);

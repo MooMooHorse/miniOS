@@ -62,6 +62,6 @@ typedef uint32_t* pgtbl_t;      // 1024 PTEs.
 void vm_init(void);
 
 /* Map one extended page for user program. */
-void uvmmap_ext(uint32_t pa);
+int32_t uvmmap_ext(uint32_t pa);
 
 #endif /* _MMU_H */

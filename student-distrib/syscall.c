@@ -96,7 +96,9 @@ int32_t execute (const uint8_t* command){
     ppid=get_pid();
 
     /* program is under PCB base */
-    uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE); /* assume never fail, TLB flushed */
+    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
+        return ERR_VM_FAILURE;
+    } /* TLB flushed */
 
     /* program loader */
     if(readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE)==-1){

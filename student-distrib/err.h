@@ -10,6 +10,7 @@
 #define ERR_EXCEPTION 256 /* stipulated */
 #define ERR_FS_READ 257  /* self-defined */
 #define ERR_BAD_PID 258  /* self-defined */
+#define ERR_VM_FAILURE 259  /* self-defined */
 
 #ifndef ASM
 #include "types.h"

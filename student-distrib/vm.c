@@ -59,12 +59,13 @@ vm_init(void)
  * @param pa is *4MB-aligned* physical address where user virtual memory starting at 128MB (0x08000000) is mapped to.
  * @return 0 if succeeded, -1 otherwise (`pa` is not 4MB-aligned).
  */
-void
+int32_t
 uvmmap_ext(uint32_t pa){
     if (pa << (PTESIZE - PDXOFF)) {
-        return;  // Physical address not 4MB-aligned.
+        return -1;  // Physical address not 4MB-aligned.
     }
     pgdir[PDX(VPROG_START_ADDR)] = pa | PAGE_P | PAGE_RW | PAGE_PS | PAGE_U; /* remap address starting from 128MB */
     lcr3((uint32_t) pgdir); /* flush TLB */
+    return 0;
 }
 

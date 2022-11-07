@@ -52,7 +52,6 @@ int32_t execute (const uint8_t* command){
     }
     // strcpy((int8_t*)_command,(int8_t*)command);
 
-
     // parse command
     start = end = 0;
 
@@ -64,23 +63,24 @@ int32_t execute (const uint8_t* command){
         _command[i - start] = command[i];
     }
     _command[end - start] = '\0';
-
-    // Parse argument
-    start = end + 1;
-    end = start;
-
-    while(command[end] != '\0' && command[end] != NULL) {
-        end++;
-    }
     
-    for (i = start; i < end; i++) {
-        args[i - start] = command[i];
-    }
-    args[end - start] = '\0';
+    if(command[end]!='\0'){
+        // Parse argument
+        start = end + 1;
+        end = start;
 
-    // Command validation
-    if(readonly_fs.check_exec(_command)!=1){
-        return ERR_NO_CMD;
+        while(command[end] != '\0' && command[end] != NULL) {
+            end++;
+        }
+        
+        for (i = start; i < end; i++) {
+            args[i - start] = command[i];
+        }
+        args[end - start] = '\0';
+        // Command validation
+        if(readonly_fs.check_exec(_command)!=1){
+            return ERR_NO_CMD;
+        }
     }
 
     /* Attempt to find new pid, if none of in-stack pcb is availabe, allocate space for it */
@@ -94,6 +94,7 @@ int32_t execute (const uint8_t* command){
     }
 
     ppid=get_pid();
+
 
     /* program is under PCB base */
     open_page((pid-1)*PROG_SIZE+PCB_BASE); /* assume never fail, TLB flushed */

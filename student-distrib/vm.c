@@ -62,9 +62,6 @@ vm_init(void)
  */
 int32_t
 open_page(uint32_t addr){
-    if(addr!=(8<<20)&&addr!=(12<<20)){
-        return -1;
-    }
     pgdir[PDX(VPROG_START_ADDR)]=addr|PAGE_P|PAGE_RW|PAGE_PS|PAGE_U; /* remap address starting from 128MB */
     lcr3((uint32_t)pgdir); /* flush TLB */
     return 0;

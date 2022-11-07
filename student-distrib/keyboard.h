@@ -32,7 +32,7 @@
 #define SHIFT           (1 << 0)
 #define CTRL            (1 << 1)
 #define ALT             (1 << 2)
-#define CAPSLOCK        (1 << 2)
+#define CAPSLOCK        (1 << 3)
 
 /*!
  * @brief Circular buffer used to store keyboard input.

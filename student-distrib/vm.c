@@ -39,7 +39,7 @@ vm_init(void)
     );
 
     // Set page directory.
-    lcr3(pgdir);
+    lcr3((uint32_t) pgdir);
 
     // Turn on paging.
     asm volatile(
@@ -65,6 +65,6 @@ uvmmap_ext(uint32_t pa){
         return;  // Physical address not 4MB-aligned.
     }
     pgdir[PDX(VPROG_START_ADDR)] = pa | PAGE_P | PAGE_RW | PAGE_PS | PAGE_U; /* remap address starting from 128MB */
-    lcr3(pgdir); /* flush TLB */
+    lcr3((uint32_t) pgdir); /* flush TLB */
 }
 

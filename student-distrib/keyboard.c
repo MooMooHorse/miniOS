@@ -45,6 +45,8 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
     [28] = '\n' /* \r */, [38] = C('L'), [46] = C('C')
 };
 
+static const uint8_t map_alt[MAP_SIZE] = {};
+
 // Complete CTRL map.
 /* static const uint8_t map_ctrl[MAP_SIZE] = { */
 /*     [16] = C('Q'), C('W'), C('E'), C('R'), C('T'), C('Y'), C('U'), C('I'), */
@@ -63,9 +65,10 @@ static const uint8_t map_mod_xor[MAP_SIZE] = {
     [0x3A] = CAPSLOCK  // Others currently not supported.
 };
 
-// So we can use `code & (SHIFT | CTRL)` to select the corresponding map.
-static const uint8_t* const map[4] = {
-    map_basics, map_shift, map_ctrl, map_ctrl  // SHIFT ignored when CTRL is pressed.
+// So we can use `code & (ALT | CTRL | SHIFT)` to select the corresponding map.
+static const uint8_t* const map[8] = {
+    map_basics, map_shift, map_ctrl, map_ctrl,  // SHIFT ignored when CTRL is pressed.
+    map_alt, map_alt, map_alt, map_alt  // Redirect characters with ALT pressed to empty map for now.
 };
 
 /**
@@ -103,7 +106,7 @@ kgetc(void) {
     // Update modifier key status. No effect if none is active.
     mod |= map_mod_or[code];
     mod ^= map_mod_xor[code];
-    c = map[mod & (SHIFT | CTRL)][code];
+    c = map[mod & (ALT | CTRL | SHIFT)][code];
     if (mod & CAPSLOCK) {  // CAPS LOCK reverts the cases of alphabetics.
         c = ISLOWER(c) ? TOUPPER(c) : ISUPPER(c) ? TOLOWER(c) : c;
     }

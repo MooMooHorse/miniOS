@@ -618,26 +618,6 @@ int32_t filesystem_ioctl_test7() {
 }
 
 /*!
- * @brief This function tests the buffer overflow handling of `terminal_write`
- * by passing it a 16-character long buffer and ask it to write 32 characters.
- * @param None.
- * @return PASS or FAIL.
- * @sideeffect None.
- */
-int32_t
-terminal_write_overflow_test(void) {
-    file_t file;  // Unused.
-    uint8_t buf[16] = "abcdefghijklmno";
-
-    if (-1 != terminal_write(&file, buf, 32)) {  // More # characters than buffer size!
-        assertion_failure();
-        return FAIL;
-    }
-
-    return PASS;
-}
-
-/*!
  * @brief This function repeatedly calls `terminal_read` and attempts to read 32 characters.
  * Then it outputs the characters actually read from the `input` buffer.
  * @param None.
@@ -827,7 +807,6 @@ void launch_tests(){
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test5());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test6());
     // TEST_OUTPUT("filesystem_ioctl_test",filesystem_ioctl_test7());
-    // TEST_OUTPUT("terminal_write_overflow_test", terminal_write_overflow_test());
     // TEST_OUTPUT("terminal_io_test", terminal_io_test());
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());

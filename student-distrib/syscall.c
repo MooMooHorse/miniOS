@@ -77,10 +77,10 @@ int32_t execute (const uint8_t* command){
             args[i - start] = command[i];
         }
         args[end - start] = '\0';
-        // Command validation
-        if(readonly_fs.check_exec(_command)!=1){
-            return ERR_NO_CMD;
-        }
+    }
+    // Command validation
+    if(readonly_fs.check_exec(_command)!=1){
+        return ERR_NO_CMD;
     }
 
     /* Attempt to find new pid, if none of in-stack pcb is availabe, allocate space for it */

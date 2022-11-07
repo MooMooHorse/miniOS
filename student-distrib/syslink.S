@@ -20,9 +20,9 @@ _orig_eax:
 
 syscall_entry:
     cmpl $1,%eax
-    jl   syscall_done
+    jl   syscall_bad
     cmpl $SYSCALL_NUM,%eax
-    jg   syscall_done
+    jg   syscall_bad
 
     pushal
     pushfl
@@ -37,6 +37,9 @@ syscall_entry:
     popal
     movl _orig_eax,%eax # make return value in eax
 syscall_done:
+    iret
+syscall_bad:
+    movl $-1,%eax
     iret
 
 

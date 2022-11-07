@@ -16,6 +16,7 @@
 #include "syscall.h"
 #include "mmu.h"
 #include "err.h"
+#include "tests.h"
 /**
  * @brief Create PID by modifying PCB_ptr
  * 
@@ -249,8 +250,16 @@ discard_proc(uint32_t pid,uint32_t status){
     }
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
     _pcb_ptr->active=0; /* turn off old pcb */
+    #ifdef RUN_TESTS_OPEN
+    test_open(&_pcb_ptr->file_entry[0]);
+    test_open(&_pcb_ptr->file_entry[1]);
+    #endif
     close(0);
     close(1);
+    #ifdef RUN_TESTS_CLOSE
+    test_close(&_pcb_ptr->file_entry[0]);
+    test_close(&_pcb_ptr->file_entry[1]);
+    #endif
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;

@@ -18,6 +18,7 @@
 
 // Constants.
 #define PGSIZE          4096                // Bytes per page.
+#define PTESIZE         32                  // Size of a PDE/PTE in bits.
 #define PTXOFF          12                  // Offset of PTX in a virtual address.
 #define PDXOFF          22                  // Offset of PDX in a virtual address.
 #define PAGE_P          (1L << 0)           // Present
@@ -60,8 +61,7 @@ typedef uint32_t* pgtbl_t;      // 1024 PTEs.
 /* Set up page dir and page table. Enable paging. */
 void vm_init(void);
 
-/* open a page for program starting at PHYSICAL memory address addr */
-extern int32_t open_page(uint32_t addr);
-
+/* Map one extended page for user program. */
+void uvmmap_ext(uint32_t pa);
 
 #endif /* _MMU_H */

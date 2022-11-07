@@ -271,7 +271,7 @@ discard_proc(uint32_t pid,uint32_t status){
 
         _pcb_ptr=(pcb_t*)(PCB_BASE-ppid*PCB_SIZE); /* recover pid */
         recover_tss(_pcb_ptr); /* recover tss */
-        open_page(PCB_BASE+(_pcb_ptr->pid-1)*PROG_SIZE); /* re-open last program */
+        uvmmap_ext(PCB_BASE+(_pcb_ptr->pid-1)*PROG_SIZE); /* re-open last program */
         /* recover stack frame, return in exec() */
         asm volatile("            \n\
         movl %%ebx,%%esp          \n\

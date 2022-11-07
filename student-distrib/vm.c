@@ -39,7 +39,7 @@ vm_init(void)
     );
 
     // Set page directory.
-    lcr3((uint32_t) pgdir);
+    lcr3(pgdir);
 
     // Turn on paging.
     asm volatile(
@@ -55,15 +55,16 @@ vm_init(void)
 
 
 /**
- * @brief Open paging for program image
- * @param addr - physical address where you want to map from 128MB (0x08000000) to
- * @return ** int32_t - -1 on illegal memory (besides 8 MB and 12MB)
- * 0 on open page success 
+ * @brief This function maps 1 extended page (4MB) for program image.
+ * @param pa is *4MB-aligned* physical address where user virtual memory starting at 128MB (0x08000000) is mapped to.
+ * @return 0 if succeeded, -1 otherwise (`pa` is not 4MB-aligned).
  */
-int32_t
-open_page(uint32_t addr){
-    pgdir[PDX(VPROG_START_ADDR)]=addr|PAGE_P|PAGE_RW|PAGE_PS|PAGE_U; /* remap address starting from 128MB */
-    lcr3((uint32_t)pgdir); /* flush TLB */
-    return 0;
+void
+uvmmap_ext(uint32_t pa){
+    if (pa << (PTESIZE - PDXOFF)) {
+        return;  // Physical address not 4MB-aligned.
+    }
+    pgdir[PDX(VPROG_START_ADDR)] = pa | PAGE_P | PAGE_RW | PAGE_PS | PAGE_U; /* remap address starting from 128MB */
+    lcr3(pgdir); /* flush TLB */
 }
 

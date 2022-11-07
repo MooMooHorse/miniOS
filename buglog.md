@@ -2,26 +2,29 @@
 
 ## CP 1 Bug Log
 
-| Stat                                                 | Bug No. |
-| ---------------------------------------------------- | ------- |
-| :white_check_mark:                                   | `000`   |
-| :white_check_mark:                                   | `001`   |
-| :white_check_mark:                                   | `002`   |
-| :white_check_mark:                                   | `003`   |
-| :white_check_mark:                                   | `004`   |
-| Potential, Harmless for cp1, will "fix" in later cps | `005`   |
-| :white_check_mark:                                   | `006`   |
-| :white_check_mark:                                   | `007`   |
-| :white_check_mark:                                   | `008`   |
-| :white_check_mark:                                   | `009`   |
-| :white_check_mark:                                   | `010`   |
-| :white_check_mark:                                   | `011`   |
-| :white_check_mark:                                   | `012`   |
-| :white_check_mark:                                   | `013`   |
-| :white_check_mark:                                   | `014`   |
-| :white_check_mark:                                   | `015`   |
-| Waiting for good fix                                 | `014`   |
-| :white_check_mark:                                   | `015`   |
+| Stat               | Bug No. |
+| ------------------ | ------- |
+| :white_check_mark: | `000`   |
+| :white_check_mark: | `001`   |
+| :white_check_mark: | `002`   |
+| :white_check_mark: | `003`   |
+| :white_check_mark: | `004`   |
+| :white_check_mark: | `005`   |
+| :white_check_mark: | `006`   |
+| :white_check_mark: | `007`   |
+| :white_check_mark: | `008`   |
+| :white_check_mark: | `009`   |
+| :white_check_mark: | `010`   |
+| :white_check_mark: | `011`   |
+| :white_check_mark: | `012`   |
+| :white_check_mark: | `013`   |
+| :white_check_mark: | `014`   |
+| :white_check_mark: | `015`   |
+| :white_check_mark: | `014`   |
+| :white_check_mark: | `015`   |
+| :white_check_mark: | `016`   |
+| :white_check_mark: | `017`   |
+| :white_check_mark: | `018`   |
 
 ### Bug `#000`
 **Description**  
@@ -220,3 +223,33 @@ PID index out of bound
 **Resolution**  
 
 Base address of PID is larger than PID top.
+
+#### Bug `#016`
+
+**Description**
+
+Can't run multi-processing
+
+**Resolution**  
+
+* Bad sanity check
+
+#### Bug `#017`
+
+**Description**
+
+Always return -1 on bad result
+
+**Resolution**  
+
+* Add error number in `err.c` `err.h`
+
+#### Bug `#018`
+
+**Description**
+
+getarg only one arg
+
+**Resolution**  
+
+* stop checking `\0`

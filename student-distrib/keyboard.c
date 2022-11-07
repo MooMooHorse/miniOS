@@ -30,14 +30,14 @@ static const uint8_t map_basics[MAP_SIZE] = {
     [2] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a',
     's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x',
-    'c', 'v', 'b', 'n', 'm', ',', '.', '/', [MAP_SIZE - 1] = ' '
+    'c', 'v', 'b', 'n', 'm', ',', '.', '/', [57] = ' '
 };
 
 static const uint8_t map_shift[MAP_SIZE] = {
     [2] = '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A',
     'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X',
-    'C', 'V', 'B', 'N', 'M', '<', '>', '?', [MAP_SIZE - 1] = ' '
+    'C', 'V', 'B', 'N', 'M', '<', '>', '?', [57] = ' '
 };
 
 #define C(x) ((x) - '@')
@@ -54,12 +54,12 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
 /* }; */
 
 // Scan Code --> Bitmask in `mod`.
-static const uint8_t map_mod_or[MOD_MAP_SIZE] = {
+static const uint8_t map_mod_or[MAP_SIZE] = {
     [0x2A] = SHIFT, [0x36] = SHIFT, [0x1D] = CTRL, [0x38] = ALT
 };
 
 // Scan Code --> Bitmask in `mod`.
-static const uint8_t map_mod_xor[MOD_MAP_SIZE] = {
+static const uint8_t map_mod_xor[MAP_SIZE] = {
     [0x3A] = CAPSLOCK  // Others currently not supported.
 };
 

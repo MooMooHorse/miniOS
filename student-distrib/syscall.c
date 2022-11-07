@@ -182,8 +182,8 @@ int32_t open (const uint8_t* filename){
             return -1; /* errono to be defined */
         }
     }
-    if(strncmp((int8_t*)"RTC",(int8_t*)filename,4)==0){
-        if(rtc[0].ioctl.open(file_entry,filename,2)==-1){
+    if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
+        if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
             return -1;
         }
     }

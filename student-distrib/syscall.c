@@ -95,20 +95,9 @@ int32_t execute (const uint8_t* command){
 
     ppid=get_pid();
 
-
-    /* program is under PCB base */
-    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
-        return ERR_VM_FAILURE;
-    } /* TLB flushed */
-
-    /* program loader */
-    if(readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE)==-1){
-        return ERR_FS_READ; 
-    }
-    
     /* create PCB */
     if(pcb_create(pid)==-1){
-        printf("illegal pid\n");
+        printf("too many executable\n");
         return ERR_BAD_PID; /* errono to be defined */
     }
 
@@ -118,6 +107,17 @@ int32_t execute (const uint8_t* command){
         printf("not enough space for PCB\n");
         return ERR_BAD_PID; /* errono to be defined */
     }
+
+    /* program is under PCB base */
+    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
+        return ERR_VM_FAILURE;
+    } /* TLB flushed */
+
+    /* to this point, everything is checked, nothing should fail */
+
+    /* program loader */
+    readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE);
+    
 
     /* copy arguments to PCB */
     pcb_t *arg_pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
@@ -171,20 +171,20 @@ int32_t open (const uint8_t* filename){
     uint8_t if_file_empty=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     /* search for all file structs, trying to find one that is not occupied */
-    // dentry_t dentry;
-    // if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
-    //     printf("no such file\n");
-    //     return -1;
-    // }
-    // for(i=0;i<FILE_ARRAY_MAX;i++){
-    //     if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
-    //     return -1;
-    //     }
-    // }
+    dentry_t dentry;
+    if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
+        printf("no such file\n");
+        return -1;
+    }
+    for(i=0;i<FILE_ARRAY_MAX;i++){
+        if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
+        return -1;
+        }
+    }
     if(filename[0]=='\0'){
         return -1;
     }
-    for(i=0;i<_pcb_ptr->filenum;i++){
+    for(i=0;i<FILE_ARRAY_MAX;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
             if((file_entry=get_file_entry(filenum=i))==NULL){
                 printf("invalid file struct\n");

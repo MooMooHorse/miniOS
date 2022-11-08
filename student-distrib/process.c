@@ -241,7 +241,7 @@ get_file_entry(uint32_t fd){
     uint32_t pid;
     pid=get_pid();
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(fd<0||fd>=_pcb_ptr->filenum) return NULL;
+    if(fd<0||fd>=FILE_ARRAY_MAX) return NULL;
     return &(_pcb_ptr->file_entry[fd]);
 }
 

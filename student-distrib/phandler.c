@@ -107,7 +107,7 @@ install_exception_hanlder() {
     for (i = 0; i < 20; i++) {
         if (is_exception_reserved(i))
             continue;
-        SET_IDT_ENTRY(idt[i], execption_hanlder_jump_table[i]);
+        SET_IDT_ENTRY(idt[i], exception_hanlder_jump_table[i]);
     }
 }
 

@@ -17,7 +17,7 @@
 
 
 /* jump table for exception hanlder */
-extern uint32_t execption_hanlder_jump_table[21];
+extern uint32_t exception_hanlder_jump_table[21];
 #endif /* ASM */
 #endif
 

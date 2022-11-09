@@ -7,12 +7,12 @@
 /* assembly linkage for exceptions */
 .text
 
-.globl execption_hanlder_jump_table
+.globl exception_hanlder_jump_table
 
 .align 4
 
 /* jump table for exception hanlder, in total 21, because of reserved for intel */
-execption_hanlder_jump_table:
+exception_hanlder_jump_table:
 .long divide_zero_exception
 .long debug_exception
 .long NMI_interrupt

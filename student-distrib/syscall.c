@@ -191,17 +191,6 @@ int32_t open (const uint8_t* filename){
     uint32_t pid=get_pid(),i,filenum;
     uint8_t if_file_available=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    /* search for all file structs, trying to find one that is not occupied */
-    // dentry_t dentry;
-    // if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
-    //     printf("no such file\n");
-    //     return -1;
-    // }
-    // for(i=0;i<FILE_ARRAY_MAX;i++){
-    //     if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
-    //         return -1;
-    //     }
-    // }
     if(filename[0]=='\0'){
         return -1;
     }

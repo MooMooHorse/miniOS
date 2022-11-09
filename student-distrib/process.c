@@ -146,7 +146,6 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->active=1;
-    _pcb_ptr->filenum=2; /* STDIN and STDOUT */
     clean_up_fda(_pcb_ptr);
     init_file_entry(_pcb_ptr,0);
     init_file_entry(_pcb_ptr,1);

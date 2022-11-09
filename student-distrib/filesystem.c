@@ -130,7 +130,9 @@ open_fs(uint32_t addr) {
  */
 static int32_t openr(file_t* ret, const uint8_t* fname, int32_t findex) {
     dentry_t dentry;
-    readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
+    if(-1==readonly_fs.f_rw.read_dentry_by_name(fname, &dentry)){
+        return -1;
+    }
     if (dentry.filetype == DESCRIPTOR_ENTRY_DIR)
         return directory_open(ret, fname, findex);
     return file_open(ret, fname, findex);
@@ -500,7 +502,8 @@ read_dentry_by_index(uint32_t index, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
-    if (dentry == NULL || fname == NULL) {
+    /* file name must be non-empty : equivalent to check if each dentry has non-empty file-name */
+    if (dentry == NULL || fname == NULL || strlen((int8_t*) fname) == 0 ) {
         return -1;
     }
     if (strlen((int8_t*) fname) > readonly_fs.filename_size) {

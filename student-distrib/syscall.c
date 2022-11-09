@@ -185,21 +185,23 @@ int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
     
 }
 
+/**
+ * @brief open a file. It will return -1 under situations below
+ * 
+ * @param filename 
+ * @return ** int32_t 
+ */
 int32_t open (const uint8_t* filename){
     /* terminal is opened in exec, not in this system call */
     file_t* file_entry;
     uint32_t pid=get_pid(),i,filenum;
     uint8_t if_file_available=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(filename[0]=='\0'){
-        return -1;
-    }
     for(i=0;i<FILE_ARRAY_MAX;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
-            // printf("%d %d\n",_pcb_ptr->file_entry->flags,i);
             if((file_entry=get_file_entry(filenum=i))==NULL){
                 printf("invalid file struct\n");
-                return -1; /* errono to be defined */
+                return -1; 
             }
             if_file_available=1; /* there is availabe space for this file in fda */
             break;

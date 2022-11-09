@@ -50,6 +50,7 @@ extern void setup_tss(uint32_t pid);
 extern file_t* get_file_entry(uint32_t fd);
 extern uint32_t get_pid();
 extern int32_t discard_proc(uint32_t pid,uint32_t status);
+extern void handle_args(uint32_t pid, uint8_t * arg_string);
 
 #endif
 

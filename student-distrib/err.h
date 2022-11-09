@@ -2,8 +2,7 @@
 
 /* halt status : 0~255 : used as input to halt and user level return or exception */
 #define STATUS_NORMAL    0   /* stipulated */
-#define STATUS_EXCEPTION 255 /* self-defined */
-
+#define STATUS_EXCEPTION 250 /* self-defined */
 /* used in execute system call */
 /* errono : 32 bits integer */
 #define ERR_NO_CMD  -1    /* stipulated */

@@ -130,7 +130,9 @@ open_fs(uint32_t addr) {
  */
 static int32_t openr(file_t* ret, const uint8_t* fname, int32_t findex) {
     dentry_t dentry;
-    readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
+    if(-1==readonly_fs.f_rw.read_dentry_by_name(fname, &dentry)){
+        return -1;
+    }
     if (dentry.filetype == DESCRIPTOR_ENTRY_DIR)
         return directory_open(ret, fname, findex);
     return file_open(ret, fname, findex);
@@ -346,12 +348,15 @@ read_from_block(uint32_t* offset, uint32_t dnum, uint8_t* buf, uint32_t length, 
     if (offset == NULL || buf == NULL || buf_ptr == NULL)
         return -1;
     uint32_t data_block_addr = readonly_fs.sys_st_addr + (1 + readonly_fs.iblock_num + dnum) * readonly_fs.block_size;
+    
+    length = length > (readonly_fs.block_size-(*offset)) ? 
+    (readonly_fs.block_size-(*offset)) : length; /* length = min (length, block_size) */
+
     data_block_addr += (*offset);
     *offset = 0;
-    if (fs_sanity_check(0, data_block_addr))
-        return -1;
+    // if (fs_sanity_check(0, data_block_addr))
+    //     return -1;
     uint32_t i;
-    length = length > readonly_fs.block_size ? readonly_fs.block_size : length; /* length = min (length, block_size) */
 
     for (i = 0; i < length; i++) {
         if (fs_sanity_check(0, data_block_addr + i))
@@ -380,9 +385,9 @@ read_from_block(uint32_t* offset, uint32_t dnum, uint8_t* buf, uint32_t length, 
  */
 static int32_t
 read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
-    uint32_t data_block_num, buf_ptr = 0, read_length, ret;
+    uint32_t data_block_num, buf_ptr = 0, ret;
     uint32_t inode_addr, file_length, data_block_offset, data_block_entry_addr;
-    uint32_t max_read_length;
+    int32_t read_length,max_read_length;
     if (buf == NULL)
         return -1;
     if (fs_sanity_check(inode, readonly_fs.sys_st_addr))
@@ -497,7 +502,8 @@ read_dentry_by_index(uint32_t index, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
-    if (dentry == NULL || fname == NULL) {
+    /* file name must be non-empty : equivalent to check if each dentry has non-empty file-name */
+    if (dentry == NULL || fname == NULL || strlen((int8_t*) fname) == 0 ) {
         return -1;
     }
     if (strlen((int8_t*) fname) > readonly_fs.filename_size) {

@@ -35,7 +35,6 @@ typedef struct PCB{
     uint32_t cur_PCB_ptr; /* current pcb pointer */
     uint8_t active;
     uint8_t pname[33]; /* program name, aligned with filesystem, max length 32 : 33 with NUL*/
-    uint32_t filenum; /* number of file struct */
     /* Below is file struct array (open file table) */
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */
     file_t file_entry[FILE_ARRAY_MAX];
@@ -51,6 +50,7 @@ extern void setup_tss(uint32_t pid);
 extern file_t* get_file_entry(uint32_t fd);
 extern uint32_t get_pid();
 extern int32_t discard_proc(uint32_t pid,uint32_t status);
+extern void handle_args(uint32_t pid, uint8_t * arg_string);
 
 #endif
 

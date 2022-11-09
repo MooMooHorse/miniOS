@@ -30,20 +30,22 @@ static const uint8_t map_basics[MAP_SIZE] = {
     [2] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', '\0', 'a',
     's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', '\0', '\\', 'z', 'x',
-    'c', 'v', 'b', 'n', 'm', ',', '.', '/', [MAP_SIZE - 1] = ' '
+    'c', 'v', 'b', 'n', 'm', ',', '.', '/', [57] = ' '
 };
 
 static const uint8_t map_shift[MAP_SIZE] = {
     [2] = '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', '\0', 'A',
     'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', '\0', '|', 'Z', 'X',
-    'C', 'V', 'B', 'N', 'M', '<', '>', '?', [MAP_SIZE - 1] = ' '
+    'C', 'V', 'B', 'N', 'M', '<', '>', '?', [57] = ' '
 };
 
 #define C(x) ((x) - '@')
 static const uint8_t map_ctrl[MAP_SIZE] = {
     [28] = '\n' /* \r */, [38] = C('L'), [46] = C('C')
 };
+
+static const uint8_t map_alt[MAP_SIZE] = {};
 
 // Complete CTRL map.
 /* static const uint8_t map_ctrl[MAP_SIZE] = { */
@@ -54,18 +56,19 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
 /* }; */
 
 // Scan Code --> Bitmask in `mod`.
-static const uint8_t map_mod_or[MOD_MAP_SIZE] = {
+static const uint8_t map_mod_or[MAP_SIZE] = {
     [0x2A] = SHIFT, [0x36] = SHIFT, [0x1D] = CTRL, [0x38] = ALT
 };
 
 // Scan Code --> Bitmask in `mod`.
-static const uint8_t map_mod_xor[MOD_MAP_SIZE] = {
+static const uint8_t map_mod_xor[MAP_SIZE] = {
     [0x3A] = CAPSLOCK  // Others currently not supported.
 };
 
-// So we can use `code & (SHIFT | CTRL)` to select the corresponding map.
-static const uint8_t* const map[4] = {
-    map_basics, map_shift, map_ctrl, map_ctrl  // SHIFT ignored when CTRL is pressed.
+// So we can use `code & (ALT | CTRL | SHIFT)` to select the corresponding map.
+static const uint8_t* const map[8] = {
+    map_basics, map_shift, map_ctrl, map_ctrl,  // SHIFT ignored when CTRL is pressed.
+    map_alt, map_alt, map_alt, map_alt  // Redirect characters with ALT pressed to empty map for now.
 };
 
 /**
@@ -88,11 +91,10 @@ void keyboard_init(void) {
  */
 static int32_t
 kgetc(void) {
-    // Extract the least-significant byte.
     uint8_t c;
     uint8_t stat = inb(KEYBOARD_STAT);
     if (!(stat & 0x01)) { return -1; }  // ERROR: Empty keyboard buffer!
-    uint8_t code = inb(KEYBOARD_DATA) & SCAN_MASK;
+    uint8_t code = inb(KEYBOARD_DATA) & SCAN_MASK;  // Extract the least-significant byte.
 
     // Scan codes indicating "key release" has the HIGHEST bit set.
     if (code & RELEASE_MASK) {
@@ -104,7 +106,7 @@ kgetc(void) {
     // Update modifier key status. No effect if none is active.
     mod |= map_mod_or[code];
     mod ^= map_mod_xor[code];
-    c = map[mod & (SHIFT | CTRL)][code];
+    c = map[mod & (ALT | CTRL | SHIFT)][code];
     if (mod & CAPSLOCK) {  // CAPS LOCK reverts the cases of alphabetics.
         c = ISLOWER(c) ? TOUPPER(c) : ISUPPER(c) ? TOLOWER(c) : c;
     }

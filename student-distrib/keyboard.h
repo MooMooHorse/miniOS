@@ -27,13 +27,12 @@
 #define INPUT_SIZE      128
 #define SCAN_MASK       0xFF
 #define RELEASE_MASK    0x80
-#define MAP_SIZE        0x3A
-#define MOD_MAP_SIZE    256     // May be used to support more modifier keys.
+#define MAP_SIZE        256
 
 #define SHIFT           (1 << 0)
 #define CTRL            (1 << 1)
 #define ALT             (1 << 2)
-#define CAPSLOCK        (1 << 2)
+#define CAPSLOCK        (1 << 3)
 
 /*!
  * @brief Circular buffer used to store keyboard input.

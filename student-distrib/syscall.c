@@ -43,40 +43,42 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint8_t args[CMD_MAX_LEN];
+    uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
     uint8_t start, end;
-    if(strlen((int8_t*) command)>=CMD_MAX_LEN){
-        printf("command too long : ");
-        return ERR_NO_CMD;
+    
+    for (i = 0; i < CMD_MAX_LEN; i++) {
+        if (command[i] == '\0') {
+            break;
+        }
+        else if (i == CMD_MAX_LEN - 1) {
+            printf("command too long : ");
+            return ERR_NO_CMD;
+        }
     }
-    // strcpy((int8_t*)_command,(int8_t*)command);
-
 
     // parse command
-    start = end = 0;
+    start = 0;
 
-    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
-        end++;
+    // skip leading whitespace
+    while(command[start] == ' ' && command[start] != '\0') {
+        start++;
     }
 
-    for (i = start; i < end; i++) {
-        _command[i - start] = command[i];
+    end = start; // set starting point
+
+    // extract command
+    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+        _command[end-start] = command[end];
+        end++;
     }
     _command[end - start] = '\0';
 
-    // Parse argument
-    start = end + 1;
-    end = start;
+    for (i = 0; i < CMD_MAX_LEN - end; i++) {
+        argument_segment[i] = command[end + i];
+    }
 
-    while(command[end] != '\0' && command[end] != NULL) {
-        end++;
-    }
-    
-    for (i = start; i < end; i++) {
-        args[i - start] = command[i];
-    }
-    args[end - start] = '\0';
+    // printf("[DEBUG] command: \"%s\"\n", _command);
 
     // Command validation
     if(readonly_fs.check_exec(_command)!=1){
@@ -95,19 +97,9 @@ int32_t execute (const uint8_t* command){
 
     ppid=get_pid();
 
-    /* program is under PCB base */
-    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
-        return ERR_VM_FAILURE;
-    } /* TLB flushed */
-
-    /* program loader */
-    if(readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE)==-1){
-        return ERR_FS_READ; 
-    }
-    
     /* create PCB */
     if(pcb_create(pid)==-1){
-        printf("illegal pid\n");
+        printf("too many executable\n");
         return ERR_BAD_PID; /* errono to be defined */
     }
 
@@ -118,9 +110,18 @@ int32_t execute (const uint8_t* command){
         return ERR_BAD_PID; /* errono to be defined */
     }
 
-    /* copy arguments to PCB */
-    pcb_t *arg_pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
-    strcpy((int8_t*)arg_pcb_ptr->args, (int8_t*)args);
+    /* program is under PCB base */
+    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
+        return ERR_VM_FAILURE;
+    } /* TLB flushed */
+
+    /* to this point, everything is checked, nothing should fail */
+
+    // handle arguments
+    handle_args(pid, argument_segment);
+
+    /* program loader */
+    readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE);
 
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
@@ -137,65 +138,116 @@ int32_t execute (const uint8_t* command){
     return ret;
 
 }
-int32_t read (uint32_t file, void* buf, uint32_t nbytes){
+
+/**
+ * @brief read from a file
+ * 
+ * @param fd - fild escriptor, an integer within range of [0,FILE_ARRAY_MAX)
+ * @param buf - read buffer : user have to be responsible for buffer size
+ * @param nbytes - number of bytes to read
+ * @return ** int32_t number of bytes written -1 on failure
+ */
+int32_t read (int32_t fd, void* buf, uint32_t nbytes){
+    if(fd<0||fd>=FILE_ARRAY_MAX){
+        return -1;
+    }
     file_t* file_entry;
     sti();
-    if((file_entry=get_file_entry(file))==NULL){
-        printf("invalid file struct\n");
-        return -1; /* errono to be defined */
+
+    
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
+        return -1;
     }
     return file_entry->fops.read(file_entry, buf, nbytes);
 }
-int32_t write (uint32_t fd, const void* buf, uint32_t nbytes){
+
+/**
+ * @brief write to a file(terminal for readonly filesystem )
+ * 
+ * @param fd - fild escriptor, an integer within range of [0,FILE_ARRAY_MAX)
+ * @param buf - write buffer : user have to be responsible for buffer size
+ * @param nbytes - number of bytes to write
+ * @return ** int32_t number of bytes written -1 on failure
+ */
+int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
+    if(fd<0||fd>=FILE_ARRAY_MAX){
+        return -1;
+    }
     file_t* file_entry;
     sti();
-    if((file_entry=get_file_entry(fd))==NULL){
-        printf("invalid file struct\n");
-        return -1; /* errono to be defined */
+    
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
+        return -1;
     }
     return file_entry->fops.write(file_entry, buf, nbytes);
     
 }
 
+/**
+ * @brief open a file. It will return -1 under situations below
+ * 
+ * @param filename 
+ * @return ** int32_t 
+ */
 int32_t open (const uint8_t* filename){
     /* terminal is opened in exec, not in this system call */
     file_t* file_entry;
     uint32_t pid=get_pid(),i,filenum;
-    uint8_t if_file_empty=0;
+    uint8_t if_file_available=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    /* search for all file structs, trying to find one that is not occupied */
-    for(i=0;i<_pcb_ptr->filenum;i++){
+    /* find unopened space in fda */
+    for(i=0;i<FILE_ARRAY_MAX;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
             if((file_entry=get_file_entry(filenum=i))==NULL){
                 printf("invalid file struct\n");
-                return -1; /* errono to be defined */
+                return -1; 
             }
-            if_file_empty=1;
+            if_file_available=1; /* there is availabe space for this file in fda */
             break;
         }
     }
-    if(!if_file_empty){
-        filenum=_pcb_ptr->filenum++;
-        if((file_entry=get_file_entry(filenum))==NULL){
-            printf("invalid file struct\n");
-            return -1; /* errono to be defined */
-        }
+    /* no space in fda */
+    if(!if_file_available){
+        return -1;
     }
-    if(strncmp((int8_t*)"RTC",(int8_t*)filename,4)==0){
-        if(rtc[0].ioctl.open(file_entry,filename,2)==-1){
+    /* if rtc */
+    if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
+        if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
             return -1;
         }
     }
     else{
+        /* if regular file */
         if(readonly_fs.openr(file_entry,filename,0)==-1){
             return -1;
         }
     }
+    /* terminal is opened in process.c init_file_entry() where we add bad call to fops jumptable */
     return filenum;
 }
-int32_t close (uint32_t fd){
+/**
+ * @brief close file. On situation below, close should fail
+ * fd exeeds the scope
+ * fd isn't opened
+ * close STDIN/STDOUT (in halt, they are directly closed using fops jumptable)
+ * @param fd 
+ * @return ** int32_t 
+ */
+int32_t close (int32_t fd){
+    if(fd<2||fd>=FILE_ARRAY_MAX) return -1;
     file_t* file_entry;
-    file_entry=get_file_entry(fd);
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
+        return -1;
+    }
     return file_entry->fops.close(file_entry);
 }
 
@@ -218,6 +270,19 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
     uint32_t pid = get_pid();
     pcb_t* _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
 
+    // arg existence check
+    if (_pcb_ptr->args[0] == '\0') {
+        
+        printf("getargs: args are nonexistent\n");
+        return -1;
+    }
+
+    // arg string-correctness check
+    if (_pcb_ptr->args[strlen(_pcb_ptr->args)] != '\0') {
+        printf("getargs: args are not null-terminated\n");
+        return -1;
+    }
+
     // copy args to pcb_ptr->args
     strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);
 
@@ -225,7 +290,7 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
 }
 
 int32_t vidmap (uint8_t** screen_start){
-    return 0;
+    return -1;
 }
 int32_t set_handler (uint32_t signum, void* handler_address){
     return 0;

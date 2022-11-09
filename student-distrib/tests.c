@@ -1,7 +1,6 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-#include "filesystem.h"
 #include "rtc.h"
 #include "keyboard.h"
 #include "terminal.h"
@@ -768,6 +767,26 @@ exception_squash_program_test(){
     volatile int x = 0;
     return 1 / x;
 }
+
+void test_open(file_t* checked_item){
+    if(checked_item->flags&F_OPEN){
+        printf("open success\n");
+    }
+    else{
+        printf("open failed\n");
+    }
+}
+
+void test_close(file_t* checked_item){
+    if(checked_item->flags==F_CLOSE){
+        printf("close success\n");
+    }
+    else{
+        printf("close failed\n");
+    }
+}
+
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 

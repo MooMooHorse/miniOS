@@ -16,6 +16,7 @@
 #include "syscall.h"
 #include "mmu.h"
 #include "err.h"
+#include "tests.h"
 /**
  * @brief Create PID by modifying PCB_ptr
  * 
@@ -36,14 +37,38 @@ pcb_create(uint32_t pid){
     return 0;
 }
 
+/**
+ * @brief bad call for terminal write for STDIN
+ * @param file - same as write
+ * @param buf  - same as write
+ * @param nbytes - same as write
+ * @return ** int32_t  always -1
+ */
+static int32_t
+bad_call1(file_t* file, const void* buf, int32_t nbytes) {
+    return -1;
+}
 
-/* lack of open function in terminal.c , have to do in this way */
+
+/**
+ * @brief bad call for terminal read for STDOUT
+ * @param file - same as read
+ * @param buf - same as read
+ * @param nbytes - same as read
+ * @return ** int32_t  always -1
+ */
+static int32_t
+bad_call2(file_t* file, void* buf, int32_t nbytes) {
+    return -1;
+}
+
+/* Warning & TODO : lack of open function in terminal.c , have to do in this way */
 /** Internal use
  * @brief Open terminal : initialize file struct table for terminal
  * 
  * @param _pcb_ptr - pointer to pcb block for current process
  * @param i - index for file struct table
- * @return ** int32_t 
+ * @return ** int32_t -1 on failure
  */
 static int32_t 
 init_file_entry(pcb_t* _pcb_ptr, int32_t i){
@@ -54,12 +79,36 @@ init_file_entry(pcb_t* _pcb_ptr, int32_t i){
     _pcb_ptr->file_entry[i].pos=0;
     _pcb_ptr->file_entry[i].flags=DESCRIPTOR_ENTRY_TERMINAL|F_OPEN;
     _pcb_ptr->file_entry[i].inode=-1; /* won't be used */
-    _pcb_ptr->file_entry[i].fops.read=terminal.ioctl.read;
-    _pcb_ptr->file_entry[i].fops.write=terminal.ioctl.write;
+    
+    if(i==0){
+        _pcb_ptr->file_entry[i].fops.write=bad_call1;
+        _pcb_ptr->file_entry[i].fops.read=terminal.ioctl.read;
+    }
+    else{
+        _pcb_ptr->file_entry[i].fops.write=terminal.ioctl.write;
+        _pcb_ptr->file_entry[i].fops.read=bad_call2;
+    }
     _pcb_ptr->file_entry[i].fops.close=terminal.ioctl.close;
     _pcb_ptr->file_entry[i].fops.open=terminal.ioctl.open;
     return 0;
 }
+
+/**
+ * @brief clean up fda for current created process
+ * 
+ * @param _pcb_ptr - pointer pointing to pcb of current process
+ * @return ** int32_t always 0
+ */
+static int32_t clean_up_fda(pcb_t* _pcb_ptr){
+    int32_t i;
+    for(i=0;i<FILE_ARRAY_MAX;i++){
+        _pcb_ptr->file_entry[i].flags=0;
+        _pcb_ptr->file_entry[i].inode=-1;
+        _pcb_ptr->file_entry[i].pos=0;
+    }
+    return 0;
+}
+
 
 
 /**
@@ -97,9 +146,10 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->active=1;
-    _pcb_ptr->filenum=2; /* STDIN and STDOUT */
+    clean_up_fda(_pcb_ptr);
     init_file_entry(_pcb_ptr,0);
     init_file_entry(_pcb_ptr,1);
+
     /* following file entries are not opened yet, not initialized */
     strncpy((int8_t*)_pcb_ptr->pname,(int8_t*)prog_name,32);
     dentry_t dentry;
@@ -222,7 +272,7 @@ get_file_entry(uint32_t fd){
     uint32_t pid;
     pid=get_pid();
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(fd<0||fd>=_pcb_ptr->filenum) return NULL;
+    if(fd<0||fd>=FILE_ARRAY_MAX) return NULL;
     return &(_pcb_ptr->file_entry[fd]);
 }
 
@@ -249,8 +299,16 @@ discard_proc(uint32_t pid,uint32_t status){
     }
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
     _pcb_ptr->active=0; /* turn off old pcb */
-    close(0);
-    close(1);
+    #ifdef RUN_TESTS_OPEN
+    test_open(&_pcb_ptr->file_entry[0]);
+    test_open(&_pcb_ptr->file_entry[1]);
+    #endif
+    _pcb_ptr->file_entry[0].fops.close(&_pcb_ptr->file_entry[0]);
+    _pcb_ptr->file_entry[1].fops.close(&_pcb_ptr->file_entry[1]);
+    #ifdef RUN_TESTS_CLOSE
+    test_close(&_pcb_ptr->file_entry[0]);
+    test_close(&_pcb_ptr->file_entry[1]);
+    #endif
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;
@@ -290,4 +348,49 @@ discard_proc(uint32_t pid,uint32_t status){
     return -1;
 }
 
+/** 
+ * @brief Extract arguments given a arg_string line
+ * 
+ * @param pid - relevant PID
+ * @param arg_string - arg_string to extract from
+ * SIDE EFFECT: no side effect
+*/
+void
+handle_args(uint32_t pid, uint8_t * arg_string) {
+    uint8_t args[CMD_MAX_LEN];
+    uint8_t start, end;
+
+    // parse arg_string
+    start = end = 0;
+    if (arg_string[start] != '\0') {
+        // Parse argument
+        start = end + 1;
+
+        // skip leading whitespace
+        while(arg_string[start] == ' ' && arg_string[start] != '\0' && arg_string[start] != NULL) {
+            start++;
+        }
+
+        end = start; // set starting point
+
+        // extract argument
+        while(arg_string[end] != '\0' && arg_string[end] != NULL) {
+            args[end - start] = arg_string[end];
+            end++;
+        }
+
+        args[end - start] = '\0';
+
+        // printf("[DEBUG] args: \"%s\"\n", args);
+
+        // acquire PID
+        pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+        strcpy((int8_t*)pcb_ptr->args, (int8_t*)args);
+    } else {
+        pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+        strcpy((int8_t*)pcb_ptr->args, (int8_t*)"");
+    }
+
+    return;
+}
 

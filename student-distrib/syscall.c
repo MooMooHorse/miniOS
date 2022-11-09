@@ -43,14 +43,19 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint8_t args[CMD_MAX_LEN];
+    uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
     uint8_t start, end;
-    if(strlen((int8_t*) command)>=CMD_MAX_LEN){
-        printf("command too long : ");
-        return ERR_NO_CMD;
+    
+    for (i = 0; i < CMD_MAX_LEN; i++) {
+        if (command[i] == '\0') {
+            break;
+        }
+        else if (i == CMD_MAX_LEN - 1) {
+            printf("command too long : ");
+            return ERR_NO_CMD;
+        }
     }
-    // strcpy((int8_t*)_command,(int8_t*)command);
 
     // parse command
     start = 0;
@@ -69,30 +74,11 @@ int32_t execute (const uint8_t* command){
     }
     _command[end - start] = '\0';
 
-    // printf("[DEBUG] command: \"%s\"\n", _command);
-    
-    // check if arguments exist
-    if(command[end]!='\0'){
-        // Parse argument
-        start = end + 1;
-        
-        // skip leading whitespace
-        while(command[start] == ' ' && command[start] != '\0' && command[start] != NULL) {
-            start++;
-        }
-        
-        end = start; // set starting point
-
-        // extract argument
-        while(command[end] != '\0' && command[end] != NULL) {
-            args[end - start] = command[end];
-            end++;
-        }
-        
-        args[end - start] = '\0';
-
-        // printf("[DEBUG] args: \"%s\"\n", args);
+    for (i = 0; i < CMD_MAX_LEN - end; i++) {
+        argument_segment[i] = command[end + i];
     }
+
+    // printf("[DEBUG] command: \"%s\"\n", _command);
 
     // Command validation
     if(readonly_fs.check_exec(_command)!=1){
@@ -131,13 +117,11 @@ int32_t execute (const uint8_t* command){
 
     /* to this point, everything is checked, nothing should fail */
 
+    // handle arguments
+    handle_args(pid, argument_segment);
+
     /* program loader */
     readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE);
-    
-
-    /* copy arguments to PCB */
-    pcb_t *arg_pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
-    strcpy((int8_t*)arg_pcb_ptr->args, (int8_t*)args);
 
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
@@ -285,6 +269,19 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
     // get pointer to pcb_t
     uint32_t pid = get_pid();
     pcb_t* _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+
+    // arg existence check
+    if (_pcb_ptr->args[0] == '\0') {
+        
+        printf("getargs: args are nonexistent\n");
+        return -1;
+    }
+
+    // arg string-correctness check
+    if (_pcb_ptr->args[strlen(_pcb_ptr->args)] != '\0') {
+        printf("getargs: args are not null-terminated\n");
+        return -1;
+    }
 
     // copy args to pcb_ptr->args
     strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);

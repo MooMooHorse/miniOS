@@ -154,6 +154,15 @@ int32_t execute (const uint8_t* command){
     return ret;
 
 }
+
+/**
+ * @brief read from a file
+ * 
+ * @param fd - fild escriptor, an integer within range of [0,FILE_ARRAY_MAX)
+ * @param buf - read buffer : user have to be responsible for buffer size
+ * @param nbytes - number of bytes to read
+ * @return ** int32_t number of bytes written -1 on failure
+ */
 int32_t read (int32_t fd, void* buf, uint32_t nbytes){
     if(fd<0||fd>=FILE_ARRAY_MAX){
         return -1;
@@ -175,8 +184,8 @@ int32_t read (int32_t fd, void* buf, uint32_t nbytes){
  * @brief write to a file(terminal for readonly filesystem )
  * 
  * @param fd - fild escriptor, an integer within range of [0,FILE_ARRAY_MAX)
- * @param buf - read buffer : user have to be responsible for buffer size
- * @param nbytes - number of bytes to read
+ * @param buf - write buffer : user have to be responsible for buffer size
+ * @param nbytes - number of bytes to write
  * @return ** int32_t number of bytes written -1 on failure
  */
 int32_t write (int32_t fd, const void* buf, uint32_t nbytes){

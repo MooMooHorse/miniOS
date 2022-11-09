@@ -37,24 +37,38 @@ pcb_create(uint32_t pid){
     return 0;
 }
 
-
-int32_t
-bad_call(file_t* file, const void* buf, int32_t nbytes) {
+/**
+ * @brief bad call for terminal write for STDIN
+ * @param file - same as write
+ * @param buf  - same as write
+ * @param nbytes - same as write
+ * @return ** int32_t  always -1
+ */
+static int32_t
+bad_call1(file_t* file, const void* buf, int32_t nbytes) {
     return -1;
 }
 
-int32_t
+
+/**
+ * @brief bad call for terminal read for STDOUT
+ * @param file - same as read
+ * @param buf - same as read
+ * @param nbytes - same as read
+ * @return ** int32_t  always -1
+ */
+static int32_t
 bad_call2(file_t* file, void* buf, int32_t nbytes) {
     return -1;
 }
 
-/* lack of open function in terminal.c , have to do in this way */
+/* Warning & TODO : lack of open function in terminal.c , have to do in this way */
 /** Internal use
  * @brief Open terminal : initialize file struct table for terminal
  * 
  * @param _pcb_ptr - pointer to pcb block for current process
  * @param i - index for file struct table
- * @return ** int32_t 
+ * @return ** int32_t -1 on failure
  */
 static int32_t 
 init_file_entry(pcb_t* _pcb_ptr, int32_t i){
@@ -67,7 +81,7 @@ init_file_entry(pcb_t* _pcb_ptr, int32_t i){
     _pcb_ptr->file_entry[i].inode=-1; /* won't be used */
     
     if(i==0){
-        _pcb_ptr->file_entry[i].fops.write=bad_call;
+        _pcb_ptr->file_entry[i].fops.write=bad_call1;
         _pcb_ptr->file_entry[i].fops.read=terminal.ioctl.read;
     }
     else{
@@ -76,6 +90,22 @@ init_file_entry(pcb_t* _pcb_ptr, int32_t i){
     }
     _pcb_ptr->file_entry[i].fops.close=terminal.ioctl.close;
     _pcb_ptr->file_entry[i].fops.open=terminal.ioctl.open;
+    return 0;
+}
+
+/**
+ * @brief clean up fda for current created process
+ * 
+ * @param _pcb_ptr - pointer pointing to pcb of current process
+ * @return ** int32_t always 0
+ */
+static int32_t clean_up_fda(pcb_t* _pcb_ptr){
+    int32_t i;
+    for(i=0;i<FILE_ARRAY_MAX;i++){
+        _pcb_ptr->file_entry[i].flags=0;
+        _pcb_ptr->file_entry[i].inode=-1;
+        _pcb_ptr->file_entry[i].pos=0;
+    }
     return 0;
 }
 
@@ -117,8 +147,10 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->active=1;
     _pcb_ptr->filenum=2; /* STDIN and STDOUT */
+    clean_up_fda(_pcb_ptr);
     init_file_entry(_pcb_ptr,0);
     init_file_entry(_pcb_ptr,1);
+
     /* following file entries are not opened yet, not initialized */
     strncpy((int8_t*)_pcb_ptr->pname,(int8_t*)prog_name,32);
     dentry_t dentry;

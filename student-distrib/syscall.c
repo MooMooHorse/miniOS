@@ -168,38 +168,35 @@ int32_t open (const uint8_t* filename){
     /* terminal is opened in exec, not in this system call */
     file_t* file_entry;
     uint32_t pid=get_pid(),i,filenum;
-    uint8_t if_file_empty=0;
+    uint8_t if_file_available=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     /* search for all file structs, trying to find one that is not occupied */
-    dentry_t dentry;
-    if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
-        printf("no such file\n");
-        return -1;
-    }
-    for(i=0;i<FILE_ARRAY_MAX;i++){
-        if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
-        return -1;
-        }
-    }
+    // dentry_t dentry;
+    // if(-1==readonly_fs.f_rw.read_dentry_by_name(filename,&dentry)){
+    //     printf("no such file\n");
+    //     return -1;
+    // }
+    // for(i=0;i<FILE_ARRAY_MAX;i++){
+    //     if((_pcb_ptr->file_entry[i].flags&F_OPEN)&&(_pcb_ptr->file_entry[i].inode==dentry.inode_num)){
+    //         return -1;
+    //     }
+    // }
     if(filename[0]=='\0'){
         return -1;
     }
     for(i=0;i<FILE_ARRAY_MAX;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
+            // printf("%d %d\n",_pcb_ptr->file_entry->flags,i);
             if((file_entry=get_file_entry(filenum=i))==NULL){
                 printf("invalid file struct\n");
                 return -1; /* errono to be defined */
             }
-            if_file_empty=1;
+            if_file_available=1; /* there is availabe space for this file in fda */
             break;
         }
     }
-    if(!if_file_empty){
-        filenum=_pcb_ptr->filenum++;
-        if((file_entry=get_file_entry(filenum))==NULL){
-            printf("invalid file struct\n");
-            return -1; /* errono to be defined */
-        }
+    if(!if_file_available){
+        return -1;
     }
     if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
         if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
@@ -213,12 +210,21 @@ int32_t open (const uint8_t* filename){
     }
     return filenum;
 }
+/**
+ * @brief close file. On situation below, close should fail
+ * fd exeeds the scope
+ * fd isn't opened
+ * @param fd 
+ * @return ** int32_t 
+ */
 int32_t close (int32_t fd){
-    if(fd<0||fd>=FILE_ARRAY_MAX){
+    if(fd<0||fd>=FILE_ARRAY_MAX) return -1;
+    file_t* file_entry;
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
         return -1;
     }
-    file_t* file_entry;
-    file_entry=get_file_entry(fd);
     return file_entry->fops.close(file_entry);
 }
 

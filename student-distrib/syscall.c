@@ -69,7 +69,7 @@ int32_t execute (const uint8_t* command){
     }
     _command[end - start] = '\0';
 
-    printf("[DEBUG] command: \"%s\"\n", _command);
+    // printf("[DEBUG] command: \"%s\"\n", _command);
     
     // check if arguments exist
     if(command[end]!='\0'){
@@ -91,7 +91,7 @@ int32_t execute (const uint8_t* command){
         
         args[end - start] = '\0';
 
-        printf("[DEBUG] args: \"%s\"\n", args);
+        // printf("[DEBUG] args: \"%s\"\n", args);
     }
 
     // Command validation
@@ -160,9 +160,12 @@ int32_t read (int32_t fd, void* buf, uint32_t nbytes){
     }
     file_t* file_entry;
     sti();
-    if((file_entry=get_file_entry(fd))==NULL){
-        printf("invalid file struct\n");
-        return -1; /* errono to be defined */
+
+    
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
+        return -1;
     }
     return file_entry->fops.read(file_entry, buf, nbytes);
 }
@@ -172,9 +175,11 @@ int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
     }
     file_t* file_entry;
     sti();
-    if((file_entry=get_file_entry(fd))==NULL){
-        printf("invalid file struct\n");
-        return -1; /* errono to be defined */
+    
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
+        return -1;
     }
     return file_entry->fops.write(file_entry, buf, nbytes);
     
@@ -230,11 +235,12 @@ int32_t open (const uint8_t* filename){
  * @brief close file. On situation below, close should fail
  * fd exeeds the scope
  * fd isn't opened
+ * close STDIN/STDOUT (in halt, they are directly closed using fops jumptable)
  * @param fd 
  * @return ** int32_t 
  */
 int32_t close (int32_t fd){
-    if(fd<0||fd>=FILE_ARRAY_MAX) return -1;
+    if(fd<2||fd>=FILE_ARRAY_MAX) return -1;
     file_t* file_entry;
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);

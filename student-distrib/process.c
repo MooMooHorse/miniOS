@@ -304,8 +304,8 @@ discard_proc(uint32_t pid,uint32_t status){
     test_open(&_pcb_ptr->file_entry[0]);
     test_open(&_pcb_ptr->file_entry[1]);
     #endif
-    close(0);
-    close(1);
+    _pcb_ptr->file_entry[0].fops.close(&_pcb_ptr->file_entry[0]);
+    _pcb_ptr->file_entry[1].fops.close(&_pcb_ptr->file_entry[1]);
     #ifdef RUN_TESTS_CLOSE
     test_close(&_pcb_ptr->file_entry[0]);
     test_close(&_pcb_ptr->file_entry[1]);

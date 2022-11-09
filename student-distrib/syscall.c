@@ -293,7 +293,7 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
 }
 
 int32_t vidmap (uint8_t** screen_start){
-    return 0;
+    return -1;
 }
 int32_t set_handler (uint32_t signum, void* handler_address){
     return 0;

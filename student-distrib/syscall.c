@@ -53,31 +53,47 @@ int32_t execute (const uint8_t* command){
     // strcpy((int8_t*)_command,(int8_t*)command);
 
     // parse command
-    start = end = 0;
+    start = 0;
 
+    // skip leading whitespace
+    while(command[start] == ' ' && command[start] != '\0') {
+        start++;
+    }
+
+    end = start; // set starting point
+
+    // extract command
     while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+        _command[end-start] = command[end];
         end++;
     }
-
-    for (i = start; i < end; i++) {
-        _command[i - start] = command[i];
-    }
     _command[end - start] = '\0';
+
+    printf("[DEBUG] command: \"%s\"\n", _command);
     
+    // check if arguments exist
     if(command[end]!='\0'){
         // Parse argument
         start = end + 1;
-        end = start;
+        
+        // skip leading whitespace
+        while(command[start] == ' ' && command[start] != '\0' && command[start] != NULL) {
+            start++;
+        }
+        
+        end = start; // set starting point
 
+        // extract argument
         while(command[end] != '\0' && command[end] != NULL) {
+            args[end - start] = command[end];
             end++;
         }
         
-        for (i = start; i < end; i++) {
-            args[i - start] = command[i];
-        }
         args[end - start] = '\0';
+
+        printf("[DEBUG] args: \"%s\"\n", args);
     }
+
     // Command validation
     if(readonly_fs.check_exec(_command)!=1){
         return ERR_NO_CMD;

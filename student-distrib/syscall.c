@@ -164,11 +164,21 @@ int32_t read (int32_t fd, void* buf, uint32_t nbytes){
     
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
     if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
         return -1;
     }
     return file_entry->fops.read(file_entry, buf, nbytes);
 }
+
+/**
+ * @brief write to a file(terminal for readonly filesystem )
+ * 
+ * @param fd - fild escriptor, an integer within range of [0,FILE_ARRAY_MAX)
+ * @param buf - read buffer : user have to be responsible for buffer size
+ * @param nbytes - number of bytes to read
+ * @return ** int32_t number of bytes written -1 on failure
+ */
 int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
     if(fd<0||fd>=FILE_ARRAY_MAX){
         return -1;
@@ -178,6 +188,7 @@ int32_t write (int32_t fd, const void* buf, uint32_t nbytes){
     
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
     if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
         return -1;
     }
@@ -197,6 +208,7 @@ int32_t open (const uint8_t* filename){
     uint32_t pid=get_pid(),i,filenum;
     uint8_t if_file_available=0;
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* find unopened space in fda */
     for(i=0;i<FILE_ARRAY_MAX;i++){
         if(!(_pcb_ptr->file_entry[i].flags&F_OPEN)){
             if((file_entry=get_file_entry(filenum=i))==NULL){
@@ -207,19 +219,23 @@ int32_t open (const uint8_t* filename){
             break;
         }
     }
+    /* no space in fda */
     if(!if_file_available){
         return -1;
     }
+    /* if rtc */
     if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
         if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
             return -1;
         }
     }
     else{
+        /* if regular file */
         if(readonly_fs.openr(file_entry,filename,0)==-1){
             return -1;
         }
     }
+    /* terminal is opened in process.c init_file_entry() where we add bad call to fops jumptable */
     return filenum;
 }
 /**
@@ -235,6 +251,7 @@ int32_t close (int32_t fd){
     file_t* file_entry;
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* DO NOT move the second condition into get_file_entry(), this function is generally used */
     if(((file_entry=get_file_entry(fd))==NULL)||(!(_pcb_ptr->file_entry[fd].flags&F_OPEN))){
         return -1;
     }

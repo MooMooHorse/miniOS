@@ -121,7 +121,7 @@ int32_t execute (const uint8_t* command){
     handle_args(pid, argument_segment);
 
     /* program loader */
-    readonly_fs.load_prog(_command,VPROG_START_ADDR,PROG_SIZE);
+    readonly_fs.load_prog(_command,IMG_START,PROG_SIZE);
 
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
@@ -290,8 +290,13 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
 }
 
 int32_t vidmap (uint8_t** screen_start){
-    return -1;
+    if (NULL == screen_start) {
+        return -1;
+    }
+
+    return uvmmap_vid(screen_start);
 }
+
 int32_t set_handler (uint32_t signum, void* handler_address){
     return 0;
 }

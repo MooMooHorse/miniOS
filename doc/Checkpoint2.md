@@ -1,5 +1,7 @@
 # Checkpoint 2
 
+author : Hao Ren
+
 This document helps each member of the group knows the ideas of what other people are doing, so that we're all on the same page.
 
 

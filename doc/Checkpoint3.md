@@ -1,5 +1,7 @@
 # Checkpoint 3
 
+author : Hao, Ren
+
 This document helps each member of the group knows the ideas of what other people are doing, so that we're all on the same page.
 
 * General workflow
@@ -106,6 +108,15 @@ All the citation in this section is from cp3.4
 
 > Finally, when a new task is started with the execute system call, you’ll need to store the parent task’s PCB pointer in the child task’s PCB so that when the child program calls halt, you are able to return control to the parent task.
 
+### How to return to parent process?
+
+* recover esp, ebp
+
+* return to execute (think about if you're in kernel space/user space and your destination)
+
+* return value : eax (halt has `0~255` as parameter), you need to map the error number to `int32_t` 
+  * `err.c`, `err.h`
+
 
 
 ## Rest of System Call
@@ -115,6 +126,16 @@ All the citation in this section is from cp3.4
 
 > Each process’s PCB should be stored at the top of its 8 kB stack, and the stack should grow towards them.
 
-## How can Segmentation protect user from accessing Kernel Memory
+* open/close for STDIN/STDOUT should fail
+* bad call installed
+* open several files for several times should work
+* fda allocation, use flag wisely, use macro, no magic number
+* check `ece391syserr.c` to check all corner cases
+* learn to write user level program and put them in file system img. (It seems that we should NOT add files but we can modify some files(like shell, make it support history))
+
+
+
+## Q : How can Segmentation protect user from accessing Kernel Memory
 
 * No it can't, paging does this.
+

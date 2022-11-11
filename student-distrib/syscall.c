@@ -48,7 +48,11 @@ int32_t execute (const uint8_t* command){
     uint8_t start=0, end;
     /* no way to check command length, for '\0' will always be attached */
 
-    // skip leading whitespace
+    // TO DO : get rid of all multiple space 
+    // stuff like `    cat   frame0.txt     frame1.txt            ` 
+    // should be stripped into `cat frame0.txt frame1.txt`
+    // The following process shoule be in ONE while loop
+
     while(command[start] == ' ' && command[start] != '\0') start++;
     end = start; // set starting point
 
@@ -240,7 +244,7 @@ int32_t close (int32_t fd){
     return file_entry->fops.close(file_entry);
 }
 
-/**
+/** TO DO : nbytes unused 
  * @brief Reads program's arguments from its respective pcb_t into a user-level buffer.
  * 
  * @param buf Pointer to the buffer to be filled with the arguments.
@@ -249,7 +253,7 @@ int32_t close (int32_t fd){
  * SIDE EFFECT: buf is filled with the arguments.
  */
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
-    // super quick sanity check
+    // TO DO : use nbytes
     if (buf == NULL) {
         // if buf is NULL, return -1
         return -1;

@@ -45,26 +45,11 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    uint8_t start, end;
-    
-    for (i = 0; i < CMD_MAX_LEN; i++) {
-        if (command[i] == '\0') {
-            break;
-        }
-        else if (i == CMD_MAX_LEN - 1) {
-            printf("command too long : ");
-            return ERR_NO_CMD;
-        }
-    }
-
-    // parse command
-    start = 0;
+    uint8_t start=0, end;
+    /* no way to check command length, for '\0' will always be attached */
 
     // skip leading whitespace
-    while(command[start] == ' ' && command[start] != '\0') {
-        start++;
-    }
-
+    while(command[start] == ' ' && command[start] != '\0') start++;
     end = start; // set starting point
 
     // extract command
@@ -74,13 +59,12 @@ int32_t execute (const uint8_t* command){
     }
     _command[end - start] = '\0';
 
+    /* TO DO : Make the loop into while loop */
     for (i = 0; i < CMD_MAX_LEN - end; i++) {
         argument_segment[i] = command[end + i];
     }
 
-    // printf("[DEBUG] command: \"%s\"\n", _command);
-
-    // Command validation
+    /* check executable */ 
     if(readonly_fs.check_exec(_command)!=1){
         return ERR_NO_CMD;
     }

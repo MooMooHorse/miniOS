@@ -1,5 +1,7 @@
 # CheckPoint 1 : MP3
 
+author : Hao Ren
+
 This document cites important information for checkpoint 1. MP3.
 
 It also gives an outline for checkpoint 1

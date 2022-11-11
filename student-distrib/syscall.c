@@ -45,26 +45,15 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    uint8_t start, end;
-    
-    for (i = 0; i < CMD_MAX_LEN; i++) {
-        if (command[i] == '\0') {
-            break;
-        }
-        else if (i == CMD_MAX_LEN - 1) {
-            printf("command too long : ");
-            return ERR_NO_CMD;
-        }
-    }
+    uint8_t start=0, end;
+    /* no way to check command length, for '\0' will always be attached */
 
-    // parse command
-    start = 0;
+    // TO DO : get rid of all multiple space 
+    // stuff like `    cat   frame0.txt     frame1.txt            ` 
+    // should be stripped into `cat frame0.txt frame1.txt`
+    // The following process shoule be in ONE while loop
 
-    // skip leading whitespace
-    while(command[start] == ' ' && command[start] != '\0') {
-        start++;
-    }
-
+    while(command[start] == ' ' && command[start] != '\0') start++;
     end = start; // set starting point
 
     // extract command
@@ -74,13 +63,12 @@ int32_t execute (const uint8_t* command){
     }
     _command[end - start] = '\0';
 
+    /* TO DO : Make the loop into while loop */
     for (i = 0; i < CMD_MAX_LEN - end; i++) {
         argument_segment[i] = command[end + i];
     }
 
-    // printf("[DEBUG] command: \"%s\"\n", _command);
-
-    // Command validation
+    /* check executable */ 
     if(readonly_fs.check_exec(_command)!=1){
         return ERR_NO_CMD;
     }
@@ -93,6 +81,11 @@ int32_t execute (const uint8_t* command){
             pid=i;
             break;
         }
+    }
+    /* special for cp4 sanity check, to make running program <= 3 */
+    if((pid==(PCB_BASE-PCB_ptr)/PCB_SIZE+1) && pid == 4){
+        printf("limit number of program below 4\n");
+        return 0;
     }
 
     ppid=get_pid();
@@ -251,7 +244,7 @@ int32_t close (int32_t fd){
     return file_entry->fops.close(file_entry);
 }
 
-/**
+/** TO DO : nbytes unused 
  * @brief Reads program's arguments from its respective pcb_t into a user-level buffer.
  * 
  * @param buf Pointer to the buffer to be filled with the arguments.
@@ -260,7 +253,7 @@ int32_t close (int32_t fd){
  * SIDE EFFECT: buf is filled with the arguments.
  */
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
-    // super quick sanity check
+    // TO DO : use nbytes
     if (buf == NULL) {
         // if buf is NULL, return -1
         return -1;

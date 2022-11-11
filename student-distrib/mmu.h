@@ -51,7 +51,9 @@
 #define PGROUNDUP(x)        (((x) + PGSIZE - 1) & ~(PGSIZE - 1))
 #define PGROUNDDOWN(x)      ((x) & ~(PGSIZE - 1))
 
-#define VPROG_START_ADDR    0x08048000
+#define UVM_START   0x08000000  // Starting virtual address of user memory.
+#define IMG_START   0x08048000  // Starting address of program image.
+#define UVM_SIZE    0x400000    // 4MB.
 
 typedef uint32_t pte_t;
 typedef uint32_t pde_t;
@@ -63,5 +65,8 @@ void vm_init(void);
 
 /* Map one extended page for user program. */
 int32_t uvmmap_ext(uint32_t pa);
+
+/* Map one 4KB page for user video memory and send back address. */
+int32_t uvmmap_vid(uint8_t** screen_start);
 
 #endif /* _MMU_H */

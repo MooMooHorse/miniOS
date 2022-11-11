@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "keyboard.h"
+#include "cursor.h"
 #include "filesystem.h"
 #include "syscall.h"
 
@@ -155,6 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Initialize devices */
     rtc_init();
     keyboard_init();
+    cursor_init();
     
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

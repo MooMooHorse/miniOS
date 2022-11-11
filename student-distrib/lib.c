@@ -1,6 +1,7 @@
 /* lib.c - Some basic library functions (printf, strlen, etc.) */
 
 #include "lib.h"
+#include "cursor.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
@@ -22,6 +23,7 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
     screen_x = screen_y = 0;
+    cursor_update(0, 0);
 }
 
 /* Standard printf().
@@ -215,6 +217,7 @@ void putc(uint8_t c) {
             }
         }
     }
+    cursor_update(screen_x, screen_y);
 }
 
 /**

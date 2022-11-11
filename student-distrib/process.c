@@ -313,6 +313,8 @@ discard_proc(uint32_t pid,uint32_t status){
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;
 
+    uvmunmap_vid();
+
     /* re-spawn a shell immediately */
     if(ppid==0){ 
         PCB_ptr=PCB_BASE; /* discard all process */

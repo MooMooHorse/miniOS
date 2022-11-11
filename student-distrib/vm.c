@@ -95,3 +95,22 @@ uvmmap_vid(uint8_t** screen_start) {
 
     return 0;
 }
+
+/*!
+ * @brief This function undoes the changes to the paging mechanism performed by `uvmmap_vid`.
+ * @param None.
+ * @return 0 on success.
+ * @sideeffect It modifies page table to unmap user video memory mapping.
+ */
+int32_t
+uvmunmap_vid(void) {
+    uint32_t va = UVM_START + UVM_SIZE;
+
+    // Undo user video memory mapping.
+    pgdir[PDX(va)] &= ~PAGE_P;
+    pgtbl_vid[PTX(va)] &= ~PAGE_P;
+
+    lcr3((uint32_t) pgdir);  // Flush TLB.
+
+    return 0;
+}

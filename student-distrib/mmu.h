@@ -69,4 +69,7 @@ int32_t uvmmap_ext(uint32_t pa);
 /* Map one 4KB page for user video memory and send back address. */
 int32_t uvmmap_vid(uint8_t** screen_start);
 
+/* Undo user video memory mapping. */
+int32_t uvmunmap_vid(void);
+
 #endif /* _MMU_H */

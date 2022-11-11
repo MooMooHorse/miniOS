@@ -94,6 +94,11 @@ int32_t execute (const uint8_t* command){
             break;
         }
     }
+    /* special for cp4 sanity check, to make running program <= 3 */
+    if((pid==(PCB_BASE-PCB_ptr)/PCB_SIZE+1) && pid == 4){
+        printf("limit number of program below 4\n");
+        return 0;
+    }
 
     ppid=get_pid();
 

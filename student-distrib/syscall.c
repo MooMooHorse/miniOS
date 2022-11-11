@@ -289,6 +289,14 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
     return 0;
 }
 
+/*!
+ * @brief Maps video memory in the user page table so that user programs can modify video memory in
+ * their virtual address space. Writes the start of user virtual address of video memory to the pointer
+ * passed in.
+ * @param screen_start is pointer to user buffer which holds starting virtual address of video memory.
+ * @return 0 if successful, non-zero otherwise.
+ * @sideeffect It modifies page table to enable user access of video memory.
+ */
 int32_t vidmap (uint8_t** screen_start){
     if (NULL == screen_start) {
         return -1;

@@ -42,31 +42,38 @@ int32_t halt (uint8_t status){
  * @return ** int32_t - errno 
  */
 int32_t execute (const uint8_t* command){
-    uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint8_t argument_segment[CMD_MAX_LEN];
+    int8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    int8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    uint8_t start=0, end;
+    int8_t x, y;
+    int8_t command_arg_flag;
     /* no way to check command length, for '\0' will always be attached */
+    
+    // Separate command from arguments
+    // Strip excess whitespace
+    command_arg_flag = 0;
+    for (i = x = y = 0; command[i]; ++i) {
+        if (command[i] == ' ' && i == strlen((int8_t *)command)) {
+            continue;
+        }
 
-    // TO DO : get rid of all multiple space 
-    // stuff like `    cat   frame0.txt     frame1.txt            ` 
-    // should be stripped into `cat frame0.txt frame1.txt`
-    // The following process shoule be in ONE while loop
+        if (!command_arg_flag && command[i] == ' ' &&
+            strlen((int8_t *)_command) > 1) {
+            command_arg_flag = 1;
+            continue;
+        }
 
-    while(command[start] == ' ' && command[start] != '\0') start++;
-    end = start; // set starting point
-
-    // extract command
-    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
-        _command[end-start] = command[end];
-        end++;
+        if ((command[i] != ' ') || (i > 0 && (command[i - 1] != ' '))) {
+            if (command_arg_flag) {
+                argument_segment[y++] = command[i];
+            } else {
+                _command[x++] = command[i];
+            }
+        }
     }
-    _command[end - start] = '\0';
 
-    /* TO DO : Make the loop into while loop */
-    for (i = 0; i < CMD_MAX_LEN - end; i++) {
-        argument_segment[i] = command[end + i];
-    }
+    _command[strlen((int8_t *)_command)] = '\0';
+    argument_segment[strlen((int8_t *)argument_segment) - 1] = '\0';
 
     /* check executable */ 
     if(readonly_fs.check_exec(_command)!=1){
@@ -276,8 +283,13 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
         return -1;
     }
 
+    printf("%d %d\n", strlen(_pcb_ptr->args), nbytes);
+    if (strlen(_pcb_ptr->args) > nbytes) {
+        printf("getargs: args are longer than number of bytes specified\n");
+    }
+
     // copy args to pcb_ptr->args
-    strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);
+    strncpy((int8_t*)buf, (int8_t*)_pcb_ptr->args, nbytes);
 
     return 0;
 }

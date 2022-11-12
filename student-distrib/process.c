@@ -358,33 +358,9 @@ discard_proc(uint32_t pid,uint32_t status){
  * SIDE EFFECT: no side effect
 */
 void
-handle_args(uint32_t pid, uint8_t * arg_string) {
-    uint8_t args[CMD_MAX_LEN];
-    uint8_t start, end;
-
+handle_args(uint32_t pid, int8_t * args) {
     // parse arg_string
-    start = end = 0;
-    if (arg_string[start] != '\0') {
-        // Parse argument
-        start = end + 1;
-
-        // skip leading whitespace
-        while(arg_string[start] == ' ' && arg_string[start] != '\0' && arg_string[start] != NULL) {
-            start++;
-        }
-
-        end = start; // set starting point
-
-        // extract argument
-        while(arg_string[end] != '\0' && arg_string[end] != NULL) {
-            args[end - start] = arg_string[end];
-            end++;
-        }
-
-        args[end - start] = '\0';
-
-        // printf("[DEBUG] args: \"%s\"\n", args);
-
+    if (args[0] != '\0') {
         // acquire PID
         pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
         strcpy((int8_t*)pcb_ptr->args, (int8_t*)args);

@@ -25,6 +25,10 @@
 | :white_check_mark: | `016`   |
 | :white_check_mark: | `017`   |
 | :white_check_mark: | `018`   |
+| :white_check_mark: | `019`   |
+| :white_check_mark: | `020`   |
+| :white_check_mark: | `021`   |
+| :white_check_mark: | `022`   |
 
 ### Bug `#000`
 **Description**  
@@ -224,7 +228,7 @@ PID index out of bound
 
 Base address of PID is larger than PID top.
 
-#### Bug `#016`
+### Bug `#016`
 
 **Description**
 
@@ -234,7 +238,7 @@ Can't run multi-processing
 
 * Bad sanity check
 
-#### Bug `#017`
+### Bug `#017`
 
 **Description**
 
@@ -244,7 +248,7 @@ Always return -1 on bad result
 
 * Add error number in `err.c` `err.h`
 
-#### Bug `#018`
+#### Bug `#0183`
 
 **Description**
 
@@ -253,3 +257,43 @@ getarg only one arg
 **Resolution**  
 
 * stop checking `\0`
+
+### Bug `#019`
+
+**Description**
+
+getarg no stripping
+
+**Resolution**  
+
+* strip args
+
+### Bug `#020`
+
+**Description**
+
+Open file number error.
+
+**Resolution**  
+
+* search the open file with constant 8 size
+
+### Bug `#021`
+
+**Description**
+
+STDIN/STDOUT no bad call
+
+**Resolution**  
+
+* add bad call
+
+### Bug `#022`
+
+**Description**
+
+system call (open/write/read/close). Boundary problem
+
+**Resolution**  
+
+* Add sanity check

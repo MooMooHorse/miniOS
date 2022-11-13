@@ -357,10 +357,33 @@ discard_proc(uint32_t pid,uint32_t status){
  * @param arg_string - arg_string to extract from
  * SIDE EFFECT: no side effect
 */
+
+/** 
+ * @brief Extract arguments given a arg_string line
+ * 
+ * @param pid - relevant PID
+ * @param arg_string - arg_string to extract from
+ * SIDE EFFECT: no side effect
+*/
 void
-handle_args(uint32_t pid, int8_t * args) {
+handle_args(uint32_t pid, int8_t * arg_string) {
+    uint8_t args[CMD_MAX_LEN];
+    uint8_t i, x;
+
     // parse arg_string
-    if (args[0] != '\0') {
+    if (arg_string[0] != '\0') {
+        for (i = x = 0; arg_string[i] != '\0'; ++i) {
+            if (arg_string[i] != ' ' || (i > 1 && arg_string[i - 1] != ' ')) {
+                args[x++] = arg_string[i];
+            }
+        }
+
+        if (args[strlen(args) - 1] == ' ') {
+            args[strlen(args) - 1] = '\0';
+        } else {
+            args[strlen(args)] = '\0';
+        }
+
         // acquire PID
         pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
         strcpy((int8_t*)pcb_ptr->args, (int8_t*)args);
@@ -371,4 +394,5 @@ handle_args(uint32_t pid, int8_t * args) {
 
     return;
 }
+
 

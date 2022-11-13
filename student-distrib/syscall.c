@@ -45,35 +45,26 @@ int32_t execute (const uint8_t* command){
     int8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     int8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    int8_t x, y;
-    int8_t command_arg_flag;
+    int8_t start, end;
     /* no way to check command length, for '\0' will always be attached */
     
     // Separate command from arguments
     // Strip excess whitespace
-    command_arg_flag = 0;
-    for (i = x = y = 0; command[i]; ++i) {
-        if (command[i] == ' ' && i == strlen((int8_t *)command)) {
-            continue;
-        }
+    start = end = 0;
 
-        if (!command_arg_flag && command[i] == ' ' &&
-            strlen((int8_t *)_command) > 1) {
-            command_arg_flag = 1;
-            continue;
-        }
+    while(command[start] == ' ' && command[start] != '\0') start++;
+    end = start; // set starting point
 
-        if ((command[i] != ' ') || (i > 0 && (command[i - 1] != ' '))) {
-            if (command_arg_flag) {
-                argument_segment[y++] = command[i];
-            } else {
-                _command[x++] = command[i];
-            }
-        }
+    // extract command
+    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
+        _command[end-start] = command[end];
+        end++;
     }
+    _command[end - start] = '\0';
 
-    _command[strlen((int8_t *)_command)] = '\0';
-    argument_segment[strlen((int8_t *)argument_segment) - 1] = '\0';
+    for (i = 0; i < CMD_MAX_LEN - end; i++) {
+        argument_segment[i] = command[end + i];
+    }
 
     /* check executable */ 
     if(readonly_fs.check_exec(_command)!=1){

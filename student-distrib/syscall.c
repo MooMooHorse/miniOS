@@ -283,7 +283,7 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
         return -1;
     }
 
-    printf("%d %d\n", strlen(_pcb_ptr->args), nbytes);
+    // check if nbytes is too small
     if (strlen(_pcb_ptr->args) > nbytes) {
         printf("getargs: args are longer than number of bytes specified\n");
         return -1;

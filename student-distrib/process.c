@@ -371,17 +371,17 @@ handle_args(uint32_t pid, int8_t * arg_string) {
     uint8_t i, x;
 
     // parse arg_string
-    if (arg_string[0] != '\0') {
-        for (i = x = 0; arg_string[i] != '\0'; ++i) {
+    if (arg_string[0] != (uint8_t)'\0') {
+        for (i = x = 0; arg_string[i] != (uint8_t)'\0'; ++i) {
             if (arg_string[i] != ' ' || (i > 1 && arg_string[i - 1] != ' ')) {
                 args[x++] = arg_string[i];
             }
         }
 
-        if (args[strlen(args) - 1] == ' ') {
-            args[strlen(args) - 1] = '\0';
+        if (args[strlen((int8_t*) args) - 1] == (uint8_t)' ') {
+            args[strlen((int8_t*)args) - 1] = (uint8_t)'\0';
         } else {
-            args[strlen(args)] = '\0';
+            args[strlen((int8_t*)args)] = (uint8_t)'\0';
         }
 
         // acquire PID

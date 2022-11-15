@@ -357,32 +357,33 @@ discard_proc(uint32_t pid,uint32_t status){
  * @param arg_string - arg_string to extract from
  * SIDE EFFECT: no side effect
 */
-
-/** 
- * @brief Extract arguments given a arg_string line
- * 
- * @param pid - relevant PID
- * @param arg_string - arg_string to extract from
- * SIDE EFFECT: no side effect
-*/
 void
-handle_args(uint32_t pid, int8_t * arg_string) {
+handle_args(uint32_t pid, uint8_t * arg_string) {
     uint8_t args[CMD_MAX_LEN];
-    uint8_t i, x;
+    uint8_t start, end;
 
     // parse arg_string
-    if (arg_string[0] != (uint8_t)'\0') {
-        for (i = x = 0; arg_string[i] != (uint8_t)'\0'; ++i) {
-            if (arg_string[i] != ' ' || (i > 1 && arg_string[i - 1] != ' ')) {
-                args[x++] = arg_string[i];
-            }
+    start = end = 0;
+    if (arg_string[start] != '\0') {
+        // Parse argument
+        start = end + 1;
+
+        // skip leading whitespace
+        while(arg_string[start] == ' ' && arg_string[start] != '\0' && arg_string[start] != NULL) {
+            start++;
         }
 
-        if (args[strlen((int8_t*) args) - 1] == (uint8_t)' ') {
-            args[strlen((int8_t*)args) - 1] = (uint8_t)'\0';
-        } else {
-            args[strlen((int8_t*)args)] = (uint8_t)'\0';
+        end = start; // set starting point
+
+        // extract argument
+        while(arg_string[end] != '\0' && arg_string[end] != NULL) {
+            args[end - start] = arg_string[end];
+            end++;
         }
+
+        args[end - start] = '\0';
+
+        // printf("[DEBUG] args: \"%s\"\n", args);
 
         // acquire PID
         pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
@@ -394,5 +395,4 @@ handle_args(uint32_t pid, int8_t * arg_string) {
 
     return;
 }
-
 

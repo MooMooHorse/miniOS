@@ -42,32 +42,34 @@ int32_t halt (uint8_t status){
  * @return ** int32_t - errno 
  */
 int32_t execute (const uint8_t* command){
-    int8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    int8_t argument_segment[CMD_MAX_LEN];
+    uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    int32_t start, end;
+    uint8_t start=0, end;
     /* no way to check command length, for '\0' will always be attached */
-    
-    // Separate command from arguments
-    // Strip excess whitespace
-    start = end = 0;
 
-    while(command[start] == (uint8_t)' ' && command[start] != (uint8_t)'\0') start++;
+    // TO DO : get rid of all multiple space 
+    // stuff like `    cat   frame0.txt     frame1.txt            ` 
+    // should be stripped into `cat frame0.txt frame1.txt`
+    // The following process shoule be in ONE while loop
+
+    while(command[start] == ' ' && command[start] != '\0') start++;
     end = start; // set starting point
 
     // extract command
-    while(command[end] != (uint8_t)' ' && command[end] != (uint8_t)'\0') {
+    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
         _command[end-start] = command[end];
         end++;
     }
-    _command[end - start] = (uint8_t)'\0';
+    _command[end - start] = '\0';
 
+    /* TO DO : Make the loop into while loop */
     for (i = 0; i < CMD_MAX_LEN - end; i++) {
         argument_segment[i] = command[end + i];
     }
 
     /* check executable */ 
-    if(readonly_fs.check_exec((uint8_t*)_command)!=1){
+    if(readonly_fs.check_exec(_command)!=1){
         return ERR_NO_CMD;
     }
 
@@ -96,7 +98,7 @@ int32_t execute (const uint8_t* command){
 
 
     /* open PCB */
-    if(pcb_open(ppid,pid,(uint8_t*)_command)==-1){
+    if(pcb_open(ppid,pid,_command)==-1){
         printf("not enough space for PCB\n");
         return ERR_BAD_PID; /* errono to be defined */
     }
@@ -112,7 +114,7 @@ int32_t execute (const uint8_t* command){
     handle_args(pid, argument_segment);
 
     /* program loader */
-    readonly_fs.load_prog((uint8_t*)_command,IMG_START,PROG_SIZE);
+    readonly_fs.load_prog(_command,IMG_START,PROG_SIZE);
 
     /* set up TSS, only esp0 is needed to be modified */
     setup_tss(pid);
@@ -274,14 +276,8 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
         return -1;
     }
 
-    // check if nbytes is too small
-    if (strlen(_pcb_ptr->args) > nbytes) {
-        printf("getargs: args are longer than number of bytes specified\n");
-        return -1;
-    }
-
     // copy args to pcb_ptr->args
-    strncpy((int8_t*)buf, (int8_t*)_pcb_ptr->args, nbytes);
+    strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);
 
     return 0;
 }

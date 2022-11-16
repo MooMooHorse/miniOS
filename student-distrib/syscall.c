@@ -229,7 +229,7 @@ int32_t close (int32_t fd){
     return file_entry->fops.close(file_entry);
 }
 
-/** TO DO : nbytes unused 
+/** 
  * @brief Reads program's arguments from its respective pcb_t into a user-level buffer.
  * 
  * @param buf Pointer to the buffer to be filled with the arguments.

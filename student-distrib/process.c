@@ -351,9 +351,9 @@ discard_proc(uint32_t pid,uint32_t status){
 
 /**
  * @brief copy command from user space to kernel space
- * @param command : command passed from execute, in user space
- * @param _command  : command you parsed into, in kernel
- * @param nbytes - at most copy n_bytes
+ * @param command   - command passed from execute, in user space
+ * @param _command  - command you parsed into, in kernel
+ * @param nbytes    - at most copy n_bytes
  * @return ** int32_t
  * command length, -1 on failure
  */
@@ -375,10 +375,11 @@ copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes){
 /**
  * @brief set arguments for current task, set them into correct format, stripping whitespace, adding
  * suitable termination mark.
- * @param command : command that contains arguments
- * @param start : starting place of the first argument
- * @param nbytes : number of bytes at most in command
- * @return ** int32_t 
+ * @param command - command that contains arguments
+ * @param start   - starting place of the first argument
+ * @param nbytes  - number of bytes at most in command
+ * @return ** int32_t number of bytes in arguments
+ * This shouldn't fail
  */
 int32_t 
 set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes,uint32_t pid){

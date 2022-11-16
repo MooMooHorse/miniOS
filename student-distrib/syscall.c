@@ -45,7 +45,7 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    uint8_t start=0, end;
+    int32_t start=0, end;
     /* no way to check command length, for '\0' will always be attached */
 
     // TO DO : get rid of all multiple space 
@@ -258,10 +258,17 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
         // if buf is NULL, return -1
         return -1;
     }
+    
 
     // get pointer to pcb_t
     uint32_t pid = get_pid();
     pcb_t* _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+
+    if (strlen(_pcb_ptr->args) > nbytes) {
+        printf("getargs: args are longer than number of bytes specified\n");
+        return -1;
+    }
+
 
     // arg existence check
     if (_pcb_ptr->args[0] == '\0') {

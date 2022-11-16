@@ -60,15 +60,10 @@ int32_t execute (const uint8_t* command){
     pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; 
     for(i=pid-1;i>=1;i--){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
-        if(0==_pcb_ptr->active){
+        if(0==_pcb_ptr->present){
             pid=i;
             break;
         }
-    }
-    /* special for cp4 sanity check, to make running program <= 3 */
-    if((pid==(PCB_BASE-PCB_ptr)/PCB_SIZE+1) && pid == 4){
-        printf("limit number of program below 4\n");
-        return 0;
     }
 
     ppid=get_pid();

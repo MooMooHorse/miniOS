@@ -144,7 +144,7 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* cast pointer to dereference memory */
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
-    _pcb_ptr->active=1;
+    _pcb_ptr->present=1;
     clean_up_fda(_pcb_ptr);
     init_file_entry(_pcb_ptr,0);
     init_file_entry(_pcb_ptr,1);
@@ -296,18 +296,11 @@ discard_proc(uint32_t pid,uint32_t status){
         printf("shell respawn\n");
         execute((uint8_t*)"shell");
     }
+
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
-    _pcb_ptr->active=0; /* turn off old pcb */
-    #ifdef RUN_TESTS_OPEN
-    test_open(&_pcb_ptr->file_entry[0]);
-    test_open(&_pcb_ptr->file_entry[1]);
-    #endif
+    _pcb_ptr->present=0; /* turn off old pcb */
     _pcb_ptr->file_entry[0].fops.close(&_pcb_ptr->file_entry[0]);
     _pcb_ptr->file_entry[1].fops.close(&_pcb_ptr->file_entry[1]);
-    #ifdef RUN_TESTS_CLOSE
-    test_close(&_pcb_ptr->file_entry[0]);
-    test_close(&_pcb_ptr->file_entry[1]);
-    #endif
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;

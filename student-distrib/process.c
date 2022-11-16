@@ -386,13 +386,13 @@ set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes,uint32_t pid){
     int32_t i=0; /* counter for process's argument */
     /* copy into pcb arguments : note to current process */
     while(command[start]!='\0'&&start<nbytes){
-        while(command[start]==' ') start++; /* trim white space */
+        while(command[start]==' '&&start<nbytes) start++; /* trim white space */
         /* no need to check i, for i <= start */
         while(command[start]!=' '&&command[start]!='\0'&&start<nbytes){
             _pcb_ptr->args[i++]=command[start++]; /* trim white space */
         }
         _pcb_ptr->args[i++]=' '; /* SIDE-EFFECT(internal) : 1 white space at the end */
-        while(command[start]==' ') start++;
+        while(command[start]==' '&&start<nbytes) start++;
     }
 
     if(start==nbytes) return -1; /* check '\0' for command : not needed */

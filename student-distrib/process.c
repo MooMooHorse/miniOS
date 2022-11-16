@@ -13,7 +13,6 @@
 #include "filesystem.h"
 #include "terminal.h"
 #include "lib.h"
-#include "syscall.h"
 #include "mmu.h"
 #include "err.h"
 #include "tests.h"
@@ -350,49 +349,50 @@ discard_proc(uint32_t pid,uint32_t status){
     return -1;
 }
 
-/** 
- * @brief Extract arguments given a arg_string line
- * 
- * @param pid - relevant PID
- * @param arg_string - arg_string to extract from
- * SIDE EFFECT: no side effect
-*/
-void
-handle_args(uint32_t pid, uint8_t * arg_string) {
-    uint8_t args[CMD_MAX_LEN];
-    uint8_t start, end;
-
-    // parse arg_string
-    start = end = 0;
-    if (arg_string[start] != '\0') {
-        // Parse argument
-        start = end + 1;
-
-        // skip leading whitespace
-        while(arg_string[start] == ' ' && arg_string[start] != '\0' && arg_string[start] != NULL) {
-            start++;
-        }
-
-        end = start; // set starting point
-
-        // extract argument
-        while(arg_string[end] != '\0' && arg_string[end] != NULL) {
-            args[end - start] = arg_string[end];
-            end++;
-        }
-
-        args[end - start] = '\0';
-
-        // printf("[DEBUG] args: \"%s\"\n", args);
-
-        // acquire PID
-        pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
-        strcpy((int8_t*)pcb_ptr->args, (int8_t*)args);
-    } else {
-        pcb_t *pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
-        strcpy((int8_t*)pcb_ptr->args, (int8_t*)"");
+/**
+ * @brief copy command from user space to kernel space
+ * @param command : command passed from execute, in user space
+ * @param _command  : command you parsed into, in kernel
+ * @param nbytes - at most copy n_bytes
+ * @return ** int32_t
+ * command length, -1 on failure
+ */
+int32_t copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes){
+    if(command==NULL||_command==NULL) return -1;
+    int32_t cmd_ptr=0;
+    /* copy untill end of program name */
+    while(command[cmd_ptr]!='\0'&&command[cmd_ptr]!=' '&&cmd_ptr<nbytes){
+        _command[cmd_ptr]=command[cmd_ptr];
+        cmd_ptr++;
     }
-
-    return;
+    if(cmd_ptr==nbytes) return -1; /* check '\0' for command : not needed */
+    _command[cmd_ptr]='\0';
+    /* check if command is NUL terminated */
+    return cmd_ptr;
 }
-
+/**
+ * @brief set arguments for current task, set them into correct format, stripping whitespace, adding
+ * suitable termination mark.
+ * @param command : command that contains arguments
+ * @param start : starting place of the first argument
+ * @param nbytes : number of bytes at most in command
+ * @return ** int32_t 
+ */
+int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes){
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    int32_t i=0; /* counter for process's argument */
+    while(command[start]!='\0'&&start<nbytes){
+        while(command[start]==' ') start++; /* trim white space */
+        /* no need to check i, for i <= start */
+        while(command[start]!=' '&&command[start]!='\0'&&start<nbytes){
+            _pcb_ptr->args[i++]=command[start++]; /* trim white space */
+        }
+        _pcb_ptr->args[i++]=' '; /* SIDE-EFFECT(internal) : 1 white space at the end */
+        while(command[start]==' ') start++;
+    }
+    if(start==nbytes) return -1; /* check '\0' for command : not needed */
+    if(i) i--; /* revert the last whitespace */
+    _pcb_ptr->args[i]='\0';
+    return i;
+}

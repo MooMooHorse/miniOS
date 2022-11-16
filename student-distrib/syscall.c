@@ -43,30 +43,13 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint8_t argument_segment[CMD_MAX_LEN];
     uint32_t pid,ppid,i,ret;
-    int32_t start=0, end;
-    /* no way to check command length, for '\0' will always be attached */
-
-    // TO DO : get rid of all multiple space 
-    // stuff like `    cat   frame0.txt     frame1.txt            ` 
-    // should be stripped into `cat frame0.txt frame1.txt`
-    // The following process shoule be in ONE while loop
-
-    while(command[start] == ' ' && command[start] != '\0') start++;
-    end = start; // set starting point
-
-    // extract command
-    while(command[end] != ' ' && command[end] != '\0' && command[end] != NULL) {
-        _command[end-start] = command[end];
-        end++;
+    
+    /* ret : temporary here, have meaning at the end of execute */
+    if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){
+        return ERR_NO_CMD;
     }
-    _command[end - start] = '\0';
-
-    /* TO DO : Make the loop into while loop */
-    for (i = 0; i < CMD_MAX_LEN - end; i++) {
-        argument_segment[i] = command[end + i];
-    }
+    
 
     /* check executable */ 
     if(readonly_fs.check_exec(_command)!=1){
@@ -96,6 +79,10 @@ int32_t execute (const uint8_t* command){
         return ERR_BAD_PID; /* errono to be defined */
     }
 
+    /* set argument for this process :  */
+    /* position of this function is IMPORTANT! */
+    set_proc_args(command,ret,CMD_MAX_LEN);
+
 
     /* open PCB */
     if(pcb_open(ppid,pid,_command)==-1){
@@ -110,8 +97,6 @@ int32_t execute (const uint8_t* command){
 
     /* to this point, everything is checked, nothing should fail */
 
-    // handle arguments
-    handle_args(pid, argument_segment);
 
     /* program loader */
     readonly_fs.load_prog(_command,IMG_START,PROG_SIZE);
@@ -253,7 +238,8 @@ int32_t close (int32_t fd){
  * SIDE EFFECT: buf is filled with the arguments.
  */
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
-    // TO DO : use nbytes
+    uint32_t pid,ppid;
+    pcb_t* _pcb_ptr;
     if (buf == NULL) {
         // if buf is NULL, return -1
         return -1;
@@ -261,8 +247,10 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
     
 
     // get pointer to pcb_t
-    uint32_t pid = get_pid();
-    pcb_t* _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+    pid = get_pid();
+    _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+    ppid = _pcb_ptr->ppid;
+    _pcb_ptr=(pcb_t*)(PCB_BASE - ppid * PCB_SIZE);
 
     if (strlen(_pcb_ptr->args) > nbytes) {
         printf("getargs: args are longer than number of bytes specified\n");

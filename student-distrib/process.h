@@ -21,7 +21,7 @@
 
 #include "types.h"
 #include "x86_desc.h" 
-
+#include "syscall.h"
 /**
  * @brief struct for pcb block
  */
@@ -38,7 +38,7 @@ typedef struct PCB{
     /* Below is file struct array (open file table) */
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */
     file_t file_entry[FILE_ARRAY_MAX];
-    int8_t args[128]; /* arguments */
+    int8_t args[CMD_MAX_LEN]; /* arguments */
     /* after PCB, we have kernel stack for each process */
 } pcb_t;
 
@@ -50,7 +50,8 @@ extern void setup_tss(uint32_t pid);
 extern file_t* get_file_entry(uint32_t fd);
 extern uint32_t get_pid();
 extern int32_t discard_proc(uint32_t pid,uint32_t status);
-extern void handle_args(uint32_t pid, uint8_t * arg_string);
+extern int32_t copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes);
+extern int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes);
 
 #endif
 

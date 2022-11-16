@@ -362,7 +362,7 @@ copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes){
     if(command==NULL||_command==NULL) return -1;
     int32_t cmd_ptr=0;
     int32_t i=0;
-    while(command[cmd_ptr]==' ') cmd_ptr++; /* trim leading space */
+    while(command[cmd_ptr]==' '&&cmd_ptr<nbytes) cmd_ptr++; /* trim leading space */
 
 
     /* copy untill end of program name */

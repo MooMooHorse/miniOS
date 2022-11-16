@@ -238,7 +238,7 @@ int32_t close (int32_t fd){
  * SIDE EFFECT: buf is filled with the arguments.
  */
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
-    uint32_t pid,ppid;
+    uint32_t pid;
     pcb_t* _pcb_ptr;
     if (buf == NULL) {
         // if buf is NULL, return -1

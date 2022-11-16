@@ -240,34 +240,15 @@ int32_t close (int32_t fd){
 int32_t getargs (uint8_t* buf, uint32_t nbytes){
     uint32_t pid;
     pcb_t* _pcb_ptr;
-    if (buf == NULL) {
-        // if buf is NULL, return -1
-        return -1;
-    }
-    
-
+    /* sanity check start */
+    if (buf == NULL) return -1; /* no buf */
     // get pointer to pcb_t
     pid = get_pid();
     _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
+    if (strlen(_pcb_ptr->args) > nbytes) return -1; /* no enough buf length */
+    if (_pcb_ptr->args[0] == '\0') return -1; /* no argument */
+    /* sanity check end */
 
-    if (strlen(_pcb_ptr->args) > nbytes) {
-        printf("getargs: args are longer than number of bytes specified\n");
-        return -1;
-    }
-
-
-    // arg existence check
-    if (_pcb_ptr->args[0] == '\0') {
-        
-        printf("getargs: args are nonexistent\n");
-        return -1;
-    }
-
-    // arg string-correctness check
-    if (_pcb_ptr->args[strlen(_pcb_ptr->args)] != '\0') {
-        printf("getargs: args are not null-terminated\n");
-        return -1;
-    }
 
     // copy args to pcb_ptr->args
     strcpy((int8_t*)buf, (int8_t*)_pcb_ptr->args);

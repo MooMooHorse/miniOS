@@ -81,7 +81,7 @@ int32_t execute (const uint8_t* command){
 
     /* set argument for this process :  */
     /* position of this function is IMPORTANT! */
-    set_proc_args(command,ret,CMD_MAX_LEN);
+    set_proc_args(command,ret,CMD_MAX_LEN,pid);
 
 
     /* open PCB */
@@ -249,8 +249,6 @@ int32_t getargs (uint8_t* buf, uint32_t nbytes){
     // get pointer to pcb_t
     pid = get_pid();
     _pcb_ptr = (pcb_t*)(PCB_BASE - pid * PCB_SIZE);
-    ppid = _pcb_ptr->ppid;
-    _pcb_ptr=(pcb_t*)(PCB_BASE - ppid * PCB_SIZE);
 
     if (strlen(_pcb_ptr->args) > nbytes) {
         printf("getargs: args are longer than number of bytes specified\n");

@@ -357,13 +357,15 @@ discard_proc(uint32_t pid,uint32_t status){
  * @return ** int32_t
  * command length, -1 on failure
  */
-int32_t copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes){
+int32_t 
+copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes){
     if(command==NULL||_command==NULL) return -1;
     int32_t cmd_ptr=0;
+    int32_t i=0;
+    while(command[cmd_ptr]==' ') cmd_ptr++; /* trim leading space */
     /* copy untill end of program name */
     while(command[cmd_ptr]!='\0'&&command[cmd_ptr]!=' '&&cmd_ptr<nbytes){
-        _command[cmd_ptr]=command[cmd_ptr];
-        cmd_ptr++;
+        _command[i++]=command[cmd_ptr++];
     }
     if(cmd_ptr==nbytes) return -1; /* check '\0' for command : not needed */
     _command[cmd_ptr]='\0';
@@ -378,10 +380,11 @@ int32_t copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes)
  * @param nbytes : number of bytes at most in command
  * @return ** int32_t 
  */
-int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes){
-    uint32_t pid=get_pid();
+int32_t 
+set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes,uint32_t pid){
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     int32_t i=0; /* counter for process's argument */
+    /* copy into pcb arguments : note to current process */
     while(command[start]!='\0'&&start<nbytes){
         while(command[start]==' ') start++; /* trim white space */
         /* no need to check i, for i <= start */
@@ -391,6 +394,7 @@ int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes){
         _pcb_ptr->args[i++]=' '; /* SIDE-EFFECT(internal) : 1 white space at the end */
         while(command[start]==' ') start++;
     }
+
     if(start==nbytes) return -1; /* check '\0' for command : not needed */
     if(i) i--; /* revert the last whitespace */
     _pcb_ptr->args[i]='\0';

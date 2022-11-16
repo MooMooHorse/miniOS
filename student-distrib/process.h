@@ -51,7 +51,7 @@ extern file_t* get_file_entry(uint32_t fd);
 extern uint32_t get_pid();
 extern int32_t discard_proc(uint32_t pid,uint32_t status);
 extern int32_t copy_to_command(const uint8_t* command,uint8_t* _command,int32_t nbytes);
-extern int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes);
+extern int32_t set_proc_args(const uint8_t* command,int32_t start,int32_t nbytes,uint32_t pid);
 
 #endif
 

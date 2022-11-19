@@ -76,15 +76,18 @@ int32_t prog_video_update(int32_t index){
  * @return ** void 
  */
 void prog_video_recover(char* video,int sx,int sy){
-    terminal_load(terminal_index);
+    terminal[terminal_index].screen_x=get_screen_x();
+    terminal[terminal_index].screen_y=get_screen_y();
     set_vid(video,sx,sy);
 }
 
 /**
  * @brief load the terminal for their video, screen_x, screen_y
+ * Shouldn't be used in keyboard interrupt handler and context switch
  * @param index - terminal index to load
  * @return ** int32_t -1 on illegal index
  * 0 on success
+ * SIDE-EFFECT : copy the whole video memory : slow
  */
 int32_t terminal_load(int32_t index){
     int32_t i;
@@ -93,6 +96,8 @@ int32_t terminal_load(int32_t index){
     }
     char* vid=(char*)VIDEO;
     /* copy the video memory into terminal buffer */
+    /* TO DO : Optimize it so you only have to copy chars you wrote */
+    /* it's NOT looping from old coordinate to new coordinate, that's buggy */
     for(i=0;i<VIDEO_SIZE;i++) terminal[index].video[i]=vid[i]; 
     terminal[index].screen_x=get_screen_x();
     terminal[index].screen_y=get_screen_y();

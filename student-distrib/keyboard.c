@@ -22,6 +22,7 @@
 #include "lib.h"
 #include "mmu.h"
 #include "process.h"
+#include "tests.h"
 #define ISLOWER(x)  ('a' <= (x) && (x) <= 'z')
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
@@ -52,7 +53,21 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
     [28] = '\n' /* \r */, [38] = C('L'), [46] = C('C')
 };
 
-static const uint8_t map_alt[MAP_SIZE] = {};
+/**
+ * @brief 
+ * 0x3B    F1 pressed  0x3C	   F2 pressed	0x3D    F3 pressed	
+ * 0x3E    F4 pressed  0x3F	   F5 pressed   0x40    F6 pressed	
+ * 0x41	   F7 pressed  0x42	   F8 pressed	0x43	F9 pressed
+ * 0x44    F10 pressed 
+ * 
+ */
+#define A(X) ((X)+ALT_BASE)
+static const uint8_t map_alt[MAP_SIZE] = {
+    [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3),
+    [0x3E]=A(4), [0x3F]=A(5), [0x40]=A(6),
+    [0x41]=A(7), [0x42]=A(8), [0x43]=A(9),
+    [0x44]=A(10)
+};
 
 // Complete CTRL map.
 /* static const uint8_t map_ctrl[MAP_SIZE] = { */
@@ -141,9 +156,20 @@ keyboard_handler(void) {
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if(_pcb_ptr->terminal!=terminal_index) 
         set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
+
+
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
-        switch (c) {
+        if(c>ALT_BASE){ /* switch terminal */
+            if(c-ALT_BASE>10){
+                #ifdef RUN_TESTS
+                printf("bad ascii\n");
+                #endif
+            }else{
+                terminal_switch(terminal_index,(c-ALT_BASE)%MAX_TERMINAL_NUM); /* terminal 10 -> 0 */
+            }
+        }
+        else switch (c) {
             
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {

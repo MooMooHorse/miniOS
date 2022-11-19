@@ -28,6 +28,7 @@
 #define SCAN_MASK       0xFF
 #define RELEASE_MASK    0x80
 #define MAP_SIZE        256
+#define ALT_BASE        128
 
 #define SHIFT           (1 << 0)
 #define CTRL            (1 << 1)

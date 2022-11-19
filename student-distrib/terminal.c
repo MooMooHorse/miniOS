@@ -63,7 +63,12 @@ int32_t prog_video_update(int32_t index){
     if(index<0||index>9){
         return -1;
     }
-    set_vid((char*)terminal[index].video,terminal[index].screen_x,terminal[index].screen_y);
+    if(index==terminal_index){
+        set_vid((char*)VIDEO,terminal[index].screen_x,terminal[index].screen_y);
+    }
+    else{
+        set_vid((char*)terminal[index].video,terminal[index].screen_x,terminal[index].screen_y);
+    }
     return 0;
 }
 
@@ -112,7 +117,7 @@ int32_t terminal_load(int32_t index){
  * @return ** int32_t 
  */
 int32_t terminal_switch(int32_t old,int32_t new){
-    
+    int32_t i;
     terminal_load(old);
     terminal_index=new;
     if(!terminal[new].active) terminal[new].open(new,(int32_t*)get_terbuf_addr(new));
@@ -120,7 +125,15 @@ int32_t terminal_switch(int32_t old,int32_t new){
     /* initalize screen if terminal is just created(opened) */
     if(terminal[new].screen_x==terminal[new].screen_y&&terminal[new].screen_x==0){
         clear();
-        printf("391OS> ");
+        while(1){
+        #ifdef RUN_TESTS
+            printf("shell respawn\n");
+        #endif
+            execute("shell");
+        }
+    }else{
+        char* vid=(char*)VIDEO;
+        for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
     }
     return 0;
 }

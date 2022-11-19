@@ -180,7 +180,7 @@ terminal_close(file_t* file) {
     file->flags = F_CLOSE;
     file->pos = 0;
     file->inode = -1;
-    input.e = input.w;  // Discard unused characters in the input buffer.
+    
     return 0;
 }
 

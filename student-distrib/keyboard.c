@@ -28,7 +28,7 @@
 #define TOUPPER(x)  ((x) + 'A' - 'a')
 
 // Global circular buffer with R/W/E indices.
-input_t input;
+// input_t input;
 
 // Modifiers flags.
 static uint8_t mod;

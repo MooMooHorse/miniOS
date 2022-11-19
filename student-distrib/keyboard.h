@@ -44,7 +44,7 @@ typedef struct input {
     uint8_t e;  // Edit index.
 } input_t;
 
-extern input_t input;
+// extern input_t input;
 
 /* Initializes the keyboard IRQ. */
 void keyboard_init(void);

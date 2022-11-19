@@ -70,8 +70,8 @@ bad_call2(file_t* file, void* buf, int32_t nbytes) {
  * @return ** int32_t -1 on failure
  */
 static int32_t 
-init_file_entry(pcb_t* _pcb_ptr, int32_t i){
-    if(_pcb_ptr==NULL || terminal.ioctl.open(&_pcb_ptr->file_entry[i],(uint8_t*)"terminal",0)==-1){
+init_terminal(pcb_t* _pcb_ptr, int32_t i){
+    if(_pcb_ptr==NULL){
         return -1;
     }
     /* for terminal those arguments are gargbage */
@@ -81,14 +81,14 @@ init_file_entry(pcb_t* _pcb_ptr, int32_t i){
     
     if(i==0){
         _pcb_ptr->file_entry[i].fops.write=bad_call1;
-        _pcb_ptr->file_entry[i].fops.read=terminal.ioctl.read;
+        _pcb_ptr->file_entry[i].fops.read=terminal_ops.ioctl.read;
     }
     else{
-        _pcb_ptr->file_entry[i].fops.write=terminal.ioctl.write;
+        _pcb_ptr->file_entry[i].fops.write=terminal_ops.ioctl.write;
         _pcb_ptr->file_entry[i].fops.read=bad_call2;
     }
-    _pcb_ptr->file_entry[i].fops.close=terminal.ioctl.close;
-    _pcb_ptr->file_entry[i].fops.open=terminal.ioctl.open;
+    _pcb_ptr->file_entry[i].fops.close=terminal_ops.ioctl.close;
+    _pcb_ptr->file_entry[i].fops.open=terminal_ops.ioctl.open;
     return 0;
 }
 
@@ -145,9 +145,10 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
     _pcb_ptr->present=1;
+    _pcb_ptr->terminal=terminal_index;
     clean_up_fda(_pcb_ptr);
-    init_file_entry(_pcb_ptr,0);
-    init_file_entry(_pcb_ptr,1);
+    init_terminal(_pcb_ptr,0);
+    init_terminal(_pcb_ptr,1);
 
     /* following file entries are not opened yet, not initialized */
     strncpy((int8_t*)_pcb_ptr->pname,(int8_t*)prog_name,32);

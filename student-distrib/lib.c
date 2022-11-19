@@ -10,7 +10,26 @@
 
 static int screen_x;
 static int screen_y;
-static char* const video_mem = (char *)VIDEO;
+static char* video_mem = (char *)VIDEO;
+
+
+char* get_vidmem(){ return video_mem; }
+int   get_screen_x(){ return screen_x; }
+int   get_screen_y(){ return screen_y; }
+
+/**
+ * @brief set video memory, screen_x, screen_y
+ * 
+ * @param vid_mem - video memory adress to set
+ * @param s_x     - screen_x value to set
+ * @param s_y     - screen_y value to set
+ * @return ** void 
+ */
+void set_vid(char* vid_mem,int s_x,int s_y){
+    video_mem=vid_mem;
+    screen_x=s_x;
+    screen_y=s_y;
+}
 
 /* void clear(void);
  * Inputs: void

@@ -31,6 +31,13 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 /* Used to test RTC. */
 void test_interrupts(void);
 
+/* change video_mem,screen_x,screen_y */
+extern void set_vid(char* vid_mem,int s_x,int s_y);
+
+extern char* get_vidmem();
+extern int   get_screen_x();
+extern int   get_screen_y();
+
 /* Special-purpose functions. */
 /* Writes to register `cr3`. Used to switch page tables. */
 static inline void

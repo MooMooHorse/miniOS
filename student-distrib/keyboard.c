@@ -10,11 +10,18 @@
  * @date 2022-10-21
  * @brief Refactored code to support special characters and input buffer.
  *
+ * @version 2.0
+ * @author haor2
+ * @date 2022-11-18
+ * @brief support multiple terminals
  * @copyright Copyright (c) 2022
  * 
  */
 #include "keyboard.h"
-
+#include "terminal.h"
+#include "lib.h"
+#include "mmu.h"
+#include "process.h"
 #define ISLOWER(x)  ('a' <= (x) && (x) <= 'z')
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
@@ -114,8 +121,10 @@ kgetc(void) {
     return c;
 }
 
+
 /*!
  * @brief This function handles the keyboard interrupt.
+ * Handling keyboard always use the current terminal (active).
  * @param None.
  * @return None.
  * @sideeffect Modifies `input` buffer and video memory.
@@ -124,24 +133,37 @@ void
 keyboard_handler(void) {
     int32_t c;
     int32_t i;
+    char* vid=get_vidmem();
+    int sx=get_screen_x(),sy=get_screen_y();
+    
+    /* if scheduler is running background process, keyboard is still outputting to displayed terminal */
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(_pcb_ptr->terminal!=terminal_index) 
+        set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
         switch (c) {
+            
             case '\b':  // Eliminate the last character in buffer & screen.
-                if (input.e != input.w) {
+                if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {
                     putc(c);
-                    --input.e;
+                    --terminal[terminal_index].input.e;
                 }
                 break;
             case '\t':
                 // Enough space to place a tab (4 spaces + 1 linefeed)?
-                if (INPUT_SIZE < input.e - input.r + 5) { break; }
+                if (INPUT_SIZE < terminal[terminal_index].input.e 
+                - terminal[terminal_index].input.r + 5) { break; }
                 for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
                     putc(' ');
-                    input.buf[input.e++ % INPUT_SIZE] = ' ';
+                    terminal[terminal_index].input.buf[
+                        terminal[terminal_index].input.e++ % INPUT_SIZE
+                    ] = ' ';
                 }
                 break;
             case C('C'):
+                if(_pcb_ptr->terminal!=terminal_index) prog_video_recover(vid,sx,sy);
                 halt(0);  // Assume normal termination for now.
                 break;
             case C('L'):
@@ -151,11 +173,20 @@ keyboard_handler(void) {
             default:
                 // Ignore NUL characters. Stop taking input when buffer is full.
                 putc(c);  // Print non-NUL character to the screen.
-                if (INPUT_SIZE == input.e - input.r + 1 && '\n' != c) { break; }
-                input.buf[input.e++ % INPUT_SIZE] = c;  // NOTE: Circular buffer!
+                if (INPUT_SIZE == 
+                terminal[terminal_index].input.e 
+                - terminal[terminal_index].input.r + 1 
+                && '\n' != c) { break; }
+                
+                terminal[terminal_index].input.buf[
+                    terminal[terminal_index].input.e++ % INPUT_SIZE
+                ] = c;  // NOTE: Circular buffer!
                 // Update buffer write status when linefeed encountered so terminal can read.
-                if ('\n' == c) { input.w = input.e; }
+                if ('\n' == c) { 
+                    terminal[terminal_index].input.w = terminal[terminal_index].input.e; 
+                }
                 break;
         }
     }
+    if(_pcb_ptr->terminal!=terminal_index) prog_video_recover(vid,sx,sy);
 }

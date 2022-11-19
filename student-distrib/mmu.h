@@ -32,6 +32,7 @@
 #define PAGE_PAT        (1L << 7)           // Page table attribute index
 #define PAGE_G          (1L << 8)           // Global page
 #define VIDEO           0xB8000             // Copied from `lib.c`.
+#define VIDEO_SIZE      (4<<10)             // each video buffer size : 4KB
 
 // Control registers setting.
 #define CR0_PE          (1L << 0)           // Protection enable
@@ -64,12 +65,16 @@ typedef uint32_t* pgtbl_t;      // 1024 PTEs.
 void vm_init(void);
 
 /* Map one extended page for user program. */
-int32_t uvmmap_ext(uint32_t pa);
+extern int32_t uvmmap_ext(uint32_t pa);
+
+/* Map terminal buffer to correct starting address */
+extern int32_t uvmmap_tbuf(uint32_t tbufa);
 
 /* Map one 4KB page for user video memory and send back address. */
-int32_t uvmmap_vid(uint8_t** screen_start);
+extern int32_t uvmmap_vid(uint8_t** screen_start);
 
 /* Undo user video memory mapping. */
-int32_t uvmunmap_vid(void);
+extern int32_t uvmunmap_vid(void);
+
 
 #endif /* _MMU_H */

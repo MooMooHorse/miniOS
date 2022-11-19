@@ -22,10 +22,9 @@
  */
 void
 vm_init(void) {
-    pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW;  // Map the first page table.
+    pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
     pgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
-
     // Turn on page size extension for 4MB pages.
     asm volatile(
         "movl %%cr4, %%eax      \n\t\
@@ -68,6 +67,23 @@ uvmmap_ext(uint32_t pa) {
     return 0;
 }
 
+/**
+ * @brief map terminal buffer pages 
+ * 4KB aligned, each buffer size == size of video memory
+ * @param tbufa 4KB aligned buffer starting address 
+ * @return ** int32_t -1 on not 4KB aligned
+ * 0 on normal return 
+ */
+int32_t
+uvmmap_tbuf(uint32_t tbufa){
+    if(tbufa << (PTESIZE - PTXOFF)){ /* not 4KB - aligned */
+        return -1;
+    }
+    pgtbl[PTX(tbufa)] = tbufa | PAGE_P | PAGE_RW; /* physical == virtual */
+    lcr3((uint32_t) pgdir);  // Flush TLB.
+    return 0;
+}
+
 /*!
  * @brief This function maps video memory in the user page table so that user programs can modify video memory in
  * their virtual address space. It also writes the start of user virtual address of video memory to the pointer
@@ -89,6 +105,7 @@ uvmmap_vid(uint8_t** screen_start) {
     *screen_start = (uint8_t*) (UVM_START + UVM_SIZE);
 
     pgdir[PDX(*screen_start)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
+    /* TODO : change to proper video memory instead of static VIDEO */
     pgtbl_vid[PTX(*screen_start)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
 
     lcr3((uint32_t) pgdir);  // Flush TLB.

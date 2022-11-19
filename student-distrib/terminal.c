@@ -17,7 +17,7 @@
 #include "mmu.h"
 #include "tests.h"
 #include "process.h"
-
+#include "cursor.h"
 static int32_t _terminal_read(uint8_t* buf, int32_t n);
 static int32_t _terminal_write(const uint8_t* buf, int32_t n);
 static int32_t _open(int32_t,int32_t*);
@@ -134,6 +134,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
     }else{
         char* vid=(char*)VIDEO;
         for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
+        cursor_update(terminal[new].screen_x,terminal[new].screen_y);
     }
     return 0;
 }

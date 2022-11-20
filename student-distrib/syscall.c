@@ -6,6 +6,12 @@
  * @version 0.1
  * @date 2022-10-15
  * 
+ * 
+ * @version 1.0
+ * @author haor2
+ * @brief support multi-terminal
+ * @date 2022-11-19
+ * 
  * @copyright Copyright (c) 2022
  * 
  */

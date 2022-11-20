@@ -29,7 +29,7 @@ typedef struct terminal{
     int8_t* video; /* pointer to video memory */
     input_t input;  /* input buffer for current terminal */
     int32_t screen_x,screen_y; /* cursor coordinate for current terminal */
-    int8_t active;
+    int8_t active; /* terminal active or not */
     int32_t (*open) (int32_t,int32_t*);
 } terminal_t;
 

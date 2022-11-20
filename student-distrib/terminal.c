@@ -129,7 +129,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
         #ifdef RUN_TESTS
             printf("shell respawn\n");
         #endif
-            execute("shell");
+            execute((uint8_t*)"shell");
         }
     }else{
         char* vid=(char*)VIDEO;

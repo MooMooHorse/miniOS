@@ -2,7 +2,8 @@
 
 #include "lib.h"
 #include "cursor.h"
-
+#include "process.h"
+#include "terminal.h"
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
@@ -211,6 +212,8 @@ static void vertical_scroll(void) {
  * Return Value: void
  *  Function: Output a character to the console. Scroll the screen whenever necessary. */
 void putc(uint8_t c) {
+    uint32_t pid=get_pid();
+    pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);;
     if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
         screen_x = 0;
         if (NUM_ROWS == ++screen_y) {
@@ -236,18 +239,20 @@ void putc(uint8_t c) {
             }
         }
     }
-    cursor_update(screen_x, screen_y);
+    if(pid==0||_pcb_ptr->terminal==terminal_index) /* only when current terminal is displayed terminal */
+        cursor_update(screen_x, screen_y);
 }
 
-/**
- * @brief show a character at a location without changing the screen coordinate
- * @param c 
- * @return ** void 
- */
-void showc(uint8_t c){
-    *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-    *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-}
+
+// /**
+//  * @brief show a character at a location without changing the screen coordinate
+//  * @param c 
+//  * @return ** void 
+//  */
+// void showc(uint8_t c){
+//     *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
+//     *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+// }
 
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

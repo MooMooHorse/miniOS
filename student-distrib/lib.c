@@ -14,9 +14,9 @@ static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
 
-char* get_vidmem(){ return video_mem; }
-int   get_screen_x(){ return screen_x; }
-int   get_screen_y(){ return screen_y; }
+inline char* get_vidmem(){ return video_mem; } /* get video memory for current context */
+inline int   get_screen_x(){ return screen_x; } /* get screen_x for current context */
+inline int   get_screen_y(){ return screen_y; } /* get screen_y for current context */
 
 /**
  * @brief set video memory, screen_x, screen_y

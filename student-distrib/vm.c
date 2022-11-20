@@ -54,7 +54,7 @@ vm_init(void) {
 
 /**
  * @brief This function maps 1 extended page (4MB) for program image.
- * @param pa is *4MB-aligned* physical address where user virtual memory starting at 128MB (0x08000000) is mapped to.
+ * @param pa is *4MB-aligned* physical address which user virtual memory starting at 128MB (0x08000000) is mapped to.
  * @return 0 if succeeded, -1 otherwise (`pa` is not 4MB-aligned).
  */
 int32_t

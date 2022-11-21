@@ -161,16 +161,17 @@ keyboard_handler(void) {
 
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
-        if(c>ALT_BASE){ /* switch terminal */
-            if(c-ALT_BASE>10){
+        if(c > ALT_BASE){ /* switch terminal */
+            if (c - ALT_BASE > 10){
                 #ifdef RUN_TESTS
                 printf("bad ascii\n");
                 #endif
-            }else{
-                terminal_switch(terminal_index,(c-ALT_BASE)%MAX_TERMINAL_NUM); /* terminal 10 -> 0 */
+            } else {
+                terminal_switch(terminal_index, (c - ALT_BASE) % MAX_TERMINAL_NUM); /* terminal 10 -> 0 */
             }
+            return;
         }
-        else switch (c) {
+        switch (c) {
             
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {

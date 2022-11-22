@@ -20,6 +20,7 @@
 
 /* jump table for interrupt hanlder */
 interrupt_handler_jump_table:
+.long pit_interrupt
 .long keyboard_interrupt
 .long rtc_interrupt
 
@@ -44,6 +45,11 @@ common_interrupt_handler:
     popal
     addl $4,%esp # pop $0xfffff...
     iret
+
+/* 0 */
+pit_interrupt:
+    pushl $0xffffffff # ~0xffffffff = 0  ;
+    jmp common_interrupt_handler
 
 /* 1 */
 keyboard_interrupt:

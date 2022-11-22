@@ -6,6 +6,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "mmu.h"
+#include "pit.h"
 #include "rtc.h"
 #include "debug.h"
 #include "tests.h"
@@ -155,6 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
     i8259_init();
 
     /* Initialize devices */
+    pit_init();
     rtc_init();
     keyboard_init();
     cursor_init();

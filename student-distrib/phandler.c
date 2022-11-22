@@ -14,6 +14,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "irqlink.h"
+#include "pit.h"
 #include "rtc.h"
 #include "keyboard.h"
 
@@ -131,6 +132,9 @@ do_interrupt(old_ireg_t *oldregs) {
         return interrupt_index;
     }
     switch (interrupt_index) {
+        case 0x00:
+            pit_handler();
+            break;
         case 0x01:
             keyboard_handler();
             break;
@@ -151,6 +155,7 @@ do_interrupt(old_ireg_t *oldregs) {
  */
 void 
 install_interrupt_hanlder() {
-    SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[0]);
-    SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[1]);
+    SET_IDT_ENTRY(idt[0x20], interrupt_handler_jump_table[0]);
+    SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[1]);
+    SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[2]);
 }

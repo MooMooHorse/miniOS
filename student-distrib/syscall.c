@@ -400,7 +400,7 @@ int32_t sigreturn (void){
     uesp=uesp+1; /* 1: from signum to 8 regs */
     counter=8+5; /* 8 : 8 regs + 5 : 5 parameters to IRET */
     while(counter--){ /* overwrite kernel stack with user stack */
-        (*(kebp--))=(*(uesp--));
+        (*(kebp++))=(*(uesp++));
     }
     /* discard kernel stack and iret to normal program */
     asm volatile("              \n\

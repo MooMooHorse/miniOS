@@ -1,6 +1,6 @@
 .globl swtch
 swtch:
-    movl 4(%esp), %eax      # Pointer to pointer to the base struct.
+    movl 4(%esp), %eax      # Load context struct pointer.
     movl 8(%esp), %ecx
     
     # Save callee-saved registers.
@@ -9,13 +9,13 @@ swtch:
     pushl %esi
     pushl %ebx
 
-    # Swap stacks.
-    movl %esp, (%eax)       # Load base address of the context struct.
-    movl %ecx, %esp
+    # Swap kernel stacks.
+    movl %esp, (%eax)       # Save the current esp and all callee-saved registers. 
+    movl %ecx, %esp         # Load new kernel stack pointer.
 
-    # Restore callee-saved registers from *current* stack.
+    # Restore callee-saved registers from swapped kernel stack.
     popl %ebx
     popl %esi
     popl %edi
     popl %ebp
-    ret                     # Implicitly jump to address in user `eip`.
+    ret                     # Will implicitly jump to address in user `eip`. 

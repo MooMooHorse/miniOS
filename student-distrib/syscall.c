@@ -27,6 +27,9 @@
 #include "signal.h"
 #include "terminal.h"
 
+extern void swtchret(void);
+extern void pseudoret(void);
+
 int32_t is_base=1;
 
 /**
@@ -48,7 +51,9 @@ int32_t halt (uint8_t status){
 
 int32_t _execute(const uint8_t* command,uint32_t pid,uint32_t ppid){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    uint32_t esp;
     int32_t ret;
+    pcb_t* p = PCB(pid);
     
     /* ret : temporary here, have meaning at the end of execute */
     if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){
@@ -89,6 +94,24 @@ int32_t _execute(const uint8_t* command,uint32_t pid,uint32_t ppid){
     /* program loader */
     readonly_fs.load_prog(_command,IMG_START,PROG_SIZE);
 
+    p->state = RUNNABLE;
+    p->terminal = pid;
+
+    // Manually construct the context structs for base shell #2 & #3.
+    esp = (uint32_t) PCB_BASE - (pid - 1) * PCB_SIZE - 4;
+    *(uint32_t*) esp = USER_DS;
+    esp -= 4;
+    *(uint32_t*) esp = p->uesp;
+    esp -= 8;
+    *(uint32_t*) esp = USER_CS;
+    esp -= 4;
+    *(uint32_t*) esp = p->ueip;
+    esp -= 4;
+    *(uint32_t*) esp = (uint32_t) pseudoret;
+    esp -= sizeof(*p->context);
+    p->context = (context_t*) esp;
+    memset(p->context, 0, sizeof(*p->context));
+    p->context->eip = (uint32_t) swtchret;
 
     return 0;
 }
@@ -194,7 +217,7 @@ int32_t read (int32_t fd, void* buf, uint32_t nbytes){
         return -1;
     }
     file_t* file_entry;
-    sti();
+    /* sti(); */
 
     
     uint32_t pid=get_pid();

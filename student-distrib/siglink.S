@@ -1,6 +1,7 @@
 #define ASM
 
 #include "signal.h"
+.text
 
 .globl sig_enter
 
@@ -15,7 +16,6 @@ _kesp:
 _prog_start:          
 	movl	$10,%eax  
 	int	$0x80
-
 _prog_end: 
 jmp _prog_end # while(1), this should never be accessed 
 

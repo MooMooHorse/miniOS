@@ -358,6 +358,7 @@ int32_t sigreturn (void){
     int32_t counter;
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+
     /* mark signal as handled */
     _pcb_ptr->sig_num=-1;
 

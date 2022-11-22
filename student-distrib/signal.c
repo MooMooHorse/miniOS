@@ -9,9 +9,9 @@ sig_handler_t sig_table[NUM_SIGNALS];
  * Internally used
  * @param kesp - pointer to kernel stack
  * @param uesp - pointer to user stack
- * @return ** void 
+ * @return ** uint32_t user stack pointer 
  */
-static void 
+static uint32_t 
 copy_to_user_stack(uint32_t* kesp,uint32_t* uesp){
     int32_t counter=8+5; /* 8 : saved register - 5 : IRET parameters */ 
     kesp=kesp+counter;
@@ -19,6 +19,7 @@ copy_to_user_stack(uint32_t* kesp,uint32_t* uesp){
         (*(--uesp))=(*(--kesp));/* pointer arithmetic : each time 32 bits */
     }
     /* two addresses here should be always valid */
+    return (uint32_t)uesp;
 }
 
 /**
@@ -26,15 +27,15 @@ copy_to_user_stack(uint32_t* kesp,uint32_t* uesp){
  * @param uesp - user stack top pointer
  * @param prog_start - starting address of executing sigreturn assembly code
  * @param prog_end - ending address of executing sigreturn assembly code
- * @return ** void 
+ * @return ** uint32_t user stack pointer 
  */
-static void
-copy_prog(uint32_t** uesp,uint32_t* prog_start,uint32_t* prog_end){
-    uint32_t* i=prog_end; /* pointer arithmetic : each time one instruction */
+static uint32_t
+copy_prog(uint8_t* uesp,uint8_t* prog_start,uint8_t* prog_end){
+    uint8_t* i=prog_end; /* pointer arithmetic : each time one instruction */
     while((uint32_t)i>(uint32_t)prog_start){
-        *(--(*uesp))=*(--i); /* pointer arithmetic : each time one instruction */
+        *(--uesp)=*(--i); /* pointer arithmetic : each time one instruction */
     }
-
+    return (uint32_t)uesp;
 }
 
 /**
@@ -44,12 +45,13 @@ copy_prog(uint32_t** uesp,uint32_t* prog_start,uint32_t* prog_end){
  * @param ret_addr - return address (entry to assembly linkage for sigreturn)
  * @param uesp - user stack top pointer
  * @param signum - signal number
- * @return ** void 
+ * @return ** uint32_t user stack pointer 
  */
-static void
+static uint32_t
 push_ret_addr(uint32_t ret_addr,uint32_t* uesp,uint32_t signum){
     (*(--uesp))=signum;
     (*(--uesp))=ret_addr;
+    return (uint32_t)uesp;
 }
 
 
@@ -70,7 +72,7 @@ set_kernel_stack(sig_handler_t handler,uint32_t* kesp,uint32_t *uesp){
     */
     asm volatile("              \n\
     movl    %%ecx,%%esp         \n\
-    popal                       \n\
+    addl    $32,%%esp           \n\
                                 \n\
     movl    %%eax,(%%esp)       \n\
                                 \n\
@@ -85,6 +87,7 @@ set_kernel_stack(sig_handler_t handler,uint32_t* kesp,uint32_t *uesp){
     :
     :"a"(handler.handler),"b"(uesp),"c"(kesp)
     );
+    
 }
 
 /**
@@ -97,7 +100,7 @@ set_kernel_stack(sig_handler_t handler,uint32_t* kesp,uint32_t *uesp){
  * @return ** int32_t 
  */
 int32_t 
-do_signal(uint32_t kesp,uint32_t uesp,uint32_t* prog_start,uint32_t* prog_end){
+do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
     uint32_t ret_addr;
     uint32_t pid=get_pid();
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
@@ -116,13 +119,14 @@ do_signal(uint32_t kesp,uint32_t uesp,uint32_t* prog_start,uint32_t* prog_end){
     }
 
 
-    copy_prog((uint32_t**)(&uesp),prog_start,prog_end);
+    /* note that because intruction are not 32-bit aligned, uesp will get pretty ugly */
+    uesp=copy_prog((uint8_t*)uesp,prog_start,prog_end); 
     ret_addr=uesp;/* start of execution of sigreturn in user stack */
     
-    copy_to_user_stack((uint32_t*)kesp,(uint32_t*)uesp); /* copy kernel stack to user stack */
+    uesp=copy_to_user_stack((uint32_t*)kesp,(uint32_t*)uesp); /* copy kernel stack to user stack */
     
     /* push return address */
-    push_ret_addr(ret_addr,(uint32_t*)uesp,_pcb_ptr->sig_num);
+    uesp=push_ret_addr(ret_addr,(uint32_t*)uesp,_pcb_ptr->sig_num);
 
     /* modify kernel stack to enter signal handler */
     set_kernel_stack(sig_table[_pcb_ptr->sig_num],(uint32_t*)kesp,(uint32_t*)uesp); 

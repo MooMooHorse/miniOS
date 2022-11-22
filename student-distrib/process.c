@@ -16,23 +16,23 @@
 #include "mmu.h"
 #include "err.h"
 #include "tests.h"
+
+uint32_t cur_proc = PCB_BASE;
+
 /**
- * @brief Create PID by modifying PCB_ptr
+ * @brief Create PID by modifying cur_proc
  * 
  * @param pid - process id starting from 0. 
  * There will be at most 8 processes as stipulated by ECE391 staff. 
- * The memory is "allocated" using PCB_ptr pointer which is a pointer pointed at current running process.
- * PCB_ptr points at the top of the currently running process.
+ * The memory is "allocated" using cur_proc pointer which is a pointer pointed at current running process.
+ * cur_proc points at the top of PCB of the currently running process.
  * @return ** int32_t 0 on success, -1 on failure
  */
 int32_t 
 pcb_create(uint32_t pid){
-    if(pid<=0||pid>8){
-        return -1;
-    }
-    if(PCB_BASE-pid*PCB_SIZE<PCB_ptr)
-        PCB_ptr=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
-    // printf("%x\n",PCB_ptr);
+    if(PCB_BASE-pid*PCB_SIZE<cur_proc)
+        cur_proc=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
+    // printf("%x\n",cur_proc);
     return 0;
 }
 
@@ -117,7 +117,7 @@ static int32_t clean_up_fda(pcb_t* _pcb_ptr){
 uint32_t 
 get_pid(){
     uint32_t cur_esp;
-    if(PCB_ptr==PCB_BASE){
+    if(cur_proc==PCB_BASE){
         return 0; /* kernel spawn shell, kernel with "pid" 0*/
     }
     /* any esp in this kernel stack would work */
@@ -144,7 +144,7 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* cast pointer to dereference memory */
     _pcb_ptr->pid=pid;
     _pcb_ptr->ppid=ppid;
-    _pcb_ptr->present=1;
+    _pcb_ptr->state=RUNNING;
     _pcb_ptr->terminal=terminal_index;
     clean_up_fda(_pcb_ptr);
     init_terminal(_pcb_ptr,0);
@@ -186,7 +186,7 @@ switch_user(uint32_t pid){
     /* http://jamesmolloy.co.uk/tutorial_html/10.-User%20Mode.html */
     /* Note that we have different value than in that tutorial */
     /* Our user_DS is 0x2B instead of 0x23 */
-    /* besides that, we need to explicitly enable interrupt by setting 9-th bit on eflgas */
+    /* besides that, we need to explicitly enable interrupt by setting 9-th bit on eflags */
     /* http://www.c-jump.com/CIS77/ASM/Instructions/I77_0070_eflags_bits.htm */
         // mov     %%ax, %%es     \n
         // mov     %%ax, %%fs     \n
@@ -207,7 +207,6 @@ switch_user(uint32_t pid){
     :
     :"memory"
     );
-    _pcb_ptr->cur_PCB_ptr=(uint32_t)_pcb_ptr;
     asm volatile ("            \n\
         andl    $0x00ff, %%eax \n\
         movw    %%ax, %%ds     \n\
@@ -232,7 +231,6 @@ switch_user(uint32_t pid){
     /* if reach here, you fail, return for this function should be done at halt */
     return -1;
 }
-
 /** Halt to do
  * @brief Set the up tss for each process
  * Called when exec and halt
@@ -293,16 +291,17 @@ discard_proc(uint32_t pid,uint32_t status){
         printf("halt-failed : illegal pid\n");
         while(1);
     }else if(pid==0){
-        PCB_ptr=PCB_BASE; /* discard all process */
+        cur_proc=PCB_BASE; /* discard all process */
         printf("shell respawn\n");
         execute((uint8_t*)"shell");
     }
 
     _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE); /* old pcb */
-    _pcb_ptr->present=0; /* turn off old pcb */
+    _pcb_ptr->state=UNUSED; /* turn off old pcb */
     _pcb_ptr->file_entry[0].fops.close(&_pcb_ptr->file_entry[0]);
     _pcb_ptr->file_entry[1].fops.close(&_pcb_ptr->file_entry[1]);
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
+    ((pcb_t*)(PCB_BASE-ppid*PCB_SIZE))->state = RUNNABLE;
     cur_esp=_pcb_ptr->kesp;
     cur_ebp=_pcb_ptr->kebp;
 
@@ -310,7 +309,7 @@ discard_proc(uint32_t pid,uint32_t status){
 
     /* re-spawn a shell immediately */
     if(ppid==0){ 
-        PCB_ptr=PCB_BASE; /* discard all process */
+        cur_proc=PCB_BASE; /* discard all process */
         /* tss and paging isn't necessary here, for execute will help us set them up */
         /* interrupt isn't turned on during this process (process here doesn't mean task) */
         printf("shell respawn\n");
@@ -319,8 +318,8 @@ discard_proc(uint32_t pid,uint32_t status){
         execute((uint8_t*)"shell");
     }
     else{
-        if((PCB_BASE-pid*PCB_SIZE)==PCB_ptr)
-            PCB_ptr+=PCB_SIZE; /* discard current process */
+        if((PCB_BASE-pid*PCB_SIZE)==cur_proc)
+            cur_proc+=PCB_SIZE; /* discard current process */
 
         _pcb_ptr=(pcb_t*)(PCB_BASE-ppid*PCB_SIZE); /* recover pid */
         recover_tss(_pcb_ptr); /* recover tss */

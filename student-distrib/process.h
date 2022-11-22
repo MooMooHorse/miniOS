@@ -17,11 +17,27 @@
 /* size of a program is at most 4 MB */
 #define PROG_SIZE (4<<20) 
 
+#define PCB(pid) ((pcb_t*) (PCB_BASE - (pid) * PCB_SIZE))
+
 #ifndef ASM
 
 #include "types.h"
 #include "x86_desc.h" 
 #include "syscall.h"
+#include "mmu.h"
+
+enum proc_state {
+    UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE
+};
+
+typedef struct context {
+    uint32_t ebx;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t ebp;
+    uint32_t eip;
+} context_t;
+
 /**
  * @brief struct for pcb block
  */
@@ -32,17 +48,18 @@ typedef struct PCB{
     uint32_t uesp; /* user esp */
     uint32_t kesp; /* kernel esp */
     uint32_t kebp; /* kernel ebp */
-    uint32_t cur_PCB_ptr; /* current pcb pointer */
-    uint8_t present; /* if this process is present */
     uint32_t terminal; /* which terminal this process belongs to */
     uint8_t pname[33]; /* program name, aligned with filesystem, max length 32 : 33 with NUL*/
     /* Below is file struct array (open file table) */
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */
     file_t file_entry[FILE_ARRAY_MAX];
     int8_t args[CMD_MAX_LEN]; /* arguments */
+    enum proc_state state;
+    context_t* context;
     /* after PCB, we have kernel stack for each process */
 } pcb_t;
 
+extern uint32_t cur_proc;
 
 extern int32_t pcb_create(uint32_t pid);
 extern int32_t pcb_open(uint32_t ppid, uint32_t pid,const uint8_t* prog_name);

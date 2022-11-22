@@ -203,6 +203,7 @@ set_proc_signal(int32_t signum){
 static void
 sigignore_handler(int32_t signum){
     printf("Program recieve signal %s\n",signame[signum]);
+    set_proc_signal(-1); /* remove the signal from this process */
     return;
 }
 
@@ -216,6 +217,7 @@ sigignore_handler(int32_t signum){
 static void
 sigkill_handler (int32_t signum){
     printf("Program recieve signal %s\n",signame[signum]);
+    set_proc_signal(-1);
     halt(0);
     return ;
 }

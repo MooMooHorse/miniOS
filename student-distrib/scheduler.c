@@ -1,5 +1,5 @@
 #include "scheduler.h"
-
+#include "terminal.h"
 void
 scheduler(void) {
     pcb_t* p;
@@ -9,10 +9,16 @@ scheduler(void) {
 
     if (0 == pid) { return; }  // Wait until the shell is spawned.
 
+    
     // Update status of process in the current terminal.
     cur = PCB(pid);
     terminal[terminal_index].pid = pid;
     cur->state = RUNNABLE;
+    
+    if(-1==terminal_update(cur->terminal)){
+        printf("scheduler : terminal fatal error\n");
+        while(1);
+    }
 
     for (i = 1; i <= PCB_MAX; ++i) {
         p = PCB((pid - 1 + i) % PCB_MAX + 1);
@@ -24,6 +30,11 @@ scheduler(void) {
     pid = (pid - 1 + i) % PCB_MAX + 1;  // Commit update of `pid`.
 
     /* printf("context switch: #%u --> #%u\n", get_pid(), pid); */
+    if(-1==prog_video_update((PCB(pid))->terminal)){
+        printf("scheduler : terminal fatal error\n");
+        while(1);
+    }
+
 
     p->state = RUNNING;
 

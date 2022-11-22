@@ -18,6 +18,7 @@
 #include "tests.h"
 
 uint32_t top_pcb = PCB_BASE;
+uint8_t  run_as_base=1;
 
 void init_pcb(){
     int32_t i;
@@ -125,7 +126,7 @@ static int32_t clean_up_fda(pcb_t* _pcb_ptr){
 uint32_t 
 get_pid(){
     uint32_t cur_esp;
-    if(top_pcb==PCB_BASE){
+    if(run_as_base){
         return 0; /* kernel spawn shell, kernel with "pid" 0*/
     }
     /* any esp in this kernel stack would work */
@@ -197,9 +198,10 @@ switch_user(uint32_t pid){
     /* Our user_DS is 0x2B instead of 0x23 */
     /* besides that, we need to explicitly enable interrupt by setting 9-th bit on eflags */
     /* http://www.c-jump.com/CIS77/ASM/Instructions/I77_0070_eflags_bits.htm */
-        // mov     %%ax, %%es     \n
-        // mov     %%ax, %%fs     \n
-        // mov     %%ax, %%gs     \n
+    
+    run_as_base=0; /* remove base identity */
+
+
     /* get current ebp */
     asm volatile("            \n\
     movl %%ebp,%%ebx          \n\

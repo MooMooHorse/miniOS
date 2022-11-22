@@ -60,7 +60,7 @@ terminal_t terminal[MAX_TERMINAL_NUM]={
  * @return ** int32_t 
  */
 int32_t prog_video_update(int32_t index){
-    if(index<0||index>9){
+    if(index<0||index>3){
         return -1;
     }
     if(index==terminal_index){
@@ -104,6 +104,23 @@ int32_t terminal_load(int32_t index){
     /* TO DO : Optimize it so you only have to copy chars you wrote */
     /* it's NOT looping from old coordinate to new coordinate, that's buggy */
     for(i=0;i<VIDEO_SIZE;i++) terminal[index].video[i]=vid[i]; 
+    terminal[index].screen_x=get_screen_x();
+    terminal[index].screen_y=get_screen_y();
+    return 0;
+}
+
+/**
+ * @brief only update terminal's cursor coordinate after context switch
+ * Current program is switched out, the I/O status is saved in screen_x,screen_y
+ * the I/O info HAS BEEN written to corresponding buffer, so no need to update 
+ * @param index 
+ * @return ** int32_t 
+ */
+int32_t terminal_update(int32_t index){
+    int32_t i;
+    if(index<0||index>9){
+        return -1;
+    }
     terminal[index].screen_x=get_screen_x();
     terminal[index].screen_y=get_screen_y();
     return 0;

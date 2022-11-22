@@ -134,7 +134,7 @@ rtc_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
  */
 static int32_t
 rtc_read(file_t* file, void* buf, int32_t nbytes) {
-
+    sti();
     // Check fd_t pointer validity
     if (NULL == file) {
         printf("RTC Error: Sanity check failed.\n");

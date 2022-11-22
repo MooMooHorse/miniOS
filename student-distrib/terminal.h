@@ -48,6 +48,7 @@ extern int32_t prog_video_update(int32_t index);
 extern int32_t terminal_load(int32_t index);
 extern int32_t terminal_switch(int32_t old,int32_t new);
 extern void prog_video_recover(char* video,int sx,int sy);
+extern int32_t terminal_update(int32_t index);
 #endif /* ASM */
 
 #endif  /* _TERMINAL_H */

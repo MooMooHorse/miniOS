@@ -171,6 +171,7 @@ void entry(unsigned long magic, unsigned long addr) {
         terminal[i].open(i,(int32_t*)get_terbuf_addr(terminal_index));
         _execute((uint8_t*)"shell",i,0); /* open pcb for shell i with terminal i parent pid 0 */
     }
+    terminal_index=1;
     /* note that now, kernel stack for shell 2 and shell 3 are both EMPTY */
     /* You have to manually check base shell in context switch */
     

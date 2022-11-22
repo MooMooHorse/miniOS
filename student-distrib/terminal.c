@@ -18,6 +18,7 @@
 #include "tests.h"
 #include "process.h"
 #include "cursor.h"
+#include "lib.h"
 static int32_t _terminal_read(uint8_t* buf, int32_t n);
 static int32_t _terminal_write(const uint8_t* buf, int32_t n);
 static int32_t _open(int32_t,int32_t*);
@@ -117,7 +118,6 @@ int32_t terminal_load(int32_t index){
  * @return ** int32_t 
  */
 int32_t terminal_update(int32_t index){
-    int32_t i;
     if(index<0||index>9){
         return -1;
     }
@@ -143,6 +143,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
     
     char* vid=(char*)VIDEO;
     for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
+
     cursor_update(terminal[new].screen_x,terminal[new].screen_y);
     
     return 0;
@@ -158,6 +159,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
  * 0 normal return 
  */
 int32_t _open(int32_t index,int32_t* video){
+    int32_t i;
     if(index<0||index>9||(uint32_t)video<VIDEO+VIDEO_SIZE||(uint32_t)video>VIDEO+10*VIDEO_SIZE){
     #ifdef RUN_TESTS
         printf("invalid terminal number or buffer address\n");
@@ -168,6 +170,10 @@ int32_t _open(int32_t index,int32_t* video){
     terminal[index].screen_x=terminal[index].screen_y=0;
     terminal[index].video=(int8_t*)video;
     uvmmap_tbuf((uint32_t)video); /* set up terminal buffer */
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)((uint32_t)video + (i << 1)) = ' ';
+        *(uint8_t *)((uint32_t)video + (i << 1) + 1) = ATTRIB;
+    }
     terminal[index].active=1;
     return 0;
 }

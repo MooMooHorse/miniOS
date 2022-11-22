@@ -4,6 +4,10 @@
 #ifndef _LIB_H
 #define _LIB_H
 
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define ATTRIB      0x1E
+
 #include "types.h"
 
 int32_t printf(int8_t *format, ...);

@@ -43,6 +43,8 @@ common_interrupt_handler:
     popfl
     popal
     addl $4,%esp # pop $0xfffff...
+
+    jmp sig_enter
     iret
 
 /* 1 */

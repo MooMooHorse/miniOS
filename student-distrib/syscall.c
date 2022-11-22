@@ -24,6 +24,7 @@
 #include "mmu.h"
 #include "err.h"
 #include "tests.h"
+#include "signal.h"
 
 /**
  * @brief halt the program, return value is passed via eax to exec
@@ -273,11 +274,82 @@ int32_t vidmap (uint8_t** screen_start){
     return uvmmap_vid(screen_start);
 }
 
+/**
+ * @brief install handler by user
+ * 
+ * @param signum - signal number 
+ * @param handler_address - handler address
+ * @return ** int32_t -1 on illegal signum
+ * success : 0
+ */
 int32_t set_handler (uint32_t signum, void* handler_address){
-    return 0;
+    return install_sighandler(signum,handler_address);
 }
+/**
+ * @brief recover hardware context stored in user stack to kernel stack and 
+ * return to the context before signal is handled
+ * @return ** int32_t 
+ */
 int32_t sigreturn (void){
-    return 0;
+    uint32_t *uesp,*kebp;
+    int32_t counter;
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* mark signal as handled */
+    _pcb_ptr->sig_num=-1;
+
+    /* extract uesp */
+    /** kernel stack frame right now
+     * local variables
+     * old ebp <- ebp
+     * ret address
+     * para1~3
+     * eflag
+     * ------------------ should discard before iret
+     * 8regs
+     * ret
+     * CS
+     * eflags
+     * uesp
+     */
+    asm volatile("                \n\
+    movl 68(%%ebp),%%ebx          \n\
+    movl %%ebp,%%ecx              \n\
+    "
+    :"=b"(uesp),"=c"(kebp)
+    :
+    :"memory"
+    ); /* from old ebp to uesp 17 * 4 = 68 Bytes */
+
+
+    /** user stack right now
+     * signum <- uesp
+     * 8 regs
+     * return address
+     * CS
+     * Eflags
+     * old uesp
+     * SS
+     */
+
+    kebp=kebp+6; /* 6 : from old ebp to 8 regs */
+    uesp=uesp+1; /* 1: from signum to 8 regs */
+    counter=8+5; /* 8 : 8 regs + 5 : 5 parameters to IRET */
+    while(counter--){ /* overwrite kernel stack with user stack */
+        (*(kebp--))=(*(uesp--));
+    }
+    /* discard kernel stack and iret to normal program */
+    asm volatile("              \n\
+    leave                       \n\
+    addl    $20,%%esp           \n\
+    popal                       \n\
+    iret                        \n\
+    "
+    :
+    :
+    );
+
+    return -1;  
 }
 
 

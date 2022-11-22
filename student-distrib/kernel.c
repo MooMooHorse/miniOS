@@ -27,6 +27,7 @@
 void entry(unsigned long magic, unsigned long addr) {
 
     multiboot_info_t *mbi;
+    int32_t i;
 
     /* Clear the screen. */
     clear();
@@ -165,8 +166,11 @@ void entry(unsigned long magic, unsigned long addr) {
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */
     init_pcb();
-    _execute((uint8_t*)"shell",2,0); /* open pcb for shell 2 */
-    _execute((uint8_t*)"shell",3,0); /* open pcb for shell 3 */
+    for(i=2;i<=3;i++){/* debugging version : support 3 terminals */
+        terminal_index=i;
+        terminal[i].open(i,(int32_t*)get_terbuf_addr(terminal_index));
+        _execute((uint8_t*)"shell",i,0); /* open pcb for shell i with terminal i parent pid 0 */
+    }
     /* note that now, kernel stack for shell 2 and shell 3 are both EMPTY */
     /* You have to manually check base shell in context switch */
     

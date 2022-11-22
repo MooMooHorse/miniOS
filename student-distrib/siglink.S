@@ -28,8 +28,8 @@ sig_enter:
     movl %ebx,_uesp  # user stack
     movl %esp,_kesp
     # now esp points to hardware context
-    pushl _prog_end
-    pushl _prog_start
+    pushl $_prog_end
+    pushl $_prog_start
     pushl (_uesp)
     pushl (_kesp)
     call do_signal

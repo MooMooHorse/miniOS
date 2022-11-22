@@ -200,6 +200,7 @@ set_proc_signal(int32_t signum){
     if(pid<0||pid>PCB_MAX) return -1;
 
     _pcb_ptr->sig_num=signum;
+    return 0;
 }
 
 

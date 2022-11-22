@@ -19,3 +19,14 @@ swtch:
     popl %edi
     popl %ebp
     ret                     # Will implicitly jump to address in user `eip`. 
+
+.globl swtchret
+swtchret:
+    ret
+
+.globl pseudoret
+pseudoret:
+    movw 16(%esp), %ds
+    pushfl
+    popl 8(%esp)
+    iret

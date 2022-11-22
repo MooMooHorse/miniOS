@@ -103,7 +103,6 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint32_t pid=0,ppid;
     int32_t i,ret;
-    cli();
     
     /* ret : temporary here, have meaning at the end of execute */
     if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){

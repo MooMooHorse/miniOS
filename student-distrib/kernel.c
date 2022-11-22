@@ -16,7 +16,7 @@
 #include "syscall.h"
 #include "terminal.h"
 #include "process.h"
-
+#include "signal.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -162,6 +162,7 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+    sighandler_default_install();
 
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */
@@ -178,7 +179,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
      * without showing you any output */
-    sti();
+    // sti();
 
     #ifdef RUN_TESTS
         /* Run tests */

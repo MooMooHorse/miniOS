@@ -1,8 +1,16 @@
 #include "signal.h"
 #include "process.h"
 #include "lib.h"
+#include "syscall.h"
 
 sig_handler_t sig_table[NUM_SIGNALS];
+char* signame[NUM_SIGNALS]={
+    "DIV_ZERO",
+	"SEGFAULT",
+	"INTERRUPT",
+	"ALARM",
+	"USER1"
+};
 
 /**
  * @brief copy items from kernel stack to user stack
@@ -117,6 +125,18 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
         printf("double fault in do_signal\n");
         while(1);
     }
+    if(!sig_table[_pcb_ptr->sig_num].user_space){
+        sig_table[_pcb_ptr->sig_num].handler(_pcb_ptr->sig_num);
+        asm volatile("              \n\
+        movl    %%ecx,%%esp         \n\
+        popal                       \n\
+        iret                        \n\
+        "
+        :
+        :"c"(kesp)
+        );
+        while(1);
+    }
 
 
     /* note that because intruction are not 32-bit aligned, uesp will get pretty ugly */
@@ -152,7 +172,72 @@ install_sighandler(uint32_t signum, void* handler_address){
         return -1;
     }
     sig_table[signum].handler=handler_address;
+    sig_table[signum].user_space=1; /* specify it is not default handler */
     return 0;
 }
 
 
+/**
+ * @brief set signal number for current process
+ * @param signum 
+ * @return ** -1 on failure 
+ */
+int32_t 
+set_proc_signal(int32_t signum){
+    uint32_t pid=get_pid();
+    pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* sanity check */
+    if(signum!=-1&&(signum<0||signum>=NUM_SIGNALS)) return -1;
+    if(pid<0||pid>PCB_MAX) return -1;
+
+    _pcb_ptr->sig_num=signum;
+}
+
+
+/**
+ * @brief default signal handler for ALARM and USER1 signal
+ * ignore signal
+ * @param signum - signal number
+ * @return ** void 
+ */
+static void
+sigignore_handler(int32_t signum){
+    printf("Program recieve signal %s\n",signame[signum]);
+    return;
+}
+
+
+/**
+ * @brief default signal handler for DIV_ZERO, SEGFAULT, INTERRUPT signals
+ * kill the task
+ * @param signum - signal number
+ * @return ** void 
+ */
+static void
+sigkill_handler (int32_t signum){
+    printf("Program recieve signal %s\n",signame[signum]);
+    halt(0);
+    return ;
+}
+
+/**
+ * @brief install default handlers for signals
+ * 
+ * @return ** void 
+ */
+void 
+sighandler_default_install(){
+    /* set handler */
+    sig_table[SIG_DIV_ZERO].handler=sigkill_handler;
+    sig_table[SIG_SEGFAULT].handler=sigkill_handler;
+    sig_table[SIG_INTERRUPT].handler=sigkill_handler;
+    sig_table[SIG_ALARM].handler=sigignore_handler;
+    sig_table[SIG_USER1].handler=sigignore_handler;
+    /* set user/kernel space */
+    sig_table[SIG_DIV_ZERO].user_space=0;
+    sig_table[SIG_SEGFAULT].user_space=0;
+    sig_table[SIG_INTERRUPT].user_space=0;
+    sig_table[SIG_ALARM].user_space=0;
+    sig_table[SIG_USER1].user_space=0;
+
+}

@@ -260,7 +260,7 @@ int32_t open (const uint8_t* filename){
     }
     /* if rtc */
     if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
-        if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
+        if(rtc[terminal_index].ioctl.open(file_entry,filename,0)==-1){
             return -1;
         }
     }

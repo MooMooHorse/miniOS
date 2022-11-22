@@ -3,38 +3,35 @@
 void
 scheduler(void) {
     pcb_t* p;
-    pcb_t* t;
+    pcb_t* cur;
     uint32_t pid = get_pid();
     int32_t i;
 
     if (0 == pid) { return; }  // Wait until the shell is spawned.
 
     // Update status of process in the current terminal.
+    cur = PCB(pid);
     terminal[terminal_index].pid = pid;
-    ((pcb_t*) cur_proc)->state = RUNNABLE;
+    cur->state = RUNNABLE;
 
-    for (i = 1; i <= MAX_TERMINAL_NUM; ++i) {
-        pid = terminal[(terminal_index + i) % MAX_TERMINAL_NUM].pid;
-        if (0 == pid) {
-            continue;   // No active process in this terminal.
-        }
-        p = PCB(pid);
+    for (i = 1; i <= PCB_MAX; ++i) {
+        p = PCB((pid - 1 + i) % PCB_MAX + 1);
         if (RUNNABLE == p->state) {
             break;
         }
     }
+    
+    pid = (pid - 1 + i) % PCB_MAX + 1;  // Commit update of `pid`.
 
-    printf("context switch: #%u --> #%u\n", get_pid(), pid);
+    /* printf("context switch: #%u --> #%u\n", get_pid(), pid); */
 
-    t = (pcb_t*) cur_proc;
-    cur_proc = (uint32_t) p;
-    p = t;
-    ((pcb_t*) cur_proc)->state = RUNNING;
+    p->state = RUNNING;
 
-    // Switch to user page table.
-    if (0 != uvmmap_ext((pid - 1) * PROG_SIZE + PCB_BASE)) {
-        return;  // Failed to map user memory.
+    // Change user page table.
+    if (0 != uvmmap_ext((pid - 1) * PROG_SIZE + PCB_BASE)
+        || 0 != uvmremap_vid(pid)) {
+        return;  // Failed to set up user memory.
     }
-    setup_tss(pid);
-    swtch(&p->context, ((pcb_t*) cur_proc)->context);
+    tss.esp0 = (uint32_t) p->context;
+    swtch(&cur->context, p->context);
 }

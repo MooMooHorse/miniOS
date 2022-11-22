@@ -9,9 +9,9 @@ swtch:
     pushl %esi
     pushl %ebx
 
-    # Swap stacks.
-    movl %esp, (%eax)       # Load base address of the context struct
-    movl %ecx, %esp         # and implicitly save the current kernel stack pointer.
+    # Swap kernel stacks.
+    movl %esp, (%eax)       # Save the current esp and all callee-saved registers. 
+    movl %ecx, %esp         # Load new kernel stack pointer.
 
     # Restore callee-saved registers from swapped kernel stack.
     popl %ebx

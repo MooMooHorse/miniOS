@@ -103,7 +103,6 @@ int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
     uint32_t pid=0,ppid;
     int32_t i,ret;
-    cli();
     
     /* ret : temporary here, have meaning at the end of execute */
     if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){
@@ -128,6 +127,7 @@ int32_t execute (const uint8_t* command){
         printf("no more pid available\n");
         return 0;
     }
+
 
     ppid=get_pid();
 
@@ -260,7 +260,7 @@ int32_t open (const uint8_t* filename){
     }
     /* if rtc */
     if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
-        if(rtc[0].ioctl.open(file_entry,filename,0)==-1){
+        if(rtc[terminal_index].ioctl.open(file_entry,filename,0)==-1){
             return -1;
         }
     }
@@ -357,6 +357,7 @@ int32_t sigreturn (void){
     int32_t counter;
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+
     /* mark signal as handled */
     _pcb_ptr->sig_num=-1;
 
@@ -398,7 +399,7 @@ int32_t sigreturn (void){
     uesp=uesp+1; /* 1: from signum to 8 regs */
     counter=8+5; /* 8 : 8 regs + 5 : 5 parameters to IRET */
     while(counter--){ /* overwrite kernel stack with user stack */
-        (*(kebp--))=(*(uesp--));
+        (*(kebp++))=(*(uesp++));
     }
     /* discard kernel stack and iret to normal program */
     asm volatile("              \n\

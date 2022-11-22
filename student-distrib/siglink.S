@@ -1,6 +1,7 @@
 #define ASM
 
 #include "signal.h"
+.text
 
 .globl sig_enter
 
@@ -15,7 +16,6 @@ _kesp:
 _prog_start:          
 	movl	$10,%eax  
 	int	$0x80
-
 _prog_end: 
 jmp _prog_end # while(1), this should never be accessed 
 
@@ -28,8 +28,8 @@ sig_enter:
     movl %ebx,_uesp  # user stack
     movl %esp,_kesp
     # now esp points to hardware context
-    pushl _prog_end
-    pushl _prog_start
+    pushl $_prog_end
+    pushl $_prog_start
     pushl (_uesp)
     pushl (_kesp)
     call do_signal

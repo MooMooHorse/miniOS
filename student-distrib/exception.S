@@ -146,7 +146,8 @@ general_protection_exception:
 /* 14 */
 page_fault_exception:
     /* page fault is pushed by processor */
-    ; pushl $14 # ~0xfffffffe = 14  ;
+    addl  $4,%esp    # discard intel's "error code"
+    pushl $14 # ~0xfffffffe = 14  ;
     jmp common_exception_handler 
 /* 15 */
 /* reserved for intel */

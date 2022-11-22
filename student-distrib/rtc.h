@@ -1,6 +1,7 @@
 #ifndef _RTC_H
 #define _RTC_H
 #include "types.h"
+#include "terminal.h"
 #include "filesystem.h"
 
 #define RTC_PORT        0x70
@@ -12,7 +13,6 @@
 #define RTC_IRQ         8
 #define RTC_DEF_FREQ    1024  // Default frequency.
 
-#define RTC_num 1
 
 /* RTC init and handler */
 extern void rtc_init(void);
@@ -28,6 +28,6 @@ typedef struct RTC {
 
 uint32_t virt_rtc;
 
-volatile rtc_t rtc[RTC_num];
+volatile rtc_t rtc[MAX_TERMINAL_NUM];
 
 #endif

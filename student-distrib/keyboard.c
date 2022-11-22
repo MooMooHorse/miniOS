@@ -24,6 +24,8 @@
 #include "process.h"
 #include "tests.h"
 #include "cursor.h"
+#include "signal.h"
+
 #define ISLOWER(x)  ('a' <= (x) && (x) <= 'z')
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
@@ -196,6 +198,7 @@ keyboard_handler(void) {
                     prog_video_recover(vid,sx,sy);
                 }
                 halt(0);  // Assume normal termination for now.
+                // set_proc_signal(SIG_INTERRUPT);
                 break;
             case C('L'):
                 clear();

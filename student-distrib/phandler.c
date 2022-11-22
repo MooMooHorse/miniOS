@@ -17,6 +17,8 @@
 #include "pit.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "process.h"
+#include "signal.h"
 
 #define SCROLL_SCREEN_ENABLE 0
 
@@ -62,12 +64,16 @@ do_exception(old_regs_t *oldregs) {
     }
     /* label divide_zero_exception */
     uint32_t exception_index = (oldregs->orig_eax);
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if (exception_index < 0 || exception_index > 20) {
         printf("wrong exception index: %d, you will double fault!\n", exception_index);
         return exception_index;
     }
     printf("exception %d : %s\n", exception_index, exception_name[exception_index]);
-
+    if(pid>0&&pid<=PCB_MAX){
+        _pcb_ptr->sig_num=exception_index?SIG_SEGFAULT:SIG_DIV_ZERO;
+    }
 #if (SCROLL_SCREEN_ENABLE != 0)
     printf("register values before exception are as following:\n");
     printf("ebx: %d ", oldregs->oebx);

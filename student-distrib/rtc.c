@@ -47,7 +47,7 @@ rtc_init(void) {
     outb(prev | 0x40, RTC_DATA_PORT);  // Turn on bit 6 of register B.
 
     // INIT RTC's
-    for (i = 0; i < RTC_num; i++) {
+    for (i = 0; i < MAX_TERMINAL_NUM; i++) {
         rtc[i].ioctl.open = rtc_open;
         rtc[i].ioctl.close = rtc_close;
         rtc[i].ioctl.read = rtc_read;
@@ -69,7 +69,7 @@ rtc_handler(void) {
     // Handle RTC interrupt.
     virt_rtc++;
     int i;
-    for (i = 0; i < RTC_num; i++) {
+    for (i = 0; i < MAX_TERMINAL_NUM; i++) {
         if (rtc[i].freq > 0 && (virt_rtc % (1024 / rtc[i].freq)) == 0) {
             do_rtc(i);
         }

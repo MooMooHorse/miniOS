@@ -118,8 +118,7 @@ open_fs(uint32_t addr) {
     /* Install a set of file system parameters(properties) */
     readonly_fs.block_size = 4096;
     readonly_fs.dblock_entry_size = 4;
-    readonly_fs.dblock_entry_offset =
-        4;                                               /* the number of bytes in inode before data block # : In this case, length */
+    readonly_fs.dblock_entry_offset = 4;  /* the number of bytes in inode before data block # : In this case, length */
     readonly_fs.dblock_offset = readonly_fs.block_size * (readonly_fs.iblock_num + 1); /* +1 : number of boot block */
     readonly_fs.boot_block_padding = 64;
     readonly_fs.dentry_size = 64;

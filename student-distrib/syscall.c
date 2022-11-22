@@ -123,7 +123,8 @@ int32_t execute (const uint8_t* command){
         }
     }
     if(pid==0){
-        return -1;
+        printf("no more pid available\n");
+        return 0;
     }
 
     ppid=get_pid();

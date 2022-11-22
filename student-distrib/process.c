@@ -17,7 +17,7 @@
 #include "err.h"
 #include "tests.h"
 
-uint32_t cur_proc = PCB_BASE;
+uint32_t top_pcb = PCB_BASE;
 
 void init_pcb(){
     int32_t i;
@@ -28,19 +28,19 @@ void init_pcb(){
 }
 
 /**
- * @brief Create PID by modifying cur_proc
+ * @brief Create PID by modifying top_pcb
  * 
  * @param pid - process id starting from 0. 
  * There will be at most 8 processes as stipulated by ECE391 staff. 
- * The memory is "allocated" using cur_proc pointer which is a pointer pointed at current running process.
- * cur_proc points at the top of PCB of the currently running process.
+ * The memory is "allocated" using top_pcb pointer which is a pointer pointed at current running process.
+ * top_pcb points at the top of PCB of the currently running process.
  * @return ** int32_t 0 on success, -1 on failure
  */
 int32_t 
 pcb_create(uint32_t pid){
-    if(PCB_BASE-pid*PCB_SIZE<cur_proc)
-        cur_proc=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
-    // printf("%x\n",cur_proc);
+    if(PCB_BASE-pid*PCB_SIZE<top_pcb)
+        top_pcb=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
+    // printf("%x\n",top_pcb);
     return 0;
 }
 
@@ -125,7 +125,7 @@ static int32_t clean_up_fda(pcb_t* _pcb_ptr){
 uint32_t 
 get_pid(){
     uint32_t cur_esp;
-    if(cur_proc==PCB_BASE){
+    if(top_pcb==PCB_BASE){
         return 0; /* kernel spawn shell, kernel with "pid" 0*/
     }
     /* any esp in this kernel stack would work */
@@ -302,7 +302,7 @@ discard_proc(uint32_t pid,uint32_t status){
         printf("halt-failed : illegal pid\n");
         while(1);
     }else if(pid==0){
-        cur_proc=PCB_BASE; /* discard all process */
+        top_pcb=PCB_BASE; /* discard all process */
         printf("shell respawn\n");
         execute((uint8_t*)"shell");
     }
@@ -323,7 +323,7 @@ discard_proc(uint32_t pid,uint32_t status){
 
     /* re-spawn a shell immediately */
     if(ppid==0){ 
-        cur_proc=PCB_BASE; /* discard all process */
+        top_pcb=PCB_BASE; /* discard all process */
         /* tss and paging isn't necessary here, for execute will help us set them up */
         /* interrupt isn't turned on during this process (process here doesn't mean task) */
         printf("shell respawn\n");
@@ -332,8 +332,8 @@ discard_proc(uint32_t pid,uint32_t status){
         execute((uint8_t*)"shell");
     }
     else{
-        if((PCB_BASE-pid*PCB_SIZE)==cur_proc)
-            cur_proc+=PCB_SIZE; /* discard current process */
+        if((PCB_BASE-pid*PCB_SIZE)==top_pcb)
+            top_pcb+=PCB_SIZE; /* discard current process */
 
         _pcb_ptr=(pcb_t*)(PCB_BASE-ppid*PCB_SIZE); /* recover pid */
         recover_tss(_pcb_ptr); /* recover tss */

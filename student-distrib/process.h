@@ -60,7 +60,7 @@ typedef struct PCB{
     /* after PCB, we have kernel stack for each process */
 } pcb_t;
 
-extern uint32_t cur_proc;
+extern uint32_t top_pcb;
 
 extern int32_t pcb_create(uint32_t pid);
 extern int32_t pcb_open(uint32_t ppid, uint32_t pid,const uint8_t* prog_name);

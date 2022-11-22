@@ -28,6 +28,7 @@
 
 extern void install_syscall();
 extern int32_t execute(const uint8_t* command);
+extern int32_t _execute(const uint8_t* command,uint32_t pid,uint32_t ppid);
 extern int32_t halt(uint8_t status);
 extern int32_t close(int32_t fd);
 #endif

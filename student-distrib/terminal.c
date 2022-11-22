@@ -125,12 +125,6 @@ int32_t terminal_switch(int32_t old,int32_t new){
     /* initalize screen if terminal is just created(opened) */
     if(terminal[new].screen_x==terminal[new].screen_y&&terminal[new].screen_x==0){
         clear();
-        while(1){
-        #ifdef RUN_TESTS
-            printf("shell respawn\n");
-        #endif
-            execute((uint8_t*)"shell");
-        }
     }else{
         char* vid=(char*)VIDEO;
         for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];

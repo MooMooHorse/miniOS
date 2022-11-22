@@ -15,6 +15,7 @@
 #include "filesystem.h"
 #include "syscall.h"
 #include "terminal.h"
+#include "process.h"
 
 
 /* Macros. */
@@ -160,6 +161,14 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+
+    terminal_index=1; /* default : terminal 1 */
+    terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */
+    init_pcb();
+    _execute((uint8_t*)"shell",2,0); /* open pcb for shell 2 */
+    _execute((uint8_t*)"shell",3,0); /* open pcb for shell 3 */
+    /* note that now, kernel stack for shell 2 and shell 3 are both EMPTY */
+    /* You have to manually check base shell in context switch */
     
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
@@ -184,10 +193,8 @@ void entry(unsigned long magic, unsigned long addr) {
     //     execute((uint8_t*)"shell");
     // }
 
-    terminal_index=1; /* default : terminal 1 */
-    terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */
-    execute((uint8_t*)"shell");
 
+    execute((uint8_t*)"shell");
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

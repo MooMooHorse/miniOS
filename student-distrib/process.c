@@ -19,6 +19,14 @@
 
 uint32_t cur_proc = PCB_BASE;
 
+void init_pcb(){
+    int32_t i;
+    for(i=1;i<=PCB_MAX;i++){
+        pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
+        _pcb_ptr->state=UNUSED;
+    }
+}
+
 /**
  * @brief Create PID by modifying cur_proc
  * 
@@ -232,6 +240,8 @@ switch_user(uint32_t pid){
     /* if reach here, you fail, return for this function should be done at halt */
     return -1;
 }
+
+
 /** Halt to do
  * @brief Set the up tss for each process
  * Called when exec and halt
@@ -302,8 +312,11 @@ discard_proc(uint32_t pid,uint32_t status){
     _pcb_ptr->file_entry[0].fops.close(&_pcb_ptr->file_entry[0]);
     _pcb_ptr->file_entry[1].fops.close(&_pcb_ptr->file_entry[1]);
     ppid=_pcb_ptr->ppid; /* get parent pid : pid to recover */
-    ((pcb_t*)(PCB_BASE-ppid*PCB_SIZE))->state = RUNNABLE;
+    if(ppid!=0){
+        ((pcb_t*)(PCB_BASE-ppid*PCB_SIZE))->state = RUNNABLE;
+    }
     cur_esp=_pcb_ptr->kesp;
+    
     cur_ebp=_pcb_ptr->kebp;
 
     uvmunmap_vid();

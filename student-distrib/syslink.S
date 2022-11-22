@@ -37,7 +37,7 @@ syscall_entry:
     popal
     movl _orig_eax,%eax # make return value in eax
 syscall_done:
-    jmp sig_enter
+#    jmp sig_enter
     iret
 syscall_bad:
     movl $-1,%eax

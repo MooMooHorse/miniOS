@@ -26,6 +26,8 @@
 #include "tests.h"
 #include "signal.h"
 
+int32_t is_base=1;
+
 /**
  * @brief halt the program, return value is passed via eax to exec
  * 
@@ -42,6 +44,54 @@ int32_t halt (uint8_t status){
     while(1);
     
 }
+
+int32_t _execute(const uint8_t* command,uint32_t pid,uint32_t ppid){
+    uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
+    int32_t ret;
+    
+    /* ret : temporary here, have meaning at the end of execute */
+    if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){
+        return ERR_NO_CMD;
+    }
+    
+
+    /* check executable */ 
+    if(readonly_fs.check_exec(_command)!=1){
+        return ERR_NO_CMD;
+    }
+
+    /* create PCB */
+    if(pcb_create(pid)==-1){
+        printf("too many executable\n");
+        return ERR_BAD_PID; /* errono to be defined */
+    }
+
+    /* set argument for this process :  */
+    /* position of this function is IMPORTANT! */
+    set_proc_args(command,ret,CMD_MAX_LEN,pid);
+
+
+    /* open PCB */
+    if(pcb_open(ppid,pid,_command)==-1){
+        printf("not enough space for PCB\n");
+        return ERR_BAD_PID; /* errono to be defined */
+    }
+
+    /* program is under PCB base */
+    if (0 != uvmmap_ext((pid-1)*PROG_SIZE+PCB_BASE)) {
+        return ERR_VM_FAILURE;
+    } /* TLB flushed */
+
+    /* to this point, everything is checked, nothing should fail */
+
+
+    /* program loader */
+    readonly_fs.load_prog(_command,IMG_START,PROG_SIZE);
+
+
+    return 0;
+}
+
 /** 
  * @brief currently only support command without parameters
  * 
@@ -50,7 +100,8 @@ int32_t halt (uint8_t status){
  */
 int32_t execute (const uint8_t* command){
     uint8_t _command[CMD_MAX_LEN]; /* move user level data to kernel space */
-    uint32_t pid,ppid,i,ret;
+    uint32_t pid=0,ppid;
+    int32_t i,ret;
     
     /* ret : temporary here, have meaning at the end of execute */
     if((ret=copy_to_command(command,_command,CMD_MAX_LEN))==-1){
@@ -64,16 +115,24 @@ int32_t execute (const uint8_t* command){
     }
 
     /* Attempt to find new pid, if none of in-stack pcb is availabe, allocate space for it */
-    pid=(PCB_BASE-cur_proc)/PCB_SIZE+1; 
-    for(i=pid-1;i>=1;i--){
+    for(i=1;i<=PCB_MAX;i++){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
         if(UNUSED==_pcb_ptr->state){
             pid=i;
             break;
         }
     }
+    if(pid==0){
+        return -1;
+    }
 
     ppid=get_pid();
+
+    if(is_base){
+        is_base=0;
+        ppid=0;
+    }
+
 
     /* create PCB */
     if(pcb_create(pid)==-1){
@@ -302,7 +361,7 @@ int32_t sigreturn (void){
     /** kernel stack frame right now
      * local variables
      * old ebp <- ebp
-     * ret address
+     * ret address 
      * para1~3
      * eflag
      * ------------------ should discard before iret

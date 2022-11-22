@@ -10,6 +10,9 @@
  */
 
 #include "mmu.h"
+#include "process.h"
+#include "terminal.h"
+
 
 /* vm_init
  * 
@@ -110,6 +113,20 @@ uvmmap_vid(uint8_t** screen_start) {
 
     lcr3((uint32_t) pgdir);  // Flush TLB.
 
+    return 0;
+}
+
+int32_t
+uvmremap_vid(uint32_t pid) {
+    uint32_t va = UVM_START + UVM_SIZE;
+    pcb_t* p = PCB(pid);
+    terminal_t* t = &terminal[p->terminal];
+    if (!(pgtbl_vid[PTX(va)] & PAGE_P)) {
+        return 0;  // User video memory mapping not present.
+    }
+    if (p->terminal != terminal_index) {
+        pgtbl_vid[PTX(va)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
+    }
     return 0;
 }
 

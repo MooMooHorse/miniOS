@@ -76,5 +76,7 @@ extern int32_t uvmmap_vid(uint8_t** screen_start);
 /* Undo user video memory mapping. */
 extern int32_t uvmunmap_vid(void);
 
+/* Update user video memory mapping before context switch. */
+extern int32_t uvmremap_vid(uint32_t pid);
 
 #endif /* _MMU_H */

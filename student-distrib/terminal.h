@@ -26,6 +26,7 @@ extern terminal_ops_t terminal_ops;
 
 typedef struct terminal{
     int32_t index; /* index for terminal : 0~9 */
+    uint32_t pid;
     int8_t* video; /* pointer to video memory */
     input_t input;  /* input buffer for current terminal */
     int32_t screen_x,screen_y; /* cursor coordinate for current terminal */

@@ -25,6 +25,7 @@
 #include "err.h"
 #include "tests.h"
 #include "signal.h"
+#include "terminal.h"
 
 int32_t is_base=1;
 

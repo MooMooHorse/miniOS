@@ -60,6 +60,8 @@ common_exception_handler:
 
 wrapup_common_exception:
     popl %eax 
+
+    jmp sig_enter
     pushl $255 # parameter to halt (status=255)
     call halt 
 # You should never enter area below 
@@ -143,8 +145,8 @@ general_protection_exception:
 
 /* 14 */
 page_fault_exception:
-    
-    pushl $14 # ~0xfffffffe = 14  ;
+    /* page fault is pushed by processor */
+    ; pushl $14 # ~0xfffffffe = 14  ;
     jmp common_exception_handler 
 /* 15 */
 /* reserved for intel */

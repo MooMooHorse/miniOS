@@ -3,7 +3,16 @@
 #include "lib.h"
 #include "syscall.h"
 
-sig_handler_t sig_table[NUM_SIGNALS];
+static void sigkill_handler (int32_t signum);
+static void sigignore_handler(int32_t signum);
+
+sig_handler_t sig_table[NUM_SIGNALS]={
+    {.handler=sigkill_handler,.user_space=0},
+    {.handler=sigkill_handler,.user_space=0},
+    {.handler=sigkill_handler,.user_space=0},
+    {.handler=sigignore_handler,.user_space=0},
+    {.handler=sigignore_handler,.user_space=0}
+};
 char* signame[NUM_SIGNALS]={
     "DIV_ZERO",
 	"SEGFAULT",
@@ -220,27 +229,5 @@ sigkill_handler (int32_t signum){
     set_proc_signal(-1);
     halt(0);
     return ;
-}
-
-/**
- * @brief install default handlers for signals
- * 
- * @return ** void 
- */
-void 
-sighandler_default_install(){
-    /* set handler */
-    sig_table[SIG_DIV_ZERO].handler=sigkill_handler;
-    sig_table[SIG_SEGFAULT].handler=sigkill_handler;
-    sig_table[SIG_INTERRUPT].handler=sigkill_handler;
-    sig_table[SIG_ALARM].handler=sigignore_handler;
-    sig_table[SIG_USER1].handler=sigignore_handler;
-    /* set user/kernel space */
-    sig_table[SIG_DIV_ZERO].user_space=0;
-    sig_table[SIG_SEGFAULT].user_space=0;
-    sig_table[SIG_INTERRUPT].user_space=0;
-    sig_table[SIG_ALARM].user_space=0;
-    sig_table[SIG_USER1].user_space=0;
-
 }
 

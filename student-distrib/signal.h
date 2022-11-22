@@ -40,7 +40,6 @@ typedef struct sig_handler{
 } sig_handler_t;
 
 extern int32_t install_sighandler(uint32_t signum, void* handler_address);
-extern void sighandler_default_install();
 extern int32_t set_proc_signal(int32_t signum);
 #endif /* ASM */
 #endif 

@@ -162,7 +162,6 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
-    sighandler_default_install();
 
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */

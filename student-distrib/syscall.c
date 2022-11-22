@@ -63,10 +63,10 @@ int32_t execute (const uint8_t* command){
     }
 
     /* Attempt to find new pid, if none of in-stack pcb is availabe, allocate space for it */
-    pid=(PCB_BASE-PCB_ptr)/PCB_SIZE+1; 
+    pid=(PCB_BASE-cur_proc)/PCB_SIZE+1; 
     for(i=pid-1;i>=1;i--){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
-        if(0==_pcb_ptr->present){
+        if(UNUSED==_pcb_ptr->state){
             pid=i;
             break;
         }

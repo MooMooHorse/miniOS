@@ -239,8 +239,6 @@ typedef struct file{
 
 extern uint32_t syscall_table[SYSTABLE_NUM];
 
-extern uint32_t PCB_ptr; /* PCB pointer pointing at the top-most PCB */
-
 /* The IDT itself (declared in x86_desc.S */
 extern idt_desc_t idt[NUM_VEC];
 /* The descriptor used to load the IDTR */

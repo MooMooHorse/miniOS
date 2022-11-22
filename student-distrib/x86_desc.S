@@ -15,7 +15,6 @@
 .globl virt_rtc
 .globl syscall_table
 .globl kernel_stk_ptr
-.globl PCB_ptr
 .align 4
 
 
@@ -153,5 +152,3 @@ _syscall_table:
     .endr
 syscal_bottom:
 
-PCB_ptr:
-.long PCB_BASE # 8MB - PCBnum*8KB

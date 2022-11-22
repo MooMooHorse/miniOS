@@ -233,6 +233,7 @@ terminal_write(__attribute__((unused)) file_t* file, const void* buf, int32_t nb
  */
 static int32_t
 _terminal_read(uint8_t* buf, int32_t n) {
+    sti();
     int32_t target = n;
     uint8_t c = '\0';
     uint32_t pid=get_pid();

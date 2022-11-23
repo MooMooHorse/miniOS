@@ -61,7 +61,7 @@ segfault_sighandler (int signum)
     ece391_fdputs(1, (uint8_t*)"Press enter to continue...\n");
     ece391_read(0, &buf, 1);
 	badbuf = &charbuf;
-	eax = (uint32_t*)(&signum + 8);
+	eax = (uint32_t*)(&signum + 7);
 	*eax = (uint32_t)&charbuf;
 
     ece391_fdputs(1, (uint8_t*)"Signal handler returning\n");

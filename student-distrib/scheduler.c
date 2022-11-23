@@ -43,6 +43,6 @@ scheduler(void) {
         || 0 != uvmremap_vid(pid)) {
         return;  // Failed to set up user memory.
     }
-    tss.esp0 = (uint32_t) p->context;
+    setup_tss(pid);
     swtch(&cur->context, p->context);
 }

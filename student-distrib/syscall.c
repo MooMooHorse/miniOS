@@ -152,7 +152,7 @@ int32_t execute (const uint8_t* command){
     }
 
 
-    ppid=(pid<=3)?0:1;
+    ppid=(pid<=3)?0:get_pid();
 
 
     /* create PCB */

@@ -127,9 +127,9 @@ static int32_t clean_up_fda(pcb_t* _pcb_ptr){
 uint32_t 
 get_pid(){
     uint32_t cur_esp;
-    if(run_as_base){
-        return 0; /* kernel spawn shell, kernel with "pid" 0*/
-    }
+    // if(run_as_base){
+    //     return 0; /* kernel spawn shell, kernel with "pid" 0*/
+    // }
     /* any esp in this kernel stack would work */
     asm volatile("            \n\
     movl %%esp,%%ebx          \n\

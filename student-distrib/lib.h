@@ -42,6 +42,9 @@ extern char* get_vidmem();
 extern int   get_screen_x();
 extern int   get_screen_y();
 
+extern void kclear(void);
+extern int32_t kputs(int8_t* s);
+
 extern void kputc(uint8_t c);
 
 /* Special-purpose functions. */

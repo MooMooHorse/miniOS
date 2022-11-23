@@ -196,8 +196,8 @@ keyboard_handler(void) {
                 // set_proc_signal(SIG_INTERRUPT);
                 break;
             case C('L'):
-                clear();
-                printf("391OS> ");
+                kclear();
+                kputs("391OS> ");
                 break;
             default:
                 // Ignore NUL characters. Stop taking input when buffer is full.

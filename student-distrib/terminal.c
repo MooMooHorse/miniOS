@@ -101,12 +101,10 @@ int32_t terminal_load(int32_t index){
         return -1;
     }
     char* vid=(char*)VIDEO;
-    /* copy the video memory into terminal buffer */
     /* TO DO : Optimize it so you only have to copy chars you wrote */
+    /* copy the video memory into terminal buffer */
     /* it's NOT looping from old coordinate to new coordinate, that's buggy */
     for(i=0;i<VIDEO_SIZE;i++) terminal[index].video[i]=vid[i]; 
-    terminal[index].screen_x=get_screen_x();
-    terminal[index].screen_y=get_screen_y();
     return 0;
 }
 
@@ -138,7 +136,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
     terminal_load(old);
     terminal_index=new;
     if(!terminal[new].active) terminal[new].open(new,(int32_t*)get_terbuf_addr(new));
-    prog_video_update(new);
+    // prog_video_update(new);
     /* initalize screen if terminal is just created(opened) */
     
     char* vid=(char*)VIDEO;

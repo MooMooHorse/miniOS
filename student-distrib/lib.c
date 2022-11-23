@@ -205,13 +205,31 @@ static void vertical_scroll(void) {
     }
 }
 
+static void kvertical_scroll(void){
+    int32_t i;
+
+    --terminal[terminal_index].screen_y;  // Reset `screen_y` to the 23rd line.
+
+    // Shift rows up.
+    for (i = 0; i < (NUM_ROWS - 1) * NUM_COLS; i++) {
+        // Set current line to the next line, no need to change the color here.
+        *(uint8_t *)(VIDEO + (i << 1)) = *(uint8_t *)(VIDEO + ((i + NUM_COLS) << 1));
+    }
+
+    // Clear the last line.
+    for (i = (NUM_ROWS - 1) * NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(VIDEO + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO + (i << 1) + 1) = ATTRIB;
+    }
+}
+
 /* void putc(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
  *  Function: Output a character to the console. Scroll the screen whenever necessary. */
 void putc(uint8_t c) {
     uint32_t pid=get_pid();
-    pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);;
+    pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
         screen_x = 0;
         if (NUM_ROWS == ++screen_y) {
@@ -239,6 +257,35 @@ void putc(uint8_t c) {
     }
     if(pid==0||_pcb_ptr->terminal==terminal_index) /* only when current terminal is displayed terminal */
         cursor_update(screen_x, screen_y);
+}
+
+void kputc(uint8_t c){
+    if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
+        terminal[terminal_index].screen_x = 0;
+        if (NUM_ROWS == ++terminal[terminal_index].screen_y) {
+            kvertical_scroll();
+        }
+    } else if ('\b' == c) {
+        if (0 == terminal[terminal_index].screen_x && 0 == terminal[terminal_index].screen_y) { return; }  // Nothing left.
+        if (0 == terminal[terminal_index].screen_x) {  // Go back to the previous line.
+            terminal[terminal_index].screen_x = NUM_COLS;
+            --terminal[terminal_index].screen_y;
+        }
+        // Clear the previous character.
+        *(uint8_t *)(VIDEO + ((NUM_COLS * terminal[terminal_index].screen_y + terminal[terminal_index].screen_x - 1) << 1)) = ' ';
+        *(uint8_t *)(VIDEO + ((NUM_COLS * terminal[terminal_index].screen_y + terminal[terminal_index].screen_x - 1) << 1) + 1) = ATTRIB;
+        --terminal[terminal_index].screen_x;
+    } else {
+        *(uint8_t *)(VIDEO + ((NUM_COLS * terminal[terminal_index].screen_y + terminal[terminal_index].screen_x) << 1)) = c;
+        *(uint8_t *)(VIDEO + ((NUM_COLS * terminal[terminal_index].screen_y + terminal[terminal_index].screen_x) << 1) + 1) = ATTRIB;
+        if (NUM_COLS == ++terminal[terminal_index].screen_x) {
+            terminal[terminal_index].screen_x = 0;
+            if (NUM_ROWS == ++terminal[terminal_index].screen_y) {
+                kvertical_scroll();
+            }
+        }
+    }
+    cursor_update(terminal[terminal_index].screen_x, terminal[terminal_index].screen_y);
 }
 
 

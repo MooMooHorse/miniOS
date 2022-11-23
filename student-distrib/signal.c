@@ -31,10 +31,15 @@ char* signame[NUM_SIGNALS]={
 static uint32_t 
 copy_to_user_stack(uint32_t* kesp,uint32_t* uesp){
     int32_t counter=8+5; /* 8 : saved register - 5 : IRET parameters */ 
+    uint32_t swap;
     kesp=kesp+counter;
     while(counter--){
         (*(--uesp))=(*(--kesp));/* pointer arithmetic : each time 32 bits */
     }
+    /* swap eax to 7-th register : will recover in sigreturn */
+    swap=*(uesp+7);
+    *(uesp+7)=*(uesp+6);
+    *(uesp+6)=swap;
     /* two addresses here should be always valid */
     return (uint32_t)uesp;
 }
@@ -87,6 +92,9 @@ set_kernel_stack(sig_handler_t handler,uint32_t* kesp,uint32_t *uesp){
     * set the user stack for signal handler 
     * iret to signal handler 
     */
+
+    set_proc_signal(-1); /* remove the currnet signal */
+
     asm volatile("              \n\
     movl    %%ecx,%%esp         \n\
     addl    $32,%%esp           \n\
@@ -134,6 +142,8 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
         printf("double fault in do_signal\n");
         while(1);
     }
+    
+
     if(!sig_table[_pcb_ptr->sig_num].user_space){
         sig_table[_pcb_ptr->sig_num].handler(_pcb_ptr->sig_num);
         asm volatile("              \n\
@@ -146,6 +156,8 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
         );
         while(1);
     }
+
+    
 
 
     /* note that because intruction are not 32-bit aligned, uesp will get pretty ugly */

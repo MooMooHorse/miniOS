@@ -372,11 +372,8 @@ int32_t set_handler (uint32_t signum, void* handler_address){
 int32_t sigreturn (void){
     uint32_t *uesp,*kebp;
     int32_t counter;
-    uint32_t pid=get_pid();
-    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    uint32_t swap;
 
-    /* mark signal as handled */
-    _pcb_ptr->sig_num=-1;
 
     /* extract uesp */
     /** kernel stack frame right now
@@ -415,9 +412,16 @@ int32_t sigreturn (void){
     kebp=kebp+6; /* 6 : from old ebp to 8 regs */
     uesp=uesp+1; /* 1: from signum to 8 regs */
     counter=8+5; /* 8 : 8 regs + 5 : 5 parameters to IRET */
+
     while(counter--){ /* overwrite kernel stack with user stack */
         (*(kebp++))=(*(uesp++));
     }
+
+    /* move eax back to 8-th */
+    swap=*(kebp-7);
+    *(kebp-7)=*(kebp-6);
+    *(kebp-6)=swap;
+
     /* discard kernel stack and iret to normal program */
     asm volatile("              \n\
     leave                       \n\

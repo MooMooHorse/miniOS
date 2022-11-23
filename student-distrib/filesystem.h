@@ -69,7 +69,8 @@ filesystem {
     uint32_t r_times, w_times;
     uint32_t sys_st_addr;
     uint32_t sys_ed_addr;
-    uint32_t iblock_num;
+    uint32_t iblock_num; /* N */
+    uint32_t dblock_num; /* D */
     uint32_t block_size;
     uint32_t dblock_entry_size;
     uint32_t dblock_entry_offset;
@@ -79,7 +80,7 @@ filesystem {
     uint32_t filename_size;
 } fs_t;
 
-extern fs_t readonly_fs;
+extern fs_t fs;
 
 #endif
 

@@ -42,7 +42,6 @@ int32_t
 pcb_create(uint32_t pid){
     if(PCB_BASE-pid*PCB_SIZE<top_pcb)
         top_pcb=PCB_BASE-pid*PCB_SIZE; /* pid index from 0 : PCB base starts from 8 MB */
-    // printf("%x\n",top_pcb);
     return 0;
 }
 
@@ -169,12 +168,12 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     dentry_t dentry;
     uint8_t buf[5];
     /* read the dentry */
-    if(readonly_fs.f_rw.read_dentry_by_name(prog_name,&dentry)==-1){
+    if(fs.f_rw.read_dentry_by_name(prog_name,&dentry)==-1){
         printf("program doesn't exist\n");
         return -1;
     }
     /* mp3 document : entry in virtual address is specified at 24~27 bytes */
-    if(readonly_fs.f_rw.read_data(dentry.inode_num,24,buf,4)==-1){
+    if(fs.f_rw.read_data(dentry.inode_num,24,buf,4)==-1){
         printf("bad executable\n");
         return -1;
     }
@@ -195,7 +194,6 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
 int32_t
 switch_user(uint32_t pid){
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    // printf("%d\n",*(uint32_t*)(_pcb_ptr->eip+10));
     /* EIP, CS, EFLAGS, ESP, SS */
     /* http://jamesmolloy.co.uk/tutorial_html/10.-User%20Mode.html */
     /* Note that we have different value than in that tutorial */

@@ -21,7 +21,7 @@
 static int32_t open_fs(uint32_t addr);
 static int32_t close_fs();
 
-fs_t readonly_fs = {
+fs_t fs = {
     .open_fs = open_fs,
     .close_fs = close_fs
 };
@@ -69,8 +69,8 @@ static inline uint8_t read_1B(uint32_t addr) {
  * else - failed
  */
 static inline int32_t fs_sanity_check(uint32_t inode, uint32_t addr) {
-    return (inode < 0 || inode > readonly_fs.iblock_num || addr < readonly_fs.sys_st_addr
-        || addr > readonly_fs.sys_ed_addr);
+    return (inode < 0 || inode > fs.iblock_num || addr < fs.sys_st_addr
+        || addr > fs.sys_ed_addr);
 }
 
 /**
@@ -84,45 +84,50 @@ open_fs(uint32_t addr) {
     // load all functions into struct
 
     /* extended functionality : program loader */
-    readonly_fs.load_prog = load_prog;
+    fs.load_prog = load_prog;
 
     /* install lower-level r/w control to file system */
-    readonly_fs.f_rw.write = fake_write;
-    readonly_fs.f_rw.read_data = read_data;
-    readonly_fs.f_rw.read_dentry_by_index = read_dentry_by_index;
-    readonly_fs.f_rw.read_dentry_by_name = read_dentry_by_name;
+    fs.f_rw.write = fake_write;
+    fs.f_rw.read_data = read_data;
+    fs.f_rw.read_dentry_by_index = read_dentry_by_index;
+    fs.f_rw.read_dentry_by_name = read_dentry_by_name;
 
-    readonly_fs.openr = openr; /* open file/directory as read-oonly*/
-    readonly_fs.check_exec = check_exec; /* check if file is exec */ 
+    fs.openr = openr; /* open file/directory as read-oonly*/
+    fs.check_exec = check_exec; /* check if file is exec */ 
 
     /* install ioctl for file to file system */
-    readonly_fs.f_ioctl.open = file_open;
-    readonly_fs.f_ioctl.close = file_close;
-    readonly_fs.f_ioctl.read = file_read;
-    readonly_fs.f_ioctl.write = file_write;
+    fs.f_ioctl.open = file_open;
+    fs.f_ioctl.close = file_close;
+    fs.f_ioctl.read = file_read;
+    fs.f_ioctl.write = file_write;
     /* install ioctl for directory to file system */
-    readonly_fs.d_ioctl.open = directory_open;
-    readonly_fs.d_ioctl.close = directory_close;
-    readonly_fs.d_ioctl.read = directory_read;
-    readonly_fs.d_ioctl.write = directory_write;
+    fs.d_ioctl.open = directory_open;
+    fs.d_ioctl.close = directory_close;
+    fs.d_ioctl.read = directory_read;
+    fs.d_ioctl.write = directory_write;
 
     // initialize all shared variables
-    readonly_fs.sys_st_addr = _addr->mod_start;
-    readonly_fs.sys_ed_addr = _addr->mod_end;
-    readonly_fs.file_num = read_4B(_addr->mod_start); /* first 4 Bytes, number of dentries */
-    readonly_fs.iblock_num = read_4B(_addr->mod_start + 4);
+    fs.sys_st_addr = _addr->mod_start;
+    fs.sys_ed_addr = _addr->mod_end;
+    fs.file_num = read_4B(_addr->mod_start); /* first 4 Bytes, number of dentries */
+    fs.iblock_num = read_4B(_addr->mod_start + 4);
+    fs.dblock_num = read_4B(_addr->mod_start + 8 );
     printf("Opening file system which contains %d files&dir, %d iblocks(N)\n",
-           readonly_fs.file_num,
-           readonly_fs.iblock_num);
-    readonly_fs.r_times = readonly_fs.w_times = 0;
+           fs.file_num,
+           fs.iblock_num);
+    printf("Filesystem has %d datablocks in total\n",fs.dblock_num);
+    fs.r_times = fs.w_times = 0;
     /* Install a set of file system parameters(properties) */
-    readonly_fs.block_size = 4096;
-    readonly_fs.dblock_entry_size = 4;
-    readonly_fs.dblock_entry_offset = 4;  /* the number of bytes in inode before data block # : In this case, length */
-    readonly_fs.dblock_offset = readonly_fs.block_size * (readonly_fs.iblock_num + 1); /* +1 : number of boot block */
-    readonly_fs.boot_block_padding = 64;
-    readonly_fs.dentry_size = 64;
-    readonly_fs.filename_size = 32;
+    fs.block_size = 4096;
+    fs.dblock_entry_size = 4;
+    fs.dblock_entry_offset = 4;  /* the number of bytes in inode before data block # : In this case, length */
+    fs.dblock_offset = fs.block_size * (fs.iblock_num + 1); /* +1 : number of boot block */
+    fs.boot_block_padding = 64;
+    fs.dentry_size = 64;
+    fs.filename_size = 32;
+
+    /* start initializing iblock, datablock map */
+    
     return 0;
 }
 
@@ -136,7 +141,7 @@ open_fs(uint32_t addr) {
  */
 static int32_t openr(file_t* ret, const uint8_t* fname, int32_t findex) {
     dentry_t dentry;
-    if(-1==readonly_fs.f_rw.read_dentry_by_name(fname, &dentry)){
+    if(-1==fs.f_rw.read_dentry_by_name(fname, &dentry)){
         return -1;
     }
     if (dentry.filetype == DESCRIPTOR_ENTRY_DIR)
@@ -157,13 +162,13 @@ file_open(file_t* ret, const uint8_t* fname, int32_t findex) {
     dentry_t dentry;
     if (ret == NULL || fname == NULL)
         return -1;
-    if (readonly_fs.f_rw.read_dentry_by_name(fname, &dentry) == -1) {
+    if (fs.f_rw.read_dentry_by_name(fname, &dentry) == -1) {
         return -1;
     }
-    ret->fops.open = readonly_fs.f_ioctl.open;
-    ret->fops.close = readonly_fs.f_ioctl.close;
-    ret->fops.read = readonly_fs.f_ioctl.read;
-    ret->fops.write = readonly_fs.f_ioctl.write;
+    ret->fops.open = fs.f_ioctl.open;
+    ret->fops.close = fs.f_ioctl.close;
+    ret->fops.read = fs.f_ioctl.read;
+    ret->fops.write = fs.f_ioctl.write;
 
     ret->pos = 0;
     ret->flags = DESCRIPTOR_ENTRY_FILE | F_OPEN;
@@ -183,14 +188,14 @@ directory_open(file_t* ret, const uint8_t* fname, int32_t findex) {
     dentry_t dentry;
     if (ret == NULL || fname == NULL)
         return -1;
-    if (readonly_fs.f_rw.read_dentry_by_name(fname, &dentry) == -1) {
+    if (fs.f_rw.read_dentry_by_name(fname, &dentry) == -1) {
         return -1;
     }
-    readonly_fs.f_rw.read_dentry_by_name(fname, &dentry);
-    ret->fops.open = readonly_fs.d_ioctl.open;
-    ret->fops.close = readonly_fs.d_ioctl.close;
-    ret->fops.read = readonly_fs.d_ioctl.read;
-    ret->fops.write = readonly_fs.d_ioctl.write;
+    fs.f_rw.read_dentry_by_name(fname, &dentry);
+    ret->fops.open = fs.d_ioctl.open;
+    ret->fops.close = fs.d_ioctl.close;
+    ret->fops.read = fs.d_ioctl.read;
+    ret->fops.write = fs.d_ioctl.write;
     ret->pos = 0;
     ret->flags = DESCRIPTOR_ENTRY_DIR | F_OPEN;
     ret->inode = dentry.inode_num;
@@ -209,11 +214,11 @@ file_read(file_t* file, void* buf, int32_t nbytes) {
     int32_t ret;
     if (file == NULL || buf == NULL)
         return -1;
-    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, fs.sys_st_addr))
         return -1;
     if (nbytes <= 0)
         return 0;
-    ret = readonly_fs.f_rw.read_data(file->inode, file->pos, (uint8_t*) buf, nbytes);
+    ret = fs.f_rw.read_data(file->inode, file->pos, (uint8_t*) buf, nbytes);
     if (ret == -1)
         return -1;
     file->pos += ret; /* update file offset */
@@ -233,12 +238,12 @@ directory_read(file_t* file, void* buf, int32_t nbytes) {
     int32_t ret, i;
     if (file == NULL || buf == NULL)
         return -1;
-    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, fs.sys_st_addr))
         return -1;
     if (nbytes <= 0)
         return 0;
     dentry_t dentry;
-    ret = readonly_fs.f_rw.read_dentry_by_index(file->pos, &dentry);
+    ret = fs.f_rw.read_dentry_by_index(file->pos, &dentry);
     if (ret == -1)
         return -1;
     file->pos++; /* each time advance one file */
@@ -282,7 +287,7 @@ static int32_t
 file_close(file_t* file) {
     if (file == NULL)
         return -1;
-    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, fs.sys_st_addr))
         return -1;
     file->fops.close = NULL;
     file->fops.read = NULL;
@@ -302,7 +307,7 @@ static int32_t
 directory_close(file_t* file) {
     if (file == NULL)
         return -1;
-    if (fs_sanity_check(file->inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(file->inode, fs.sys_st_addr))
         return -1;
     file->fops.close = NULL;
     file->fops.read = NULL;
@@ -355,10 +360,10 @@ read_from_block(uint32_t* offset, uint32_t dnum, uint8_t* buf, uint32_t length, 
     /* number of blocks before dblock : dblock_index + 1 (bootblock) + number of iblocks (N) */
     if (offset == NULL || buf == NULL || buf_ptr == NULL)
         return -1;
-    uint32_t data_block_addr = readonly_fs.sys_st_addr + (1 + readonly_fs.iblock_num + dnum) * readonly_fs.block_size;
+    uint32_t data_block_addr = fs.sys_st_addr + (1 + fs.iblock_num + dnum) * fs.block_size;
     
-    length = length > (readonly_fs.block_size-(*offset)) ? 
-    (readonly_fs.block_size-(*offset)) : length; /* length = min (length, block_size) */
+    length = length > (fs.block_size-(*offset)) ? 
+    (fs.block_size-(*offset)) : length; /* length = min (length, block_size) */
 
     data_block_addr += (*offset);
     *offset = 0;
@@ -398,14 +403,14 @@ read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
     int32_t read_length,max_read_length;
     if (buf == NULL)
         return -1;
-    if (fs_sanity_check(inode, readonly_fs.sys_st_addr))
+    if (fs_sanity_check(inode, fs.sys_st_addr))
         return -1; /* inode out of bound */
     if (length <= 0)
         return 0; /* no need to read */
 
     /* calculate inode address */
-    inode_addr = (uint32_t) readonly_fs.sys_st_addr
-        + (inode + 1) * readonly_fs.block_size; /* inode+1 : boot block and number of inode */
+    inode_addr = (uint32_t) fs.sys_st_addr
+        + (inode + 1) * fs.block_size; /* inode+1 : boot block and number of inode */
     if (fs_sanity_check(0, inode_addr) || fs_sanity_check(0, inode_addr + 3))
         return -1;
 
@@ -417,13 +422,13 @@ read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
     max_read_length = file_length - offset;
 
     /* calculate in-block offset*/
-    data_block_offset = offset / readonly_fs.block_size;
-    offset %= readonly_fs.block_size; /* discard offset that fully occupies previous blocks*/
+    data_block_offset = offset / fs.block_size;
+    offset %= fs.block_size; /* discard offset that fully occupies previous blocks*/
 
     /* calculate first data block address */
     data_block_entry_addr = inode_addr +
-        readonly_fs.dblock_entry_offset +
-        data_block_offset * readonly_fs.dblock_entry_size;
+        fs.dblock_entry_offset +
+        data_block_offset * fs.dblock_entry_size;
     if (fs_sanity_check(0, data_block_entry_addr))
         return -1;
 
@@ -440,7 +445,7 @@ read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
         if (read_length <= 0)
             return -1;
         length -= read_length;                                  /* the length left to read */
-        data_block_entry_addr += readonly_fs.dblock_entry_size; /* move to next data block */
+        data_block_entry_addr += fs.dblock_entry_size; /* move to next data block */
     }
     return ret;
 }
@@ -454,7 +459,7 @@ read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
 static int32_t
 read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
     uint32_t i;
-    dentry_addr += readonly_fs.filename_size;
+    dentry_addr += fs.filename_size;
     if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
         return -1;
     dentry->filetype = read_4B(dentry_addr);
@@ -481,14 +486,14 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_index(uint32_t index, dentry_t* dentry) {
-    if (dentry == NULL || index > readonly_fs.file_num) {
+    if (dentry == NULL || index > fs.file_num) {
         return -1;
     }
-    uint32_t dentry_addr = readonly_fs.sys_st_addr + readonly_fs.boot_block_padding + index * readonly_fs.dentry_size;
+    uint32_t dentry_addr = fs.sys_st_addr + fs.boot_block_padding + index * fs.dentry_size;
     if (fs_sanity_check(0, dentry_addr))
         return -1;
     uint32_t i, check_EOS = 0;
-    for (i = 0; i < readonly_fs.filename_size; i++) {
+    for (i = 0; i < fs.filename_size; i++) {
         if (fs_sanity_check(0, dentry_addr + i))
             return -1;
         dentry->filename[i] = read_1B(dentry_addr + i);
@@ -496,7 +501,7 @@ read_dentry_by_index(uint32_t index, dentry_t* dentry) {
             check_EOS = 1;
     }
     if (!check_EOS)
-        dentry->filename[readonly_fs.filename_size] = '\0'; /* no zero padding, add at the end */
+        dentry->filename[fs.filename_size] = '\0'; /* no zero padding, add at the end */
     return read_after_fname(dentry_addr, dentry);
 }
 
@@ -514,19 +519,19 @@ read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
     if (dentry == NULL || fname == NULL || strlen((int8_t*) fname) == 0 ) {
         return -1;
     }
-    if (strlen((int8_t*) fname) > readonly_fs.filename_size) {
+    if (strlen((int8_t*) fname) > fs.filename_size) {
         return -1;
     }
-    uint32_t dentry_addr = readonly_fs.sys_st_addr + readonly_fs.boot_block_padding;
+    uint32_t dentry_addr = fs.sys_st_addr + fs.boot_block_padding;
     if (fs_sanity_check(0, dentry_addr))
         return -1;
     uint32_t i, dentry_index;
     uint32_t check_EOS;
-    for (dentry_index = 0; dentry_index < readonly_fs.iblock_num; dentry_index++) {
+    for (dentry_index = 0; dentry_index < fs.iblock_num; dentry_index++) {
         if (fs_sanity_check(0, dentry_addr))
             return -1;
         check_EOS = 0;
-        for (i = 0; i < readonly_fs.filename_size; i++) {
+        for (i = 0; i < fs.filename_size; i++) {
             if (fs_sanity_check(0, dentry_addr + i))
                 return -1;
             dentry->filename[i] = read_1B(dentry_addr + i);
@@ -534,16 +539,16 @@ read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
                 check_EOS = 1;
         }
         if (!check_EOS)
-            dentry->filename[readonly_fs.filename_size] = '\0'; /* no zero padding, add at the end */
-        // if(strlen((int8_t *)fname)>=readonly_fs.filename_size){
-        //     if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, readonly_fs.filename_size) == 0)
+            dentry->filename[fs.filename_size] = '\0'; /* no zero padding, add at the end */
+        // if(strlen((int8_t *)fname)>=fs.filename_size){
+        //     if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, fs.filename_size) == 0)
         //         return read_after_fname(dentry_addr, dentry);
         // }else
         if (strncmp((int8_t*) fname, (int8_t*) dentry->filename, strlen((int8_t*) fname) + 1) == 0) {
             /* strlen((int8_t*)fname)+1 : both string ends at the same time */
             return read_after_fname(dentry_addr, dentry);
         }
-        dentry_addr += readonly_fs.dentry_size;
+        dentry_addr += fs.dentry_size;
     }
     return -1;
 }
@@ -574,7 +579,7 @@ load_prog(const uint8_t* prog_name, uint32_t addr, uint32_t nbytes) {
     int32_t ret = 0, offset = 0, bytes_read;
     /* read the whole executable */
     while (1) {
-        bytes_read = readonly_fs.f_rw.read_data(dentry.inode_num, offset, (uint8_t*) addr, read_block_size);
+        bytes_read = fs.f_rw.read_data(dentry.inode_num, offset, (uint8_t*) addr, read_block_size);
         if (bytes_read == -1) return -1;
         if (bytes_read == 0) return bytes_read;
         /* read next data block */
@@ -602,11 +607,11 @@ load_prog(const uint8_t* prog_name, uint32_t addr, uint32_t nbytes) {
 static int32_t
 check_exec(const uint8_t* prog_name){
     dentry_t dentry;
-    if(-1==readonly_fs.f_rw.read_dentry_by_name(prog_name,&dentry)){
+    if(-1==fs.f_rw.read_dentry_by_name(prog_name,&dentry)){
         return -1;
     }
     uint8_t buf[5];
-    if(-1==readonly_fs.f_rw.read_data(dentry.inode_num,0,buf,4)){
+    if(-1==fs.f_rw.read_data(dentry.inode_num,0,buf,4)){
         return 0;
     }else{
         return (buf[0]==0x7f)&&(buf[1]==0x45)&&(buf[2]==0x4c)&&(buf[3]==0x46);

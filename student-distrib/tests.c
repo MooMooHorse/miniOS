@@ -316,7 +316,7 @@ int32_t filesystem_test_read_dentry1() {
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if (readonly_fs.f_rw.read_dentry_by_index(0, &ret) == -1) {
+    if (fs.f_rw.read_dentry_by_index(0, &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -334,7 +334,7 @@ int32_t filesystem_test_read_dentry2() {
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if (readonly_fs.f_rw.read_dentry_by_name((uint8_t*) "frame0.txt", &ret) == -1) {
+    if (fs.f_rw.read_dentry_by_name((uint8_t*) "frame0.txt", &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -352,7 +352,7 @@ int32_t filesystem_test_read_dentry3() {
     int result = PASS;
     // uint8_t* buf[100];
     dentry_t ret;
-    if (readonly_fs.f_rw.read_dentry_by_name((uint8_t*) "hello", &ret) == -1) {
+    if (fs.f_rw.read_dentry_by_name((uint8_t*) "hello", &ret) == -1) {
         return FAIL;
     }
     display_dentry(&ret);
@@ -371,7 +371,7 @@ int32_t filesystem_test_read1() {
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if ((f_len = readonly_fs.f_rw.read_data(38, 40, buf, 100)) == -1) {
+    if ((f_len = fs.f_rw.read_data(38, 40, buf, 100)) == -1) {
         return FAIL;
     }
     printf("read file length : %d\n", f_len);
@@ -392,7 +392,7 @@ int32_t filesystem_test_read2() {
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if ((f_len = readonly_fs.f_rw.read_data(10, 0, buf, 10)) == -1) {
+    if ((f_len = fs.f_rw.read_data(10, 0, buf, 10)) == -1) {
         return FAIL;
     }
     printf("read file length : %d\n", f_len);
@@ -412,7 +412,7 @@ int32_t filesystem_test_read3() {
     uint8_t buf[120];
     uint32_t f_len;
     // dentry_t ret;
-    if ((f_len = readonly_fs.f_rw.read_data(10, 5309, buf, 40)) == -1) {
+    if ((f_len = fs.f_rw.read_data(10, 5309, buf, 40)) == -1) {
         return FAIL;
     }
     printf("read file length : %d\n", f_len);
@@ -430,12 +430,12 @@ int32_t filesystem_ioctl_test0() {
     file_t file;
     int result = PASS;
 
-    if (readonly_fs.openr(&file, (uint8_t*) "fish", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "fish", 0) == -1) {
         return FAIL;
     }
     printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
-    if(-1==readonly_fs.f_ioctl.close(&file)){
+    if(-1==fs.f_ioctl.close(&file)){
         return FAIL;
     }
     return result;
@@ -452,12 +452,12 @@ int32_t filesystem_ioctl_test1() {
     file_t file;
     int result = PASS;
 
-    if (readonly_fs.openr(&file, (uint8_t*) ".", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
     printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
-    if(-1==readonly_fs.d_ioctl.close(&file)){
+    if(-1==fs.d_ioctl.close(&file)){
         return FAIL;
     }
     return result;
@@ -473,15 +473,15 @@ int32_t filesystem_ioctl_test2() {
     int i;
     file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file, (uint8_t*) ".", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) ".", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[100];
     dentry_t dentry;
-    for (i = 0; i < readonly_fs.file_num; i++) {
+    for (i = 0; i < fs.file_num; i++) {
         file.fops.read(&file, buf, 32);
         puts((int8_t*) buf);
-        readonly_fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
+        fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
         printf("          filetype=%d    inode=%d\n",dentry.filetype,dentry.inode_num);
     }
     return result;
@@ -498,7 +498,7 @@ int32_t filesystem_ioctl_test3() {
     int i;
     file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
         return FAIL;
     }
    uint8_t buf[40001];
@@ -509,7 +509,7 @@ int32_t filesystem_ioctl_test3() {
     }
     printf("%u\n",nbytes_read);
     for(i=0;i<nbytes_read;i++) putc(buf[i]);
-    if(readonly_fs.f_ioctl.close(&file)==-1){
+    if(fs.f_ioctl.close(&file)==-1){
         return FAIL;
     }
     return result;
@@ -525,7 +525,7 @@ int32_t filesystem_ioctl_test4() {
     int i;
     file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[40001];
@@ -551,7 +551,7 @@ int32_t filesystem_ioctl_test5() {
     int i;
     file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "hello", 0) == -1) {
         return FAIL;
     }
     uint8_t buf[40001];
@@ -577,7 +577,7 @@ int32_t filesystem_ioctl_test5() {
 int32_t filesystem_ioctl_test6() {
     int i;
     file_t file;
-    if (readonly_fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
         return PASS;
     }
    uint8_t buf[40001];
@@ -602,7 +602,7 @@ int32_t filesystem_ioctl_test7() {
     int i;
     file_t file;
     int result = PASS;
-    if (readonly_fs.openr(&file, (uint8_t*) "frame0.txt", 0) == -1) {
+    if (fs.openr(&file, (uint8_t*) "frame0.txt", 0) == -1) {
         return FAIL;
     }
    uint8_t buf[40001];

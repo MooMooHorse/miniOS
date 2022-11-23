@@ -64,7 +64,7 @@ void entry(unsigned long magic, unsigned long addr) {
         while (mod_count < mbi->mods_count) {
             /* start of file system address for Module 0 */
             if(mod_count==FILESYS_MOD){ /* open file system given module address */
-                readonly_fs.open_fs((uint32_t)mod);
+                fs.open_fs((uint32_t)mod);
             }
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start); 
             /* end of file system address for Module 0 */

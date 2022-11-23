@@ -44,6 +44,16 @@ void clear(void) {
     cursor_update(0, 0);
 }
 
+void kclear(){
+    int32_t i;
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)(VIDEO + (i << 1)) = ' ';
+        *(uint8_t *)(VIDEO + (i << 1) + 1) = ATTRIB;
+    }
+    terminal[terminal_index].screen_x = terminal[terminal_index].screen_y = 0;
+    cursor_update(0, 0);
+}
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character
@@ -168,6 +178,15 @@ format_char_switch:
         buf++;
     }
     return (buf - format);
+}
+
+int32_t kputs(int8_t* s){
+    register int32_t index = 0;
+    while (s[index] != '\0') {
+        kputc(s[index]);
+        index++;
+    }
+    return index;
 }
 
 /* int32_t puts(int8_t* s);

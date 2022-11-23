@@ -18,6 +18,7 @@
 #include "filesystem.h"
 #include "multiboot.h"
 #include "lib.h"
+#include "tests.h"
 static int32_t open_fs(uint32_t addr);
 static int32_t close_fs();
 
@@ -88,8 +89,8 @@ static inline int32_t fs_sanity_check(uint32_t inode, uint32_t addr) {
 static int32_t
 open_fs(uint32_t addr) {
     module_t* _addr = (module_t*) addr;
-    dentry_t  dentry;
     int32_t   i;
+    uint32_t filled_rate=0;
     // load all functions into struct
 
     /* extended functionality : program loader */
@@ -142,6 +143,21 @@ open_fs(uint32_t addr) {
         printf("file system boot failed\n");
         return -1;
     }
+    #ifdef RUN_TESTS
+    for(i=0;i<N_INODE;i++){
+        if(fs.imap[i]){
+            printf("inode %d is filled with %d length of file ",i,fs.flength[i]);
+        }
+    }
+
+    for(i=0;i<D_DBLOCKS;i++){
+        if(fs.dmap[i]){
+            printf("dblock %d is used \n",i);
+            filled_rate+=100;
+        }
+    }
+    printf("file system dblock is filled with rate %d%%\n",filled_rate/fs.dblock_num);
+    #endif
     return 0;
 }
 
@@ -259,7 +275,7 @@ directory_read(file_t* file, void* buf, int32_t nbytes) {
     dentry_t dentry;
     ret = fs.f_rw.read_dentry_by_index(file->pos, &dentry);
     if (ret == -1)
-        return -1;
+        return 0;
     file->pos++; /* each time advance one file */
     if (nbytes > strlen((int8_t*) dentry.filename))
         nbytes = strlen((int8_t*) dentry.filename);
@@ -643,8 +659,7 @@ check_exec(const uint8_t* prog_name){
 
 /**
  * @brief after we find inode, we check the dblocks, and mark them as used
- * 
- * @param inode 
+ * @param inode - inode number
  * @return ** void 
  */
 static int32_t
@@ -674,18 +689,18 @@ mark_dblock(uint32_t inode){
         fs.dmap[dblock_ind]=1; /* mark datablock */
         data_block_entry_addr+=fs.dblock_entry_size;
     }
+    return 0;
 }   
 
 /**
  * @brief after extracting file name, we go to following items in dentry
  * and find inode 
- * @param dentry_addr 
- * @param dentry 
+ * @param dentry_addr - dentry address for current dentry 
+ * @param dentry - dentry to fill
  * @return ** int32_t 
  */
 static int32_t
 mark_after_fname(uint32_t dentry_addr,dentry_t* dentry){
-    uint32_t i;
     dentry_addr += fs.filename_size;
     if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
         return -1;
@@ -708,7 +723,6 @@ mark_after_fname(uint32_t dentry_addr,dentry_t* dentry){
 
 /**
  * @brief mark all inodes and dblocks in the filesystem 
- * 
  * @return ** int32_t 
  */
 static int32_t
@@ -736,6 +750,7 @@ mark_inode_and_dblock(){
             fs.imap[dentry.inode_num]=1;
         }
     }
+    return 0;
 }
 
 

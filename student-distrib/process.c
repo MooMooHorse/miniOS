@@ -157,6 +157,9 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->state=RUNNING;
     _pcb_ptr->sig_num=-1;
     _pcb_ptr->terminal=terminal_index;
+    if(ppid!=0){
+        PCB(ppid)->state=SLEEPING;
+    }
     clean_up_fda(_pcb_ptr);
     init_terminal(_pcb_ptr,0);
     init_terminal(_pcb_ptr,1);

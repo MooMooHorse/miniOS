@@ -154,7 +154,6 @@ int32_t execute (const uint8_t* command){
 
     ppid=(pid<=3)?0:get_pid();
 
-
     /* create PCB */
     if(pcb_create(pid)==-1){
         printf("too many executable\n");

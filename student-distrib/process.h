@@ -55,6 +55,7 @@ typedef struct PCB{
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */
     file_t file_entry[FILE_ARRAY_MAX];
     int8_t args[CMD_MAX_LEN]; /* arguments */
+    uint8_t vidmap;
     enum proc_state state;
     context_t* context;
     /* after PCB, we have kernel stack for each process */

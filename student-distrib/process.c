@@ -25,6 +25,7 @@ void init_pcb(){
     for(i=1;i<=PCB_MAX;i++){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
         _pcb_ptr->state=UNUSED;
+        _pcb_ptr->vidmap=0;
     }
 }
 
@@ -321,6 +322,7 @@ discard_proc(uint32_t pid,uint32_t status){
     
     cur_ebp=_pcb_ptr->kebp;
 
+    _pcb_ptr->vidmap = 0;
     uvmunmap_vid();
 
     /* re-spawn a shell immediately */

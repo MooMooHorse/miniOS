@@ -61,7 +61,7 @@ common_exception_handler:
 wrapup_common_exception:
     popl %eax 
 
-#    jmp sig_enter
+    jmp sig_enter
     pushl $255 # parameter to halt (status=255)
     call halt 
 # You should never enter area below 

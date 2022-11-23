@@ -25,6 +25,7 @@ void init_pcb(){
     for(i=1;i<=PCB_MAX;i++){
         pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE);
         _pcb_ptr->state=UNUSED;
+        _pcb_ptr->vidmap=0;
     }
 }
 
@@ -126,9 +127,9 @@ static int32_t clean_up_fda(pcb_t* _pcb_ptr){
 uint32_t 
 get_pid(){
     uint32_t cur_esp;
-    if(run_as_base){
-        return 0; /* kernel spawn shell, kernel with "pid" 0*/
-    }
+    // if(run_as_base){
+    //     return 0; /* kernel spawn shell, kernel with "pid" 0*/
+    // }
     /* any esp in this kernel stack would work */
     asm volatile("            \n\
     movl %%esp,%%ebx          \n\
@@ -156,6 +157,9 @@ pcb_open(uint32_t ppid,uint32_t pid,const uint8_t* prog_name){
     _pcb_ptr->state=RUNNING;
     _pcb_ptr->sig_num=-1;
     _pcb_ptr->terminal=terminal_index;
+    if(ppid!=0){
+        PCB(ppid)->state=SLEEPING;
+    }
     clean_up_fda(_pcb_ptr);
     init_terminal(_pcb_ptr,0);
     init_terminal(_pcb_ptr,1);
@@ -321,6 +325,7 @@ discard_proc(uint32_t pid,uint32_t status){
     
     cur_ebp=_pcb_ptr->kebp;
 
+    _pcb_ptr->vidmap = 0;
     uvmunmap_vid();
 
     /* re-spawn a shell immediately */

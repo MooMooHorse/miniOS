@@ -188,12 +188,31 @@ install_sighandler(uint32_t signum, void* handler_address){
 
 /**
  * @brief set signal number for current process
- * @param signum 
- * @return ** -1 on failure 
+ * @param signum - signal number
+ * @return ** int32_t -1 on failure
  */
 int32_t 
 set_proc_signal(int32_t signum){
     uint32_t pid=get_pid();
+    pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    /* sanity check */
+    if(signum!=-1&&(signum<0||signum>=NUM_SIGNALS)) return -1;
+    if(pid<0||pid>PCB_MAX) return -1;
+
+    _pcb_ptr->sig_num=signum;
+    return 0;
+}
+
+
+/**
+ * @brief set signal number for given process 
+ * 
+ * @param signum - signal number
+ * @param pid - set pid
+ * @return ** int32_t -1 on failure
+ */
+int32_t 
+set_async_signal(int32_t signum,int32_t pid){
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     /* sanity check */
     if(signum!=-1&&(signum<0||signum>=NUM_SIGNALS)) return -1;

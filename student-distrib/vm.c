@@ -98,6 +98,10 @@ uvmmap_tbuf(uint32_t tbufa){
 int32_t
 uvmmap_vid(uint8_t** screen_start) {
     uint32_t va = (uint32_t) screen_start;
+    uint32_t pid = get_pid();
+    pcb_t* p = PCB(pid);
+    terminal_t* t = &terminal[p->terminal];
+    p->vidmap = 1;
 
     // Check input pointer validity.
     if (UVM_START > va || UVM_START + UVM_SIZE - sizeof(uint32_t*) < va) {
@@ -108,8 +112,12 @@ uvmmap_vid(uint8_t** screen_start) {
     *screen_start = (uint8_t*) (UVM_START + UVM_SIZE);
 
     pgdir[PDX(*screen_start)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
-    /* TODO : change to proper video memory instead of static VIDEO */
-    pgtbl_vid[PTX(*screen_start)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
+    /* change to proper video memory instead of static VIDEO */
+    if (p->terminal == terminal_index) {
+        pgtbl_vid[PTX(*screen_start)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
+    } else {
+        pgtbl_vid[PTX(*screen_start)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
+    }
 
     lcr3((uint32_t) pgdir);  // Flush TLB.
 
@@ -121,12 +129,21 @@ uvmremap_vid(uint32_t pid) {
     uint32_t va = UVM_START + UVM_SIZE;
     pcb_t* p = PCB(pid);
     terminal_t* t = &terminal[p->terminal];
-    if (!(pgtbl_vid[PTX(va)] & PAGE_P)) {
-        return 0;  // User video memory mapping not present.
+    if (!p->vidmap) {
+        uvmunmap_vid();  // Remove user video memory mapping.
+        goto DONE_REMAP;
     }
-    if (p->terminal != terminal_index) {
+
+    // Update user video memory mapping.
+    pgdir[PDX(va)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
+    if (p->terminal == terminal_index) {
+        pgtbl_vid[PTX(va)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
+    } else {
         pgtbl_vid[PTX(va)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
     }
+
+DONE_REMAP:
+    lcr3((uint32_t) pgdir);  // Flush TLB.
     return 0;
 }
 

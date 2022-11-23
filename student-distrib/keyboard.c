@@ -189,11 +189,15 @@ keyboard_handler(void) {
                 }
                 break;
             case C('C'):
-                if(_pcb_ptr->terminal==terminal_index){
-                    set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
+                for(i=1;i<=PCB_MAX;i++){
+                    pcb_t*  _pcb_ptr=(pcb_t*)(PCB_BASE-i*PCB_SIZE); 
+                    if(_pcb_ptr->terminal==terminal_index&&
+                        (_pcb_ptr->state==RUNNABLE||_pcb_ptr->state==RUNNING)
+                    ){
+                        set_async_signal(SIG_INTERRUPT,i);
+                        break;
+                    }        
                 }
-                halt(0);  // Assume normal termination for now.
-                // set_proc_signal(SIG_INTERRUPT);
                 break;
             case C('L'):
                 kclear();

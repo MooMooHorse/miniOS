@@ -40,9 +40,9 @@
  */
 typedef struct input {
     uint8_t buf[INPUT_SIZE];
-    uint8_t r;  // Read index.
-    uint8_t w;  // Write index.
-    uint8_t e;  // Edit index.
+    uint32_t r;  // Read index.
+    uint32_t w;  // Write index.
+    uint32_t e;  // Edit index.
 } input_t;
 
 // extern input_t input;

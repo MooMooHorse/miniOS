@@ -205,12 +205,14 @@ keyboard_handler(void) {
                 break;
             default:
                 // Ignore NUL characters. Stop taking input when buffer is full.
-                kputc(c);  // Print non-NUL character to the screen.
                 if (INPUT_SIZE == 
                 terminal[terminal_index].input.e 
-                - terminal[terminal_index].input.r + 1 
-                && '\n' != c) { break; }
-                
+                - terminal[terminal_index].input.r + 1
+                && '\n' != c) {
+                    break;
+                }
+
+                kputc(c);  // Print non-NUL character to the screen.
                 terminal[terminal_index].input.buf[
                     terminal[terminal_index].input.e++ % INPUT_SIZE
                 ] = c;  // NOTE: Circular buffer!

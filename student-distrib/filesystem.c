@@ -333,6 +333,8 @@ close_fs() {
  * @return ** int32_t - 0 for read only file system
  */
 static int32_t fake_write() {
+
+    
     return -1;
 }
 

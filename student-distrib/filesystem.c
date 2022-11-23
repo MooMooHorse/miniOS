@@ -26,10 +26,12 @@ fs_t fs = {
     .close_fs = close_fs
 };
 
+/* internal file read/write function set */
 static int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 static int32_t fake_write(void);
+/* file system io function set */
 static int32_t openr(file_t* ret, const uint8_t* fname, int32_t findex);
 static int32_t file_open(file_t* ret, const uint8_t* fname, int32_t findex);
 static int32_t directory_open(file_t* ret, const uint8_t* fname, int32_t findex);
@@ -39,8 +41,13 @@ static int32_t file_write(file_t* file, const void* buf, int32_t nbytes);
 static int32_t directory_write(file_t* file, const void* buf, int32_t nbytes);
 static int32_t file_close(file_t* file);
 static int32_t directory_close(file_t* file);
+/* program loader function set */
 static int32_t load_prog(const uint8_t* prog_name, uint32_t addr, uint32_t nbytes);
 static int32_t check_exec(const uint8_t* prog_name);
+/* scan filesytem function set */
+static int32_t mark_dblock(uint32_t inode);
+static int32_t mark_after_fname(uint32_t dentry_addr,dentry_t* dentry);
+static int32_t mark_inode_and_dblock();
 
 /**
  * @brief read 4 Bytes from memory
@@ -81,6 +88,8 @@ static inline int32_t fs_sanity_check(uint32_t inode, uint32_t addr) {
 static int32_t
 open_fs(uint32_t addr) {
     module_t* _addr = (module_t*) addr;
+    dentry_t  dentry;
+    int32_t   i;
     // load all functions into struct
 
     /* extended functionality : program loader */
@@ -127,7 +136,12 @@ open_fs(uint32_t addr) {
     fs.filename_size = 32;
 
     /* start initializing iblock, datablock map */
-    
+    for(i=0;i<N_INODE;i++) fs.imap[i]=0;
+    for(i=0;i<D_DBLOCKS;i++) fs.dmap[i]=0;
+    if(-1==mark_inode_and_dblock()){
+        printf("file system boot failed\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -463,10 +477,18 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
     if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
         return -1;
     dentry->filetype = read_4B(dentry_addr);
+
+    /* bad filetype */
+    if(dentry->filetype>3) return -1;
+
     dentry_addr += 4;
     if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
         return -1;
     dentry->inode_num = read_4B(dentry_addr);
+
+    /* bad inode # */
+    if(dentry->inode_num>=N_INODE||0==fs.imap[dentry->inode_num]) return -1;
+
     dentry_addr += 4;
     for (i = 0; i < 6; i++) {
         if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
@@ -486,7 +508,7 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_index(uint32_t index, dentry_t* dentry) {
-    if (dentry == NULL || index > fs.file_num) {
+    if (dentry == NULL || index >= N_INODE ) {
         return -1;
     }
     uint32_t dentry_addr = fs.sys_st_addr + fs.boot_block_padding + index * fs.dentry_size;
@@ -497,8 +519,10 @@ read_dentry_by_index(uint32_t index, dentry_t* dentry) {
         if (fs_sanity_check(0, dentry_addr + i))
             return -1;
         dentry->filename[i] = read_1B(dentry_addr + i);
-        if (dentry->filename[i] == '\0')
+        if (dentry->filename[i] == '\0'){
+            if(i==0) return -1; /* no file name */
             check_EOS = 1;
+        }
     }
     if (!check_EOS)
         dentry->filename[fs.filename_size] = '\0'; /* no zero padding, add at the end */
@@ -540,10 +564,6 @@ read_dentry_by_name(const uint8_t* fname, dentry_t* dentry) {
         }
         if (!check_EOS)
             dentry->filename[fs.filename_size] = '\0'; /* no zero padding, add at the end */
-        // if(strlen((int8_t *)fname)>=fs.filename_size){
-        //     if(strncmp((int8_t *)fname, (int8_t *)dentry->filename, fs.filename_size) == 0)
-        //         return read_after_fname(dentry_addr, dentry);
-        // }else
         if (strncmp((int8_t*) fname, (int8_t*) dentry->filename, strlen((int8_t*) fname) + 1) == 0) {
             /* strlen((int8_t*)fname)+1 : both string ends at the same time */
             return read_after_fname(dentry_addr, dentry);
@@ -617,4 +637,105 @@ check_exec(const uint8_t* prog_name){
         return (buf[0]==0x7f)&&(buf[1]==0x45)&&(buf[2]==0x4c)&&(buf[3]==0x46);
     }
 }
+
+
+/* scan filesystem function set */
+
+/**
+ * @brief after we find inode, we check the dblocks, and mark them as used
+ * 
+ * @param inode 
+ * @return ** void 
+ */
+static int32_t
+mark_dblock(uint32_t inode){
+    uint32_t i;
+    uint32_t inode_addr = (uint32_t) fs.sys_st_addr
+        + (inode + 1) * fs.block_size;
+    uint32_t data_block_entry_addr = inode_addr +
+        fs.dblock_entry_offset;
+    if(fs_sanity_check(0,inode_addr)||fs_sanity_check(0,data_block_entry_addr)){
+        printf("toxic inode/dblock_entry address at inode %d\n",inode);
+        return -1;
+    }
+    fs.flength[inode] = read_4B(inode_addr);
+    uint32_t dblock_num = (fs.flength[inode]-1)/fs.block_size+1;
+    uint32_t dblock_ind;
+    if(dblock_num>=D_DBLOCKS){
+        printf("bad file length at inode %d\n",inode);
+        return -1;
+    }
+    for(i=0;i<dblock_num;i++){
+        dblock_ind=read_4B(data_block_entry_addr);
+        if(dblock_ind>=D_DBLOCKS){
+            printf("toxic dblock index at inode %d\n",inode);
+            continue;
+        }
+        fs.dmap[dblock_ind]=1; /* mark datablock */
+        data_block_entry_addr+=fs.dblock_entry_size;
+    }
+}   
+
+/**
+ * @brief after extracting file name, we go to following items in dentry
+ * and find inode 
+ * @param dentry_addr 
+ * @param dentry 
+ * @return ** int32_t 
+ */
+static int32_t
+mark_after_fname(uint32_t dentry_addr,dentry_t* dentry){
+    uint32_t i;
+    dentry_addr += fs.filename_size;
+    if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
+        return -1;
+    dentry->filetype = read_4B(dentry_addr);
+
+    /* bad filetype */
+    if(dentry->filetype>3) return -1;
+
+    dentry_addr += 4;
+    if (fs_sanity_check(0, dentry_addr) || fs_sanity_check(0, dentry_addr + 3))
+        return -1;
+    dentry->inode_num = read_4B(dentry_addr);
+    /* bad inode # */
+    if(dentry->inode_num>=N_INODE) return -1;
+
+    mark_dblock(dentry->inode_num);
+
+    return 0;
+}
+
+/**
+ * @brief mark all inodes and dblocks in the filesystem 
+ * 
+ * @return ** int32_t 
+ */
+static int32_t
+mark_inode_and_dblock(){
+    uint32_t index;
+    for(index=0;index<fs.file_num;index++){
+        dentry_t dentry;
+        uint32_t dentry_addr = fs.sys_st_addr + fs.boot_block_padding + index * fs.dentry_size;
+        if (fs_sanity_check(0, dentry_addr))
+            return -1;
+        uint32_t i, check_EOS = 0;
+        for (i = 0; i < fs.filename_size; i++) {
+            if (fs_sanity_check(0, dentry_addr + i))
+                return -1;
+            dentry.filename[i] = read_1B(dentry_addr + i);
+            if (dentry.filename[i] == '\0'){
+                if(i==0) break; /* no file name */
+                check_EOS = 1;
+            }
+        }
+        if(i==0) continue; /* no file name */
+        if (!check_EOS)
+            dentry.filename[fs.filename_size] = '\0'; /* no zero padding, add at the end */
+        if(0==mark_after_fname(dentry_addr, &dentry)){
+            fs.imap[dentry.inode_num]=1;
+        }
+    }
+}
+
 

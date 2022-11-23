@@ -11,6 +11,10 @@
 #define F_OPEN                    (1<<2)
 #define F_CLOSE                   0
 
+  
+#define N_INODE       64
+#define D_DBLOCKS     59
+
 /* directory entry, 64 Bytes*/
 typedef struct
 dentry {
@@ -78,6 +82,9 @@ filesystem {
     uint32_t boot_block_padding;
     uint32_t dentry_size;
     uint32_t filename_size;
+    uint8_t imap[N_INODE];
+    uint8_t dmap[D_DBLOCKS];
+    uint32_t flength[N_INODE];
 } fs_t;
 
 extern fs_t fs;

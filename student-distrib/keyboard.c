@@ -151,14 +151,10 @@ void
 keyboard_handler(void) {
     int32_t c;
     int32_t i;
-    char* vid=get_vidmem();
-    int sx=get_screen_x(),sy=get_screen_y();
     
     /* if scheduler is running background process, keyboard is still outputting to displayed terminal */
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(_pcb_ptr->terminal!=terminal_index) 
-        set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
 
 
     send_eoi(KEYBOARD_IRQ);
@@ -177,7 +173,7 @@ keyboard_handler(void) {
             
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {
-                    putc(c);
+                    kputc(c);
                     --terminal[terminal_index].input.e;
                 }
                 break;
@@ -186,16 +182,15 @@ keyboard_handler(void) {
                 if (INPUT_SIZE < terminal[terminal_index].input.e 
                 - terminal[terminal_index].input.r + 5) { break; }
                 for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
-                    putc(' ');
+                    kputc(' ');
                     terminal[terminal_index].input.buf[
                         terminal[terminal_index].input.e++ % INPUT_SIZE
                     ] = ' ';
                 }
                 break;
             case C('C'):
-                if(_pcb_ptr->terminal!=terminal_index){
-                    cursor_update(get_screen_x(),get_screen_y());
-                    prog_video_recover(vid,sx,sy);
+                if(_pcb_ptr->terminal==terminal_index){
+                    set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
                 }
                 halt(0);  // Assume normal termination for now.
                 // set_proc_signal(SIG_INTERRUPT);
@@ -206,7 +201,7 @@ keyboard_handler(void) {
                 break;
             default:
                 // Ignore NUL characters. Stop taking input when buffer is full.
-                putc(c);  // Print non-NUL character to the screen.
+                kputc(c);  // Print non-NUL character to the screen.
                 if (INPUT_SIZE == 
                 terminal[terminal_index].input.e 
                 - terminal[terminal_index].input.r + 1 
@@ -222,8 +217,8 @@ keyboard_handler(void) {
                 break;
         }
     }
-    if(_pcb_ptr->terminal!=terminal_index){
-        cursor_update(get_screen_x(),get_screen_y());
-        prog_video_recover(vid,sx,sy);
+
+    if(_pcb_ptr->terminal==terminal_index){
+        set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
     }
 }

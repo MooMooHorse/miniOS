@@ -18,6 +18,7 @@
 #include "tests.h"
 #include "process.h"
 #include "cursor.h"
+#include "lib.h"
 static int32_t _terminal_read(uint8_t* buf, int32_t n);
 static int32_t _terminal_write(const uint8_t* buf, int32_t n);
 static int32_t _open(int32_t,int32_t*);
@@ -60,7 +61,7 @@ terminal_t terminal[MAX_TERMINAL_NUM]={
  * @return ** int32_t 
  */
 int32_t prog_video_update(int32_t index){
-    if(index<0||index>9){
+    if(index<0||index>3){
         return -1;
     }
     if(index==terminal_index){
@@ -100,10 +101,24 @@ int32_t terminal_load(int32_t index){
         return -1;
     }
     char* vid=(char*)VIDEO;
-    /* copy the video memory into terminal buffer */
     /* TO DO : Optimize it so you only have to copy chars you wrote */
+    /* copy the video memory into terminal buffer */
     /* it's NOT looping from old coordinate to new coordinate, that's buggy */
     for(i=0;i<VIDEO_SIZE;i++) terminal[index].video[i]=vid[i]; 
+    return 0;
+}
+
+/**
+ * @brief only update terminal's cursor coordinate after context switch
+ * Current program is switched out, the I/O status is saved in screen_x,screen_y
+ * the I/O info HAS BEEN written to corresponding buffer, so no need to update 
+ * @param index 
+ * @return ** int32_t 
+ */
+int32_t terminal_update(int32_t index){
+    if(index<0||index>9){
+        return -1;
+    }
     terminal[index].screen_x=get_screen_x();
     terminal[index].screen_y=get_screen_y();
     return 0;
@@ -121,15 +136,14 @@ int32_t terminal_switch(int32_t old,int32_t new){
     terminal_load(old);
     terminal_index=new;
     if(!terminal[new].active) terminal[new].open(new,(int32_t*)get_terbuf_addr(new));
-    prog_video_update(new);
+    // prog_video_update(new);
     /* initalize screen if terminal is just created(opened) */
-    if(terminal[new].screen_x==terminal[new].screen_y&&terminal[new].screen_x==0){
-        clear();
-    }else{
-        char* vid=(char*)VIDEO;
-        for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
-        cursor_update(terminal[new].screen_x,terminal[new].screen_y);
-    }
+    
+    char* vid=(char*)VIDEO;
+    for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
+
+    cursor_update(terminal[new].screen_x,terminal[new].screen_y);
+    
     return 0;
 }
 
@@ -143,6 +157,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
  * 0 normal return 
  */
 int32_t _open(int32_t index,int32_t* video){
+    int32_t i;
     if(index<0||index>9||(uint32_t)video<VIDEO+VIDEO_SIZE||(uint32_t)video>VIDEO+10*VIDEO_SIZE){
     #ifdef RUN_TESTS
         printf("invalid terminal number or buffer address\n");
@@ -153,6 +168,10 @@ int32_t _open(int32_t index,int32_t* video){
     terminal[index].screen_x=terminal[index].screen_y=0;
     terminal[index].video=(int8_t*)video;
     uvmmap_tbuf((uint32_t)video); /* set up terminal buffer */
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
+        *(uint8_t *)((uint32_t)video + (i << 1)) = ' ';
+        *(uint8_t *)((uint32_t)video + (i << 1) + 1) = ATTRIB;
+    }
     terminal[index].active=1;
     return 0;
 }

@@ -4,6 +4,10 @@
 #ifndef _LIB_H
 #define _LIB_H
 
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define ATTRIB      0x1E
+
 #include "types.h"
 
 int32_t printf(int8_t *format, ...);
@@ -37,6 +41,8 @@ extern void set_vid(char* vid_mem,int s_x,int s_y);
 extern char* get_vidmem();
 extern int   get_screen_x();
 extern int   get_screen_y();
+
+extern void kputc(uint8_t c);
 
 /* Special-purpose functions. */
 /* Writes to register `cr3`. Used to switch page tables. */

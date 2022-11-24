@@ -851,6 +851,11 @@ int32_t test_rename_file(){
     }
 }
 
+/**
+ * @brief test write file success or not
+ * OUTPUT: PASS/FAIL
+ * @return ** int32_t 
+ */
 int32_t test_write_file(){
     int32_t i=0;
     if(-1==fs.f_rw.create_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){

@@ -31,8 +31,6 @@
 extern void swtchret(void);
 extern void pseudoret(void);
 
-extern void set_cursor(int x, int y);
-extern uint16_t get_cursor(void);
 
 int32_t is_base=1;
 
@@ -440,6 +438,39 @@ int32_t sigreturn (void){
     return -1;  
 }
 
+/**
+ * @brief create a new file
+ * 
+ * @param fname - filename to create
+ * @return ** int32_t - 0 on success
+ * -1 on failure
+ */
+int32_t file_create(const uint8_t* fname){
+    return fs.f_rw.create_file(fname,strlen((int8_t*)fname));
+}
+
+/**
+ * @brief delete a file
+ * 
+ * @param fname - file name to delete 
+ * @return ** int32_t - 0 on success
+ * -1 on failure
+ */
+int32_t file_remove(const uint8_t* fname){
+    return fs.f_rw.remove_file(fname,strlen((int8_t*)fname));
+}
+/**
+ * @brief rename a file from src to dest
+ * 
+ * @param src - original file name
+ * @param dest - changed file name 
+ * @return ** int32_t - 0 on success
+ * -1 on failure
+ */
+int32_t file_rename(const uint8_t* src, const uint8_t* dest){
+    return fs.f_rw.rename_file(src,dest,strlen((int8_t*)dest));
+}
+
 
 
 /**
@@ -464,5 +495,8 @@ install_syscall(){
     syscall_table[SYS_SIGRETURN]=(uint32_t)sigreturn;
     syscall_table[SYS_SET_CURSOR]=(uint32_t)set_cursor;
     syscall_table[SYS_GET_CURSOR]=(uint32_t)get_cursor;
+    syscall_table[SYS_FILE_CREATE]=(uint32_t)file_create;
+    syscall_table[SYS_FILE_REMOVE]=(uint32_t)file_remove;
+    syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
 }
 

@@ -49,7 +49,7 @@ typedef struct
     int32_t (*read_dentry_by_name)(const uint8_t *, dentry_t *);
     int32_t (*read_dentry_by_index)(uint32_t, dentry_t *);
     int32_t (*read_data)(uint32_t, uint32_t, uint8_t *, uint32_t);
-    int32_t (*write_data)(uint32_t, uint32_t, uint8_t *, uint32_t);
+    int32_t (*write_data)(uint32_t, uint32_t,const uint8_t *, uint32_t);
     int32_t (*create_file)(const uint8_t *, int32_t);
     int32_t (*remove_file)(const uint8_t *, int32_t);
     int32_t (*rename_file)(const uint8_t *, const uint8_t *, int32_t);

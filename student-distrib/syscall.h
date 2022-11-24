@@ -13,11 +13,14 @@
 #define SYS_SIGRETURN   10
 #define SYS_SET_CURSOR  11
 #define SYS_GET_CURSOR  12
+#define SYS_FILE_CREATE 13
+#define SYS_FILE_REMOVE 14
+#define SYS_FILE_RENAME 15
 
 #define CMD_MAX_LEN 128
 #define ARG_MAX_NUM 10
 
-#define SYSCALL_NUM 12
+#define SYSCALL_NUM 15
 
 #ifndef ASM
 #include "types.h"

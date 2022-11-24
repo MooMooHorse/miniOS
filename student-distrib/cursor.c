@@ -46,7 +46,7 @@ cursor_close() {
  * @return None.
  * @sideeffect Modifies VGA registers.
  */
-void
+int32_t
 set_cursor(int x, int y) {
     uint16_t pos = y * VGA_WIDTH + x;
 
@@ -55,6 +55,7 @@ set_cursor(int x, int y) {
     outb((uint8_t) (pos & 0xFF), CRTC_DATA);
     outb(CUR_LH, CRTC_ADDR);
     outb((uint8_t) ((pos >> 8) & 0xFF), CRTC_DATA);
+    return 0;
 }
 
 /*!
@@ -63,7 +64,7 @@ set_cursor(int x, int y) {
  * @return Current location of the cursor.
  * @sideeffect None.
  */
-uint16_t
+int32_t
 get_cursor(void) {
     uint16_t pos = 0;
 

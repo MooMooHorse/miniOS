@@ -12,6 +12,7 @@
 #define _CURSOR_H
 
 #include "lib.h"
+#include "types.h"
 
 // Cursor shape configuration.
 #define TOP                 0
@@ -29,7 +30,7 @@
 // Driver interfaces.
 void cursor_init(void);
 void cursor_close(void);
-void set_cursor(int x, int y);
-uint16_t get_cursor(void);
+extern int32_t set_cursor(int x, int y);
+extern int32_t get_cursor(void);
 
 #endif  /* _CURSOR_H */

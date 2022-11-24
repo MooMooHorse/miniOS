@@ -27,7 +27,11 @@ DO_CALL(ece391_getargs,SYS_GETARGS)
 DO_CALL(ece391_vidmap,SYS_VIDMAP)
 DO_CALL(ece391_set_handler,SYS_SET_HANDLER)
 DO_CALL(ece391_sigreturn,SYS_SIGRETURN)
-
+DO_CALL(ece391_set_cursor,SYS_SET_CURSOR)
+DO_CALL(ece391_get_cursor,SYS_GET_CURSOR)
+DO_CALL(ece391_file_create,SYS_FILE_CREATE)
+DO_CALL(ece391_file_remove,SYS_FILE_REMOVE)
+DO_CALL(ece391_file_rename,SYS_FILE_RENAME)
 
 /* Call the main() function, then halt with its return value. */
 

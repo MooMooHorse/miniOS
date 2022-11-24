@@ -32,7 +32,7 @@ static int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry);
 static int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry);
 static int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 static int32_t create_file(const uint8_t* fname,int32_t nbytes);
-static int32_t write_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+static int32_t write_data(uint32_t inode, uint32_t offset,const uint8_t* buf, uint32_t length);
 static int32_t remove_file(const uint8_t* fname,int32_t nbytes);
 static int32_t rename_file(const uint8_t* src,const uint8_t* dest,int32_t nbytes);
 // static int32_t fake_write(void);
@@ -910,7 +910,7 @@ create_file(const uint8_t* fname,int32_t nbytes){
  * @param src - source file name
  * @param dest - destination file name
  * @param nbytes - number of characters in dest file name 
- * @return ** int32_t - number of characters in dest file name
+ * @return ** int32_t - 0 on success
  * -1 on failure 
  */
 static int32_t
@@ -922,7 +922,7 @@ rename_file(const uint8_t* src,const uint8_t* dest,int32_t nbytes){
     if(cp_len>fs.filename_size) cp_len=fs.filename_size;
     strncpy((int8_t*)dentry->filename,(int8_t*)dest,cp_len);
     dentry->filename[cp_len]='\0';
-    return (int32_t)strlen((int8_t*)dentry->filename);
+    return 0;
 }
 
 /**
@@ -992,7 +992,7 @@ remove_file(const uint8_t* fname,int32_t nbytes){
  * <=0 when failed
  */
 static int32_t
-write_to_block(uint32_t* offset, uint32_t dnum, uint8_t* buf, uint32_t length, uint32_t* buf_ptr) {
+write_to_block(uint32_t* offset, uint32_t dnum,const uint8_t* buf, uint32_t length, uint32_t* buf_ptr) {
     /* data block starting addres : starting address + (number of blocks before this dblock)*block_size */
     /* number of blocks before dblock : dblock_index + 1 (bootblock) + number of iblocks (N) */
     if (offset == NULL || buf == NULL || buf_ptr == NULL)
@@ -1028,7 +1028,7 @@ write_to_block(uint32_t* offset, uint32_t dnum, uint8_t* buf, uint32_t length, u
  * <0 read failed
  */
 static int32_t
-write_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length) {
+write_data(uint32_t inode, uint32_t offset,const uint8_t* buf, uint32_t length) {
     uint32_t data_block_num, buf_ptr = 0, ret;
     uint32_t inode_addr;
     uint32_t file_length, data_block_offset, data_block_entry_addr;

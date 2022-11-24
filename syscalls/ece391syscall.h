@@ -21,6 +21,11 @@ extern int32_t ece391_getargs (uint8_t* buf, int32_t nbytes);
 extern int32_t ece391_vidmap (uint8_t** screen_start);
 extern int32_t ece391_set_handler (int32_t signum, void* handler);
 extern int32_t ece391_sigreturn (void);
+extern int32_t ece391_set_cursor(int x, int y);
+extern int32_t ece391_get_cursor(void);
+extern int32_t ece391_file_create(const uint8_t* fname);
+extern int32_t ece391_file_remove(const uint8_t* fname);
+extern int32_t ece391_file_rename(const uint8_t* src, const uint8_t* dest);
 
 enum signums {
 	DIV_ZERO = 0,

@@ -31,8 +31,8 @@
 extern void swtchret(void);
 extern void pseudoret(void);
 
-extern void cursor_update(int x, int y);
-extern uint16_t cursor_get_pos(void);
+extern void set_cursor(int x, int y);
+extern uint16_t get_cursor(void);
 
 int32_t is_base=1;
 
@@ -462,7 +462,7 @@ install_syscall(){
     syscall_table[SYS_VIDMAP]=(uint32_t)vidmap;
     syscall_table[SYS_SET_HANDLER]=(uint32_t)set_handler;
     syscall_table[SYS_SIGRETURN]=(uint32_t)sigreturn;
-    syscall_table[SYS_SET_CURSOR]=(uint32_t)cursor_update;
-    syscall_table[SYS_GET_CURSOR]=(uint32_t)cursor_get_pos;
+    syscall_table[SYS_SET_CURSOR]=(uint32_t)set_cursor;
+    syscall_table[SYS_GET_CURSOR]=(uint32_t)get_cursor;
 }
 

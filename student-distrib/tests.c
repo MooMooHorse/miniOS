@@ -793,10 +793,10 @@ void test_close(file_t* checked_item){
 
 int cursor_test(void) {
     uint16_t pos;
-    pos = cursor_get_pos();
+    pos = get_cursor();
     printf("cursor position: (%u, %u)\n", pos % VGA_WIDTH, pos / VGA_WIDTH);
-    cursor_update(37, 63);
-    pos = cursor_get_pos();
+    set_cursor(37, 63);
+    pos = get_cursor();
     if (37 == pos % VGA_WIDTH && 63 == pos / VGA_WIDTH) {
         return PASS;
     }

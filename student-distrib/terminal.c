@@ -142,7 +142,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
     char* vid=(char*)VIDEO;
     for(i=0;i<VIDEO_SIZE;i++) vid[i]=terminal[new].video[i];
 
-    cursor_update(terminal[new].screen_x,terminal[new].screen_y);
+    set_cursor(terminal[new].screen_x,terminal[new].screen_y);
     
     return 0;
 }

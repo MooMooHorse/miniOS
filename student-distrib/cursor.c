@@ -47,7 +47,7 @@ cursor_close() {
  * @sideeffect Modifies VGA registers.
  */
 void
-cursor_update(int x, int y) {
+set_cursor(int x, int y) {
     uint16_t pos = y * VGA_WIDTH + x;
 
     // Write low/high bits of cursor location.
@@ -64,7 +64,7 @@ cursor_update(int x, int y) {
  * @sideeffect None.
  */
 uint16_t
-cursor_get_pos(void) {
+get_cursor(void) {
     uint16_t pos = 0;
 
     // Get low/high bits of cursor location and recover the value.

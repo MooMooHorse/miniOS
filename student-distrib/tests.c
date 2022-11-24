@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "terminal.h"
+#include "cursor.h"
 
 
 /* Include constants for testing purposes. */
@@ -873,6 +874,19 @@ int32_t test_write_file(){
     return PASS;
 }
 
+int cursor_test(void) {
+    uint16_t pos;
+    pos = get_cursor();
+    printf("cursor position: (%u, %u)\n", pos % VGA_WIDTH, pos / VGA_WIDTH);
+    set_cursor(37, 63);
+    pos = get_cursor();
+    if (37 == pos % VGA_WIDTH && 63 == pos / VGA_WIDTH) {
+        return PASS;
+    }
+    assertion_failure();
+    return FAIL;
+}
+
 
 /**
  * @brief launching test function
@@ -918,6 +932,6 @@ void launch_tests(){
     // TEST_OUTPUT("test_remove_file",test_remove_file());
     // TEST_OUTPUT("test_write_file",test_write_file());
     // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
-
+    /* TEST_OUTPUT("cursor_test", cursor_test()); */
 }
 

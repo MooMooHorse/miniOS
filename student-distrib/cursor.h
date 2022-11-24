@@ -29,7 +29,7 @@
 // Driver interfaces.
 void cursor_init(void);
 void cursor_close(void);
-void cursor_update(int x, int y);
-uint16_t cursor_get_pos(void);
+void set_cursor(int x, int y);
+uint16_t get_cursor(void);
 
 #endif  /* _CURSOR_H */

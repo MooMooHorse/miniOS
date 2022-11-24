@@ -41,7 +41,7 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
     screen_x = screen_y = 0;
-    cursor_update(0, 0);
+    set_cursor(0, 0);
 }
 
 void kclear(){
@@ -51,7 +51,7 @@ void kclear(){
         *(uint8_t *)(VIDEO + (i << 1) + 1) = ATTRIB;
     }
     terminal[terminal_index].screen_x = terminal[terminal_index].screen_y = 0;
-    cursor_update(0, 0);
+    set_cursor(0, 0);
 }
 
 /* Standard printf().
@@ -275,7 +275,7 @@ void putc(uint8_t c) {
         }
     }
     if(pid==0||_pcb_ptr->terminal==terminal_index) /* only when current terminal is displayed terminal */
-        cursor_update(screen_x, screen_y);
+        set_cursor(screen_x, screen_y);
 }
 
 void kputc(uint8_t c){
@@ -304,7 +304,7 @@ void kputc(uint8_t c){
             }
         }
     }
-    cursor_update(terminal[terminal_index].screen_x, terminal[terminal_index].screen_y);
+    set_cursor(terminal[terminal_index].screen_x, terminal[terminal_index].screen_y);
 }
 
 

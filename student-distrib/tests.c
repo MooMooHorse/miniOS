@@ -768,6 +768,13 @@ exception_squash_program_test(){
     return 1 / x;
 }
 
+/**
+ * @brief test if terminal open success
+ * 
+ * @param checked_item - terminal STDIN
+ * SIDE-EFFECT : print 
+ * @return ** void 
+ */
 void test_open(file_t* checked_item){
     if(checked_item->flags&F_OPEN){
         printf("open success\n");
@@ -776,7 +783,13 @@ void test_open(file_t* checked_item){
         printf("open failed\n");
     }
 }
-
+/**
+ * @brief test if terminal close success
+ * 
+ * @param checked_item - termina STDOUT
+ * SIDE-EFFECT : print 
+ * @return ** void 
+ */
 void test_close(file_t* checked_item){
     if(checked_item->flags==F_CLOSE){
         printf("close success\n");
@@ -786,9 +799,74 @@ void test_close(file_t* checked_item){
     }
 }
 
+/**
+ * @brief test if file creation succeed
+ * OUTPUT: PASS/FAIL
+ * @return ** int32_t 
+ * PASS on success
+ * FAIL on failure
+ */
+int32_t test_file_create(){
+    if(-1==fs.f_rw.create_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+        return FAIL;
+    }
+    else{
+        return PASS;
+    }
+}
 
-/* Checkpoint 4 tests */
-/* Checkpoint 5 tests */
+/**
+ * @brief test if file removal succeed
+ * OUTPUT: PASS/FAIL
+ * @return ** int32_t 
+ * PASS : when there is file to remove -> success
+ * when there is none -> fail
+ * FAIL : when there is file to remove -> fail
+ * when there is none -> success
+ */
+int32_t test_remove_file(){
+    if(-1==fs.f_rw.remove_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+        return FAIL;
+    }
+    else{
+        return PASS;
+    }
+}
+
+/**
+ * @brief test if file rename succeed
+ * OUTPUT: PASS/FAIL
+ * @return ** int32_t 
+ * PASS : when there is file to rename -> success
+ * when there is none -> fail
+ * FAIL : when there is file to rename -> fail
+ * when there is none -> success
+ */
+int32_t test_rename_file(){
+    if(-1==fs.f_rw.rename_file((uint8_t*)"testcreate.txt",(uint8_t*)"haha.txt",strlen("haha.txt"))){
+        return FAIL;
+    }
+    else{
+        return PASS;
+    }
+}
+
+int32_t test_write_file(){
+    int32_t i=0;
+    if(-1==fs.f_rw.create_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+        return FAIL;
+    }
+    file_t file;
+    if(-1==fs.openr(&file,(uint8_t*)"testcreate.txt",0)){
+        return FAIL;
+    }
+    for(i=0;i<4000;i++){
+        if(-1==fs.f_rw.write_data(file.inode,i*strlen("hello,world\n"),(uint8_t*)"hello,world\n",strlen("hello,world\n"))){
+            return FAIL;
+        }
+    }
+    return PASS;
+}
 
 
 /**
@@ -830,7 +908,10 @@ void launch_tests(){
     // TEST_OUTPUT("rtc_test_open_read", rtc_test_open_read());
     // TEST_OUTPUT("rtc_test_write", rtc_test_write());
     // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
-    
+    // TEST_OUTPUT("test_create_file",test_file_create());
+    // TEST_OUTPUT("test_rename_file",test_rename_file());
+    // TEST_OUTPUT("test_remove_file",test_remove_file());
+    // TEST_OUTPUT("test_write_file",test_write_file());
     // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
 
 }

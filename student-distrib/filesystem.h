@@ -10,12 +10,11 @@
 #define DESCRIPTOR_ENTRY_TERMINAL 3
 #define F_OPEN                    (1<<2)
 #define F_CLOSE                   0
-
   
 #define N_INODE       64
 #define D_DBLOCKS     59
 
-/* directory entry, 64 Bytes*/
+/* directory entry, 64 Bytes : for read */
 typedef struct
 dentry {
     uint8_t filename[33];
@@ -23,6 +22,21 @@ dentry {
     uint32_t inode_num;
     uint32_t reserved[6];
 } dentry_t;
+
+
+/* dentry for write */
+typedef struct
+wdentry {
+    uint8_t filename[32];
+    uint32_t filetype;
+    uint32_t inode_num;
+    uint32_t reserved[6];
+} wdentry_t;
+typedef struct 
+inode {
+    int32_t filelength;
+    int32_t dblock[1023];
+} inode_t;
 
 /**
  * @brief jump table for file system read_write operation
@@ -32,7 +46,10 @@ filesystem_jump_table {
     int32_t (* read_dentry_by_name)(const uint8_t*, dentry_t*);
     int32_t (* read_dentry_by_index)(uint32_t, dentry_t*);
     int32_t (* read_data)(uint32_t, uint32_t, uint8_t*, uint32_t);
-    int32_t (* write)(void);
+    int32_t (* write_data)(uint32_t, uint32_t, uint8_t* , uint32_t );
+    int32_t (* create_file)(const uint8_t* ,int32_t );
+    int32_t (*remove_file)(const uint8_t* ,int32_t );
+    int32_t (*rename_file)(const uint8_t* ,const uint8_t* ,int32_t );
 } fsjmp_t;
 
 /**

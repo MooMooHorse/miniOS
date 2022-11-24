@@ -892,7 +892,6 @@ create_file(const uint8_t* fname,int32_t nbytes){
 
     new_dentry->filetype=DESCRIPTOR_ENTRY_FILE;
     new_dentry->inode_num=new_inode;
-    // printf("%d\n",new_inode);
     /* "in-disk" field */
     inode_addr->filelength=0; /* file length */
     inode_addr->dblock[0]=new_dblock; /* 1st data block */

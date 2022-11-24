@@ -4,36 +4,38 @@
 #include "x86_desc.h"
 /* flags for file struct table */
 /* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
-#define DESCRIPTOR_ENTRY_RTC      0
-#define DESCRIPTOR_ENTRY_DIR      1
-#define DESCRIPTOR_ENTRY_FILE     2
+#define DESCRIPTOR_ENTRY_RTC 0
+#define DESCRIPTOR_ENTRY_DIR 1
+#define DESCRIPTOR_ENTRY_FILE 2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
-#define F_OPEN                    (1<<2)
-#define F_CLOSE                   0
-  
-#define N_INODE       64
-#define D_DBLOCKS     59
+#define F_OPEN (1 << 2)
+#define F_CLOSE 0
+
+#define N_INODE 64
+#define D_DBLOCKS 59
 
 /* directory entry, 64 Bytes : for read */
 typedef struct
-dentry {
+    dentry
+{
     uint8_t filename[33];
     uint32_t filetype;
     uint32_t inode_num;
     uint32_t reserved[6];
 } dentry_t;
 
-
 /* dentry for write */
 typedef struct
-wdentry {
+    wdentry
+{
     uint8_t filename[32];
     uint32_t filetype;
     uint32_t inode_num;
     uint32_t reserved[6];
 } wdentry_t;
-typedef struct 
-inode {
+typedef struct
+    inode
+{
     int32_t filelength;
     int32_t dblock[1023];
 } inode_t;
@@ -42,14 +44,15 @@ inode {
  * @brief jump table for file system read_write operation
  */
 typedef struct
-filesystem_jump_table {
-    int32_t (* read_dentry_by_name)(const uint8_t*, dentry_t*);
-    int32_t (* read_dentry_by_index)(uint32_t, dentry_t*);
-    int32_t (* read_data)(uint32_t, uint32_t, uint8_t*, uint32_t);
-    int32_t (* write_data)(uint32_t, uint32_t, uint8_t* , uint32_t );
-    int32_t (* create_file)(const uint8_t* ,int32_t );
-    int32_t (*remove_file)(const uint8_t* ,int32_t );
-    int32_t (*rename_file)(const uint8_t* ,const uint8_t* ,int32_t );
+    filesystem_jump_table
+{
+    int32_t (*read_dentry_by_name)(const uint8_t *, dentry_t *);
+    int32_t (*read_dentry_by_index)(uint32_t, dentry_t *);
+    int32_t (*read_data)(uint32_t, uint32_t, uint8_t *, uint32_t);
+    int32_t (*write_data)(uint32_t, uint32_t, uint8_t *, uint32_t);
+    int32_t (*create_file)(const uint8_t *, int32_t);
+    int32_t (*remove_file)(const uint8_t *, int32_t);
+    int32_t (*rename_file)(const uint8_t *, const uint8_t *, int32_t);
 } fsjmp_t;
 
 /**
@@ -70,21 +73,22 @@ filesystem_jump_table {
  * dblock_offset - address of the first data block
  * boot_block_padding - padding for dentry (the address of the first dentry)
  * dentry_size - the size of one dentry
- * filename_size - the size of a filename stored in dentry 
+ * filename_size - the size of a filename stored in dentry
  * (Note we can miss '/0' according to Appendix A, so we need 33 bytes to store the filename)
  */
 typedef struct
-filesystem {
+    filesystem
+{
     fsjmp_t f_rw; /* file system read/write operations*/
-    int32_t (* openr)(file_t*,
-                      const uint8_t*,
-                      int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
-    fops_t f_ioctl; /* file system ioctl */
+    int32_t (*openr)(file_t *,
+                     const uint8_t *,
+                     int32_t); /* Open file/directory as read-only this installs ioctl to file struct table */
+    fops_t f_ioctl;            /* file system ioctl */
     fops_t d_ioctl;
-    int32_t (* open_fs)(uint32_t addr); /* this installs ioctl to file system */
-    int32_t (* close_fs)(void);
-    int32_t (* load_prog)(const uint8_t*, uint32_t, uint32_t);
-    int32_t (* check_exec)(const uint8_t*);
+    int32_t (*open_fs)(uint32_t addr); /* this installs ioctl to file system */
+    int32_t (*close_fs)(void);
+    int32_t (*load_prog)(const uint8_t *, uint32_t, uint32_t);
+    int32_t (*check_exec)(const uint8_t *);
     /* A series of shared variables you might want to make use of */
     uint32_t file_num;
     uint32_t r_times, w_times;
@@ -107,4 +111,3 @@ filesystem {
 extern fs_t fs;
 
 #endif
-

@@ -4,6 +4,7 @@
 #include "rtc.h"
 #include "keyboard.h"
 #include "terminal.h"
+#include "cursor.h"
 
 
 /* Include constants for testing purposes. */
@@ -790,6 +791,19 @@ void test_close(file_t* checked_item){
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
+int cursor_test(void) {
+    uint16_t pos;
+    pos = cursor_get_pos();
+    printf("cursor position: (%u, %u)\n", pos % VGA_WIDTH, pos / VGA_WIDTH);
+    cursor_update(37, 63);
+    pos = cursor_get_pos();
+    if (37 == pos % VGA_WIDTH && 63 == pos / VGA_WIDTH) {
+        return PASS;
+    }
+    assertion_failure();
+    return FAIL;
+}
+
 
 /**
  * @brief launching test function
@@ -832,6 +846,6 @@ void launch_tests(){
     // TEST_OUTPUT("rtc_sanity_check", rtc_sanity_check());
     
     // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
-
+    /* TEST_OUTPUT("cursor_test", cursor_test()); */
 }
 

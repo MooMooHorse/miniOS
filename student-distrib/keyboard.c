@@ -66,10 +66,11 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
  */
 #define A(X) ((X)+ALT_BASE)
 static const uint8_t map_alt[MAP_SIZE] = {
-    [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3),
-    [0x3E]=A(4), [0x3F]=A(5), [0x40]=A(6),
-    [0x41]=A(7), [0x42]=A(8), [0x43]=A(9),
-    [0x44]=A(10)
+    [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3)
+    // ,
+    // [0x3E]=A(4), [0x3F]=A(5), [0x40]=A(6),
+    // [0x41]=A(7), [0x42]=A(8), [0x43]=A(9),
+    // [0x44]=A(10)
 };
 
 // Complete CTRL map.
@@ -160,7 +161,7 @@ keyboard_handler(void) {
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
         if(c > ALT_BASE){ /* switch terminal */
-            if (c - ALT_BASE > 10){
+            if (c - ALT_BASE > MAX_TERMINAL_NUM){
                 #ifdef RUN_TESTS
                 printf("bad ascii\n");
                 #endif

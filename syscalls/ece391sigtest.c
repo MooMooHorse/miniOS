@@ -26,6 +26,13 @@ int main ()
 		ece391_set_handler(ALARM, alarm_sighandler);
 	}
 
+    if(buf[0] == '2') {
+        ece391_fdputs(1, (uint8_t*)"Installing signal handlers\n");
+		ece391_set_handler(SEGFAULT, segfault_sighandler);
+		ece391_set_handler(ALARM, alarm_sighandler);
+        while(1);
+    }
+
     ece391_fdputs (1, (uint8_t*)"Hi, what's your name? ");
     if (-1 == (cnt = ece391_read (0, buf, BUFSIZE-1))) {
         ece391_fdputs (1, (uint8_t*)"Can't read name from keyboard.\n");

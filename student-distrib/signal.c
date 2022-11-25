@@ -245,7 +245,7 @@ set_async_signal(int32_t signum,int32_t pid){
  */
 static void
 sigignore_handler(int32_t signum){
-    printf("Program recieve signal %s\n",signame[signum]);
+    // printf("Program recieve signal %s\n",signame[signum]);
     set_proc_signal(-1); /* remove the signal from this process */
     return;
 }

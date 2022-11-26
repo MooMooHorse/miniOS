@@ -131,7 +131,7 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
     uint32_t pid=get_pid();
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if(pid==0||_pcb_ptr->sig_num==-1||
-    sig_table[_pcb_ptr->sig_num].handler==NULL||*((uint32_t*)(kesp)+9)==0x10){
+    sig_table[_pcb_ptr->sig_num].handler==NULL){
         /* no signal, change back to original stack */
         asm volatile("              \n\
         movl    %%ecx,%%esp         \n\
@@ -156,6 +156,20 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
         :
         :"c"(kesp)
         );
+        while(1);
+    }
+    /* not returning to user level, directly go back and keep the signal */
+    if(*((uint32_t*)(kesp)+9)==0x10){
+        /* no signal, change back to original stack */
+        asm volatile("              \n\
+        movl    %%ecx,%%esp         \n\
+        popal                       \n\
+        iret                        \n\
+        "
+        :
+        :"c"(kesp)
+        );
+        printf("double fault in do_signal\n");
         while(1);
     }
 
@@ -245,7 +259,6 @@ set_async_signal(int32_t signum,int32_t pid){
  */
 static void
 sigignore_handler(int32_t signum){
-    printf("Program recieve signal %s\n",signame[signum]);
     set_proc_signal(-1); /* remove the signal from this process */
     return;
 }

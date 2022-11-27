@@ -144,6 +144,7 @@ kgetc(void) {
     }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)){
         user_c=c;
     }else{
+        /* keyboard enable doesn't have any effect on not-selected characters */
         return c;
     }
     /* for all the selected characters, we singal the currently displaying & running user programs */
@@ -151,9 +152,10 @@ kgetc(void) {
         if(PCB(i)->terminal==terminal_index&&
         (PCB(i)->state==RUNNING||PCB(i)->state==RUNNABLE)){
             PCB(i)->sig_num=SIG_USER1;
+            break;
         }
     }
-
+    if(!PCB(i)->keyboard_enable) c=0;
     return c;
 }
 

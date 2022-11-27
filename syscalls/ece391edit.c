@@ -12,6 +12,14 @@
 uint8_t  BUF[MAX_SIZE];
 uint8_t* vmem_base_addr;
 
+void
+siguser_handler (int signum){
+    uint8_t c[2];
+    c[0]=ece391_getc();
+    c[1]='\0';
+    ece391_fdputs (1, c);
+}
+
 uint8_t*
 set_video_mode (void)
 {
@@ -40,6 +48,9 @@ int main ()
     if(set_video_mode() == NULL) {
         return -1;
     }
+    if(-1==ece391_set_handler(USER1,siguser_handler)){
+        return 3;
+    }
 
 
     while (0 != (cnt = ece391_read (fd, buf, 1024))) {
@@ -50,6 +61,7 @@ int main ()
         if (-1 == ece391_write (1, buf, cnt))
             return 3;
     }
+    while(1);
 
     return 0;
 }

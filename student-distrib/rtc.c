@@ -13,6 +13,7 @@
 #include "lib.h"
 #include "tests.h"
 #include "x86_desc.h"
+#include "signal.h"
 
 static int32_t rtc_open(file_t* file, const uint8_t* buf, int32_t nbytes);
 static int32_t rtc_read(file_t* file, void* buf, int32_t nbytes);
@@ -68,6 +69,9 @@ void
 rtc_handler(void) {
     // Handle RTC interrupt.
     virt_rtc++;
+    if(virt_rtc%10240==0){
+        sendsig_alarm();
+    }
     int i;
     for (i = 0; i < MAX_TERMINAL_NUM; i++) {
         if (rtc[i].freq > 0 && (virt_rtc % (1024 / rtc[i].freq)) == 0) {

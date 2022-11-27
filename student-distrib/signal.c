@@ -2,6 +2,7 @@
 #include "process.h"
 #include "lib.h"
 #include "syscall.h"
+#include "terminal.h"
 
 static void sigkill_handler (int32_t signum);
 static void sigignore_handler(int32_t signum);
@@ -129,7 +130,8 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
     uint32_t ret_addr;
     uint32_t pid=get_pid();
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
-    if(pid==0||_pcb_ptr->sig_num==-1||sig_table[_pcb_ptr->sig_num].handler==NULL){
+    if(pid==0||_pcb_ptr->sig_num==-1||
+    sig_table[_pcb_ptr->sig_num].handler==NULL||*((uint32_t*)(kesp)+9)==0x10){
         /* no signal, change back to original stack */
         asm volatile("              \n\
         movl    %%ecx,%%esp         \n\
@@ -243,7 +245,7 @@ set_async_signal(int32_t signum,int32_t pid){
  */
 static void
 sigignore_handler(int32_t signum){
-    printf("Program recieve signal %s\n",signame[signum]);
+    // printf("Program recieve signal %s\n",signame[signum]);
     set_proc_signal(-1); /* remove the signal from this process */
     return;
 }
@@ -261,5 +263,14 @@ sigkill_handler (int32_t signum){
     set_proc_signal(-1);
     halt(0);
     return ;
+}
+
+void sendsig_alarm(){
+    int32_t i;
+    for(i=1;i<=PCB_MAX;i++){
+        if(PCB(i)->terminal==terminal_index&&(PCB(i)->state==RUNNING||PCB(i)->state==RUNNABLE)){
+            PCB(i)->sig_num=SIG_ALARM;
+        }
+    }
 }
 

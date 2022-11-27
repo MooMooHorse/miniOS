@@ -42,6 +42,7 @@ typedef struct sig_handler{
 extern int32_t install_sighandler(uint32_t signum, void* handler_address);
 extern int32_t set_proc_signal(int32_t signum);
 extern int32_t set_async_signal(int32_t signum,int32_t pid);
+extern void sendsig_alarm();
 #endif /* ASM */
 #endif 
 

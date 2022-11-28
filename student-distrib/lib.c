@@ -603,6 +603,17 @@ int8_t* strncpy(int8_t* dest, const int8_t* src, uint32_t n) {
     return dest;
 }
 
+/*!
+ * @brief This function is used for debugging purposes.
+ * @param s is the error message to be displayed on the terminal.
+ */
+void
+panic(const char* s) {
+    cli();
+    printf("panic: %s\n", s);
+    while (1);
+}
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void

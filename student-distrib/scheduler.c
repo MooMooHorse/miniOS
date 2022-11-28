@@ -25,8 +25,7 @@ scheduler(void) {
     cur->state = RUNNABLE;
 
     if (-1 == terminal_update(cur->terminal)) {
-        printf("scheduler: terminal fatal error\n");
-        while (1);
+        panic("scheduler: terminal fatal error\n");
     }
 
     for (i = 1; i <= PCB_MAX; ++i) {
@@ -39,8 +38,7 @@ scheduler(void) {
     pid = (pid - 1 + i) % PCB_MAX + 1;  // Commit update of `pid`.
 
     if (-1 == prog_video_update((PCB(pid))->terminal)) {
-        printf("scheduler : terminal fatal error\n");
-        while (1);
+        panic("scheduler: terminal fatal error\n");
     }
 
     p->state = RUNNING;

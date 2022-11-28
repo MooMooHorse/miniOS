@@ -365,6 +365,10 @@ int32_t vidmap (uint8_t** screen_start){
  * success : 0
  */
 int32_t set_handler (uint32_t signum, void* handler_address){
+    if(handler_address==NULL){/* restore default handler */
+        set_default_handler(signum);
+        return 0;
+    }
     return install_sighandler(signum,handler_address);
 }
 /**

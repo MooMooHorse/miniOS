@@ -279,6 +279,12 @@ sigkill_handler (int32_t signum){
     return ;
 }
 
+
+/**
+ * @brief send signal alarm every 10 seconds to currently running or runnable
+ * process under current terminal.
+ * @return ** void 
+ */
 void sendsig_alarm(){
     int32_t i;
     for(i=1;i<=PCB_MAX;i++){
@@ -286,5 +292,28 @@ void sendsig_alarm(){
             PCB(i)->sig_num=SIG_ALARM;
         }
     }
+}
+
+
+/**
+ * @brief restore signum handler to default kernel handler
+ * 
+ * @param signum - signal number
+ * @return ** void 
+ */
+void set_default_handler(int32_t signum){
+    switch (signum)
+    {
+    case SIG_ALARM:
+        sig_table[signum].handler=sigignore_handler;
+        break;
+    case SIG_USER1:
+        sig_table[signum].handler=sigignore_handler;
+        break;
+    default:
+        sig_table[signum].handler=sigkill_handler;
+        break;
+    }
+    sig_table[signum].user_space=0;
 }
 

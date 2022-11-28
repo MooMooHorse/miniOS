@@ -66,13 +66,13 @@ set_cursor(int x, int y) {
  */
 int32_t
 get_cursor(void) {
-    uint16_t pos = 0;
+    int32_t pos = 0;
 
     // Get low/high bits of cursor location and recover the value.
     outb(CUR_LL, CRTC_ADDR);
     pos |= inb(CRTC_DATA);
     outb(CUR_LH, CRTC_ADDR);
     pos |= ((uint16_t) inb(CRTC_DATA) << 8);
-
+    
     return pos;
 }

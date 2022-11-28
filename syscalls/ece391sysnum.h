@@ -16,5 +16,6 @@
 #define SYS_FILE_CREATE 13
 #define SYS_FILE_REMOVE 14
 #define SYS_FILE_RENAME 15
+#define SYS_GETC        16
 
 #endif /* ECE391SYSNUM_H */

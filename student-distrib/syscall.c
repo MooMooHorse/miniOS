@@ -27,6 +27,7 @@
 #include "signal.h"
 #include "terminal.h"
 #include "cursor.h"
+#include "keyboard.h"
 
 extern void swtchret(void);
 extern void pseudoret(void);
@@ -364,6 +365,10 @@ int32_t vidmap (uint8_t** screen_start){
  * success : 0
  */
 int32_t set_handler (uint32_t signum, void* handler_address){
+    if(handler_address==NULL){/* restore default handler */
+        set_default_handler(signum);
+        return 0;
+    }
     return install_sighandler(signum,handler_address);
 }
 /**
@@ -471,6 +476,16 @@ int32_t file_rename(const uint8_t* src, const uint8_t* dest){
     return fs.f_rw.rename_file(src,dest,strlen((int8_t*)dest));
 }
 
+/**
+ * @brief get user character
+ * 
+ * @return ** int32_t user character
+ * 0 on not have any 
+ */
+int32_t getc(){
+    return get_c();
+}
+
 
 
 /**
@@ -498,5 +513,6 @@ install_syscall(){
     syscall_table[SYS_FILE_CREATE]=(uint32_t)file_create;
     syscall_table[SYS_FILE_REMOVE]=(uint32_t)file_remove;
     syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
+    syscall_table[SYS_GETC]=(uint32_t)getc;
 }
 

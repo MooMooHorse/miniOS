@@ -43,6 +43,7 @@ extern int32_t install_sighandler(uint32_t signum, void* handler_address);
 extern int32_t set_proc_signal(int32_t signum);
 extern int32_t set_async_signal(int32_t signum,int32_t pid);
 extern void sendsig_alarm();
+extern void set_default_handler(int32_t signum);
 #endif /* ASM */
 #endif 
 

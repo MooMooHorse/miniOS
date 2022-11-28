@@ -67,6 +67,12 @@ void vertical_scroll(int32_t x,int32_t y) { // not considering right now
     }
 }
 
+/**
+ * @brief Caveat : This putc must not have '\b' as input
+ * 
+ * @param c 
+ * @return ** int32_t 
+ */
 int32_t putc(uint8_t c){
     if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
         line_end[y]=x;
@@ -75,16 +81,7 @@ int32_t putc(uint8_t c){
             // vertical_scroll(x,y);
             return -1;
         }
-    } else if ('\b' == c) {
-        if (0 == x && 0 == y) { return 0; }  // Nothing left.
-        if (0 == x) {  // Go back to the previous line.
-            --y;
-            x = line_end[y]+1;
-        }
-        // Clear the previous character.
-        *(uint8_t *)(vmem_base_addr + ((NUM_COLS * y + x - 1) << 1)) = ' ';
-        --x;
-    } else {
+    } else{
         *(uint8_t *)(vmem_base_addr + ((NUM_COLS * y + x) << 1)) = c;
         if (NUM_COLS == ++x) {
             line_end[y]=x-1;
@@ -110,7 +107,14 @@ void clear(void) {
 
 void show_text(){
     int32_t i=BUF_s;
+    int32_t j=BUF_s;
+    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) *(uint8_t *)(vmem_base_addr + (i << 1)) = ' ';
     for(x=0;x<NUM_COLS;x++) for(y=0;y<NUM_ROWS;y++) buf_map[x][y]=-1;
+    for(i=0;i<flength;i++)
+        if(i+1<flength&&BUF[i+1]!='\b'&&BUF[i]!='\b') BUF[j++]=BUF[i];
+    BUF[j++]=BUF[flength-1];
+    i=0;
+    flength=j;
     x=0,y=0;
     buf_map[x][y]=i;
     while(i<flength &&-1!=putc(BUF[i++])){
@@ -126,14 +130,14 @@ void BUF_shift_right(){
     }
     flength++;
 }
-
-void BUF_shift_left(){
-    int32_t i=buf_map[x][y],j;
-    for(j=i-1;j<flength;j++){
-        BUF[j]=BUF[j+1];
-    }
-    flength--;
-}
+// abandon for current version
+// void BUF_shift_left(){
+//     int32_t i=buf_map[x][y],j;
+//     for(j=i-1;j<flength-1;j++){
+//         BUF[j]=BUF[j+1];
+//     }
+//     flength--;
+// }
 
 void
 siguser_handler (int signum){
@@ -144,16 +148,16 @@ siguser_handler (int signum){
         switch (c[0])
         {
         case UP_ARROW:
-            if(cy) cy--;
+            if(cy&&buf_map[cx][cy-1]!=-1) cy--;
             break;
         case DOWN_ARROW:
-            if(cy<NUM_ROWS-1) cy++;
+            if(cy<NUM_ROWS-1&&buf_map[cx][cy+1]!=-1) cy++;
             break;  
         case LEFT_ARROW:
-            if(cx) cx--;
+            if(cx&&buf_map[cx-1][cy]!=-1) cx--;
             break;
         case RIGHT_ARROW:
-            if(cx<NUM_COLS-1) cx++;
+            if(cx<NUM_COLS-1&&buf_map[cx+1][cy]!=-1) cx++;
             break;
         default:
             break;
@@ -161,14 +165,9 @@ siguser_handler (int signum){
         ece391_set_cursor(cx,cy);
     }else{
         x=cx,y=cy;
-        if(c[0]=='\b'){
-            if(x) BUF_shift_left();
-        }
-        else{
-            BUF_shift_right();
-            BUF[buf_map[x][y]]=c[0];
-        }
-        // putc(c[0]);
+        
+        BUF_shift_right();
+        BUF[buf_map[x][y]]=c[0];
     }
     // ece391_fdputs (1, c);
 

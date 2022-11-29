@@ -195,14 +195,14 @@ keyboard_handler(void) {
             }
             return;
         }
-        if(IS_DIR(c)){ /* nothing shows on screen, so no need to reset screen_x,screen_y */
-            if (INPUT_SIZE < terminal[terminal_index].input.e 
-            - terminal[terminal_index].input.r + 1) { return ; }
-            terminal[terminal_index].input.buf[
-                terminal[terminal_index].input.e++ % INPUT_SIZE
-            ] = c;
-            return ;
-        }
+        // if(IS_DIR(c)){ /* nothing shows on screen, so no need to reset screen_x,screen_y */
+        //     if (INPUT_SIZE < terminal[terminal_index].input.e 
+        //     - terminal[terminal_index].input.r + 1) { return ; }
+        //     terminal[terminal_index].input.buf[
+        //         terminal[terminal_index].input.e++ % INPUT_SIZE
+        //     ] = c;
+        //     return ;
+        // }
         switch (c) {
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {

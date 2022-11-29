@@ -264,7 +264,8 @@ _terminal_read(uint8_t* buf, int32_t n) {
 
     if (NULL == buf || 0 > n) { return -1; }  // Invalid input parameter!
 
-    while (0 < n && '\n' != c && '\t'!=c && !IS_DIR(c)) {  // Stop when '\n' reached or `n` characters read.
+    while (0 < n && '\n' != c) {
+    //  && '\t'!=c && !IS_DIR(c)) {  // Stop when '\n' reached or `n` characters read.
         while (terminal[prog_terminal].input.w == terminal[prog_terminal].input.r);  // Waiting for new user input in input buffer.
         c = terminal[prog_terminal].input.buf[
             terminal[prog_terminal].input.r++ % INPUT_SIZE

@@ -70,6 +70,10 @@ inline uint32_t INODE_ADDR(uint32_t inode){
 inline uint32_t DENTRY_ADDR(uint32_t index){
     return fs.sys_st_addr + fs.boot_block_padding + index * fs.dentry_size;
 }
+
+inline void WRITE_FNUM(uint32_t num){
+    *((uint32_t*)fs.sys_st_addr)=num;
+}
 /**
  * @brief read 4 Bytes from memory
  * @param addr memory address
@@ -158,6 +162,7 @@ open_fs(uint32_t addr) {
     fs.boot_block_padding = 64;
     fs.dentry_size = 64;
     fs.filename_size = 32;
+
 
     /* start initializing iblock, datablock map */
     for(i=0;i<N_INODE;i++) fs.imap[i]=0;
@@ -330,7 +335,7 @@ file_write(file_t* file, const void* buf, int32_t nbytes) {
     if (ret == -1)
         return -1;
     file->pos += ret; /* update file offset */
-    // dump_fs();
+    dump_fs();
     return ret;
 }
 /**
@@ -886,6 +891,9 @@ create_file(const uint8_t* fname,int32_t nbytes){
         return -1;
     }
     wdentry_t* new_dentry=(wdentry_t*)DENTRY_ADDR(fs.file_num++);
+    WRITE_FNUM(fs.file_num);
+    
+
     uint32_t  cp_len=nbytes;
     if(cp_len>fs.filename_size) cp_len=fs.filename_size;
     /* fill dentry */
@@ -901,7 +909,7 @@ create_file(const uint8_t* fname,int32_t nbytes){
     fs.imap[new_inode]=1;
     fs.dmap[new_dblock]=1;
     fs.flength[new_inode]=0;
-    // dump_fs();
+    dump_fs();
     return 0;
 }
 
@@ -924,7 +932,7 @@ rename_file(const uint8_t* src,const uint8_t* dest,int32_t nbytes){
     if(cp_len>fs.filename_size) cp_len=fs.filename_size;
     strncpy((int8_t*)dentry->filename,(int8_t*)dest,cp_len);
     dentry->filename[cp_len]='\0';
-    // dump_fs();
+    dump_fs();
     return 0;
 }
 
@@ -974,13 +982,14 @@ remove_file(const uint8_t* fname,int32_t nbytes){
     if(-1==remove_inode(dentry->inode_num)) return -1;
     dentry->inode_num=0;
     fs.file_num--;
+    WRITE_FNUM(fs.file_num);
     /* swap the end dentry in bootblock to deleted dentry */
     wdentry_t* swap_dentry=(wdentry_t*)DENTRY_ADDR(fs.file_num);
     wdentry_t  temp_dentry;
     temp_dentry=*dentry;
     *dentry=*swap_dentry;
     *swap_dentry=temp_dentry;
-    // dump_fs();
+    dump_fs();
     return 0;
 
 }

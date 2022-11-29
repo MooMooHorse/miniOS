@@ -14,6 +14,7 @@
 
 #define CMD_IDENTIFY    0xEC
 #define MASTER_IN       0xE0
+#define SLAVE_IN        0xF0
 #define CACHE_FLUSH     0xE7
 
 #define CMD_READ_SECTOR  0x20
@@ -77,11 +78,11 @@ detect_devtype (int32_t slavebit){
 // }
 
 /* This, from OSdev, works */
-void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_count)
-{
+void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_count,uint32_t slave_bit){
     int32_t i,j;
 	ATA_wait_BSY();
-	outb(MASTER_IN | ((LBA >>24) & 0xF),DRIVE_SELECT);
+	if(slave_bit) outb(SLAVE_IN | ((LBA >>24) & 0xF),DRIVE_SELECT);
+	else outb(MASTER_IN | ((LBA >>24) & 0xF),DRIVE_SELECT);
 	outb(sector_count,SECTOR_COUNT);
 	outb((uint8_t) LBA,LBAlo);
 	outb((uint8_t)(LBA >> 8),LBAmid);
@@ -99,11 +100,11 @@ void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_
 	}
 }
 
-void write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t target_address)
-{
+void write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t target_address,uint32_t slave_bit){
 	int32_t i,j;
 	ATA_wait_BSY();
-	outb(MASTER_IN | ((LBA >>24) & 0xF),0x1F6);
+	if(slave_bit) outb(SLAVE_IN | ((LBA >>24) & 0xF),0x1F6);
+	else outb(MASTER_IN | ((LBA >>24) & 0xF),0x1F6);
 	outb(sector_count,SECTOR_COUNT);
 	outb((uint8_t) LBA,LBAlo );
 	outb((uint8_t)(LBA >> 8),LBAmid);
@@ -127,39 +128,40 @@ void write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t target_a
 * Really concise tutorial that helps you set up ATA in 10 minutes ( although it takes me 10 hours )
 */
 void test_read_write(){
-    int32_t i;
-    uint16_t buf[2048];
-    printf("reading...\r\n");
+    // int32_t i;
+    // uint16_t buf[2048];
+    // printf("reading...\r\n");
 	/* calculation based on wiki https://en.wikipedia.org/wiki/Logical_block_addressing */
-    printf("st: C=%d H=%d S-1=%d offset=%d LBA=%x ed: C=%d H=%d S-1=%d offset=%d LBA=%x\n",
-	fs.sys_st_addr/SECTOR_SIZE/SPT/HPC,fs.sys_st_addr/SECTOR_SIZE/SPT%HPC,fs.sys_st_addr/SECTOR_SIZE%SPT,fs.sys_st_addr%SECTOR_SIZE,
-	((fs.sys_st_addr/SECTOR_SIZE/SPT/HPC)*HPC+fs.sys_st_addr/SECTOR_SIZE/SPT%HPC)*SPT+fs.sys_st_addr/SECTOR_SIZE%SPT,
-	fs.sys_ed_addr/SECTOR_SIZE/SPT/HPC,fs.sys_ed_addr/SECTOR_SIZE/SPT%HPC,fs.sys_ed_addr/SECTOR_SIZE%SPT,fs.sys_ed_addr%SECTOR_SIZE,
-	((fs.sys_ed_addr/SECTOR_SIZE/SPT/HPC)*HPC+fs.sys_ed_addr/SECTOR_SIZE/SPT%HPC)*SPT+fs.sys_ed_addr/SECTOR_SIZE%SPT
-	);
-	/* ONLY ADAPT TO OUR FILESYSTEM : !STATIC! */
-	printf("size = %d\n",fs.sys_ed_addr-fs.sys_st_addr);
+    // printf("st: C=%d H=%d S-1=%d offset=%d LBA=%x ed: C=%d H=%d S-1=%d offset=%d LBA=%x\n",
+	// fs.sys_st_addr/SECTOR_SIZE/SPT/HPC,fs.sys_st_addr/SECTOR_SIZE/SPT%HPC,fs.sys_st_addr/SECTOR_SIZE%SPT,fs.sys_st_addr%SECTOR_SIZE,
+	// ((fs.sys_st_addr/SECTOR_SIZE/SPT/HPC)*HPC+fs.sys_st_addr/SECTOR_SIZE/SPT%HPC)*SPT+fs.sys_st_addr/SECTOR_SIZE%SPT,
+	// fs.sys_ed_addr/SECTOR_SIZE/SPT/HPC,fs.sys_ed_addr/SECTOR_SIZE/SPT%HPC,fs.sys_ed_addr/SECTOR_SIZE%SPT,fs.sys_ed_addr%SECTOR_SIZE,
+	// ((fs.sys_ed_addr/SECTOR_SIZE/SPT/HPC)*HPC+fs.sys_ed_addr/SECTOR_SIZE/SPT%HPC)*SPT+fs.sys_ed_addr/SECTOR_SIZE%SPT
+	// );
+	// /* ONLY ADAPT TO OUR FILESYSTEM : !STATIC! */
+	// printf("size = %d\n",fs.sys_ed_addr-fs.sys_st_addr);
 
 	/* file system start at LBA = 0x2138 end at LBA = 0x2577 size = 557,056 B */
-    read_sectors_ATA_PIO((uint32_t)buf, FS_LBA_BASE, 1);
+    // read_sectors_ATA_PIO((uint32_t)buf, 0, 1,1);
     
-    for(i=0;i<256;i++){
-		if(i==2) break;
-        printf("%x ", buf[i] & 0xFF);
-        printf("%x ", (buf[i] >> 8) & 0xFF);
-    }
-	printf("\n");
-	uint8_t* fs_pt=(uint8_t*)fs.sys_st_addr;
-	printf("%u %u %u %u\n",*fs_pt,*(fs_pt+1),*(fs_pt+2),*(fs_pt+3));
+    // for(i=0;i<256;i++){
+    //     printf("%x ", buf[i] & 0xFF);
+    //     printf("%x ", (buf[i] >> 8) & 0xFF);
+    // }
+	// printf("\n");
+	// uint8_t* fs_pt=(uint8_t*)fs.sys_st_addr;
+	// printf("%u %u %u %u\n",*fs_pt,*(fs_pt+1),*(fs_pt+2),*(fs_pt+3));
 
-	// for(i=0;i<256;i++){
-	// 	buf[i]=0xf;
+	// for(i=0;i<256*3;i++){
+	// 	buf[i]=0;
 	// }
 
-	// write_sectors_ATA_PIO(0x0+512,1,buf);
+	// write_sectors_ATA_PIO(0x0+512,3,buf,1);
+	
+	// read_sectors_ATA_PIO((uint32_t)buf, 512, 3,1);
 
 	// printf("check write\n");
-	// for(i=0;i<256;i++){
+	// for(i=512;i<256*3;i++){
     //     printf("%x ", buf[i] & 0xFF);
     //     printf("%x ", (buf[i] >> 8) & 0xFF);
     // }
@@ -167,31 +169,43 @@ void test_read_write(){
     while(1);
 }
 
-void read_fs(){
+/**
+ * @brief read file system from MASTER/SLAVE hard drive depending on the condition
+ * 
+ * @param slave_bit 0 : read from master drive - 1 : read from slave drive
+ * @return ** void 
+ */
+void read_fs(int32_t slave_bit,uint32_t st,uint32_t ed){
 	uint32_t lba;
-	int32_t i,j;
-	uint8_t  buf[1024];
+	int32_t i,j,size=0;
+	uint16_t  buf[512];
 	for(lba=FS_LBA_BASE;lba<FS_LBA_MAX;lba++){
-		read_sectors_ATA_PIO(buf,lba,1);
+		read_sectors_ATA_PIO((uint32_t)buf,lba,1,slave_bit);
 		j=0;
-		if(lba==FS_LBA_BASE&&buf[0]==0){
-			return ;
-		}
-		for(i=((uint32_t)fs.sys_st_addr)+(lba-FS_LBA_BASE)*SECTOR_SIZE;
-		i<((uint32_t)fs.sys_st_addr)+(lba-FS_LBA_BASE+1)*SECTOR_SIZE;i++){
-			*((uint8_t*)i)=buf[j++];
+		for(i=((uint32_t)st)+(lba-FS_LBA_BASE)*SECTOR_SIZE;
+		i<((uint32_t)st)+(lba-FS_LBA_BASE+1)*SECTOR_SIZE;i+=2){
+			// if(*((uint16_t*)i)!=buf[j]){
+			// 	printf("%d\n",i);
+			// 	while(1);
+			// }
+			*((uint16_t*)i)=buf[j++];
+			size++;
 		}
 	}
+	printf("read file system with size = %d\n",size*2);
 }
 
 /**
- * @brief dump the file system into hard drive
+ * @brief dump the file system into SLAVE hard drive
  * @return ** void 
  */
 void dump_fs(){
 	uint32_t lba;
+	uint32_t num=0;
 	for(lba=FS_LBA_BASE;lba<FS_LBA_MAX;lba++){
-		write_sectors_ATA_PIO(lba,1,((uint32_t)fs.sys_st_addr)+(lba-FS_LBA_BASE)*SECTOR_SIZE);
+		write_sectors_ATA_PIO(lba,1,((uint32_t)fs.sys_st_addr)+(lba-FS_LBA_BASE)*SECTOR_SIZE,1);
+		num++;
 	}
+	printf("%d sectors written into disks\n",num);
 }
 

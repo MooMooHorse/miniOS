@@ -28,6 +28,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     multiboot_info_t *mbi;
     int32_t i;
+    uint32_t fs_st,fs_ed;
 
     /* Clear the screen. */
     clear();
@@ -55,7 +56,6 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Is the command line passed? */
     if (CHECK_FLAG(mbi->flags, 2))
         printf("cmdline = %s\n", (char *)mbi->cmdline);
-
     /* Module 0 : File System Image */
     if (CHECK_FLAG(mbi->flags, 3)) {
         int mod_count = 0;
@@ -64,6 +64,9 @@ void entry(unsigned long magic, unsigned long addr) {
         while (mod_count < mbi->mods_count) {
             /* start of file system address for Module 0 */
             if(mod_count==FILESYS_MOD){ /* open file system given module address */
+                fs_st=mod->mod_start;
+                fs_ed=mod->mod_end;
+                read_fs(1,fs_st,fs_ed);
                 fs.open_fs((uint32_t)mod);
             }
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start); 
@@ -111,6 +114,7 @@ void entry(unsigned long magic, unsigned long addr) {
 
     if(CHECK_FLAG(mbi->flags,7)){
         drive_t* drive_info=(drive_t*)mbi->drives_addr;
+        // printf("drive number %d\n",drive_info->drive_number);
         printf("drive : head = %d cylinders = %d sectors = %d\n",
         drive_info->drive_heads,drive_info->drive_cylinders,drive_info->drive_sectors);
     }
@@ -169,11 +173,18 @@ void entry(unsigned long magic, unsigned long addr) {
     keyboard_init();
     cursor_init();
 
-    if(detect_devtype(0)) printf("ATA detected\n");
+    if(detect_devtype(0)) printf("ATA master detected\n");
+    if(detect_devtype(1)) printf("ATA slave  detected\n");
 
+
+    // read_fs(1);
     // test_read_write();
     // dump_fs();
-    // read_fs();
+    // read_fs(1,fs_st,fs_ed);
+    // while(1);
+    // test_read_write();
+    // while(1);
+    // fs.open_fs((uint32_t)fs_mod);
     
 
     terminal_index=1; /* default : terminal 1 */

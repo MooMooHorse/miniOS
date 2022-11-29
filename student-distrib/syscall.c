@@ -26,6 +26,7 @@
 #include "tests.h"
 #include "signal.h"
 #include "terminal.h"
+#include "sb16.h"
 #include "cursor.h"
 
 extern void swtchret(void);
@@ -471,6 +472,11 @@ int32_t file_rename(const uint8_t* src, const uint8_t* dest){
     return fs.f_rw.rename_file(src,dest,strlen((int8_t*)dest));
 }
 
+int32_t ioctl(int32_t fd,int32_t command, int32_t args) {
+    if(IS_SB16(command)){
+        sb16_command(command,args);
+    }
+}
 
 
 /**
@@ -498,5 +504,7 @@ install_syscall(){
     syscall_table[SYS_FILE_CREATE]=(uint32_t)file_create;
     syscall_table[SYS_FILE_REMOVE]=(uint32_t)file_remove;
     syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
+    
+    syscall_table[SYS_IOCTL]=(uint32_t)ioctl;
 }
 

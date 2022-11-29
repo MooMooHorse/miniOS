@@ -25,3 +25,8 @@
 #define SB16_MASTER_VOLUME      0x22
 
 #define SB16_READY              0xAA        // status code for DSP ready
+
+#define IS_SB16(X)              (X==SB16_16_BIT_PAUSE||X==SB16_16_BIT_RESUME||X==SB16_MASTER_VOLUME)
+
+#endif
+

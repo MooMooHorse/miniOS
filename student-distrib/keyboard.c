@@ -35,7 +35,7 @@
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
 #define TOUPPER(x)  ((x) + 'A' - 'a')
-#define ISALT(x)    (x>ALT_BASE)
+#define ISALT(x)    (x>ALT_BASE&&x!=A(1)&&x!=A(2)&&x!=A(3))
 
 // Global circular buffer with R/W/E indices.
 // input_t input;

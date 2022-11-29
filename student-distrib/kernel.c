@@ -17,7 +17,7 @@
 #include "terminal.h"
 #include "process.h"
 #include "signal.h"
-
+#include "ata.h"
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
@@ -109,6 +109,12 @@ void entry(unsigned long magic, unsigned long addr) {
                     (unsigned)mmap->length_low);
     }
 
+    if(CHECK_FLAG(mbi->flags,7)){
+        drive_t* drive_info=(drive_t*)mbi->drives_addr;
+        printf("drive : head = %d cylinders = %d sectors = %d\n",
+        drive_info->drive_heads,drive_info->drive_cylinders,drive_info->drive_sectors);
+    }
+
     /* Construct an LDT entry in the GDT */
     {
         seg_desc_t the_ldt_desc;
@@ -162,6 +168,13 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+
+    if(detect_devtype(0)) printf("ATA detected\n");
+
+    // test_read_write();
+    // dump_fs();
+    // read_fs();
+    
 
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */

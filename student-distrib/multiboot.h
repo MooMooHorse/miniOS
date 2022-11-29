@@ -46,7 +46,35 @@ typedef struct multiboot_info {
     elf_section_header_table_t elf_sec;
     uint32_t mmap_length;
     uint32_t mmap_addr;
+    uint32_t drives_length;
+    uint32_t drives_addr;
 } multiboot_info_t;
+
+/** multi-boot flag 7
+ *         +-------------------+
+ * 0       | size              |
+ *         +-------------------+
+ * 4       | drive_number      |
+ *         +-------------------+
+ * 5       | drive_mode        |
+ *         +-------------------+
+ * 6       | drive_cylinders   |
+ * 8       | drive_heads       |
+ * 9       | drive_sectors     |
+ *         +-------------------+
+ * 10 - xx | drive_ports       |
+ *         +-------------------+
+ * 
+ */
+
+typedef struct drive{
+    uint32_t size;
+    uint8_t drive_number;
+    uint8_t drive_mode;
+    uint16_t drive_cylinders;
+    uint8_t drive_heads;
+    uint8_t drive_sectors;
+} drive_t;
 
 typedef struct module {
     uint32_t mod_start;

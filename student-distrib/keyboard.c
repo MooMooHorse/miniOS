@@ -14,8 +14,13 @@
  * @author haor2
  * @date 2022-11-18
  * @brief support multiple terminals
- * @copyright Copyright (c) 2022
  * 
+ * @version 3.0
+ * @author haor2
+ * @date 2022-11-28
+ * @brief support signal, and user level program input handling
+ * 
+ * @copyright Copyright (c) 2022
  */
 #include "keyboard.h"
 #include "terminal.h"
@@ -30,6 +35,7 @@
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
 #define TOUPPER(x)  ((x) + 'A' - 'a')
+#define ISALT(x)    (x>ALT_BASE)
 
 // Global circular buffer with R/W/E indices.
 // input_t input;
@@ -141,7 +147,7 @@ kgetc(void) {
 
     if(code==DOUBLE_WORD||IS_DIR(code)){
         user_c=code;
-    }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)){
+    }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)||ISALT(c)){
         user_c=c;
     }else{
         /* keyboard enable doesn't have any effect on not-selected characters */
@@ -189,8 +195,15 @@ keyboard_handler(void) {
             }
             return;
         }
+        if(IS_DIR(c)){ /* nothing shows on screen, so no need to reset screen_x,screen_y */
+            if (INPUT_SIZE < terminal[terminal_index].input.e 
+            - terminal[terminal_index].input.r + 1) { return ; }
+            terminal[terminal_index].input.buf[
+                terminal[terminal_index].input.e++ % INPUT_SIZE
+            ] = c;
+            return ;
+        }
         switch (c) {
-            
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {
                     kputc(c);
@@ -198,15 +211,23 @@ keyboard_handler(void) {
                 }
                 break;
             case '\t':
+                /* current version leaves handling tab to user level programs */
                 // Enough space to place a tab (4 spaces + 1 linefeed)?
+                // if (INPUT_SIZE < terminal[terminal_index].input.e 
+                // - terminal[terminal_index].input.r + 5) { break; }
+                // for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
+                //     kputc(' ');
+                //     terminal[terminal_index].input.buf[
+                //         terminal[terminal_index].input.e++ % INPUT_SIZE
+                //     ] = ' ';
+                // }
+                // enough space for a '\t'  ?
                 if (INPUT_SIZE < terminal[terminal_index].input.e 
-                - terminal[terminal_index].input.r + 5) { break; }
-                for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
-                    kputc(' ');
-                    terminal[terminal_index].input.buf[
-                        terminal[terminal_index].input.e++ % INPUT_SIZE
-                    ] = ' ';
-                }
+                - terminal[terminal_index].input.r + 1) { break; }
+                terminal[terminal_index].input.buf[
+                    terminal[terminal_index].input.e++ % INPUT_SIZE
+                ] = c;
+                /* no printing in screen at current version */
                 break;
             case C('C'):
                 for(i=1;i<=PCB_MAX;i++){

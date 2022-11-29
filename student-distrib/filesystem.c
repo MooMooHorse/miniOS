@@ -19,6 +19,7 @@
 #include "multiboot.h"
 #include "lib.h"
 #include "tests.h"
+#include "ata.h"
 static int32_t open_fs(uint32_t addr);
 static int32_t close_fs();
 
@@ -329,6 +330,7 @@ file_write(file_t* file, const void* buf, int32_t nbytes) {
     if (ret == -1)
         return -1;
     file->pos += ret; /* update file offset */
+    // dump_fs();
     return ret;
 }
 /**
@@ -899,7 +901,7 @@ create_file(const uint8_t* fname,int32_t nbytes){
     fs.imap[new_inode]=1;
     fs.dmap[new_dblock]=1;
     fs.flength[new_inode]=0;
-    
+    // dump_fs();
     return 0;
 }
 
@@ -922,6 +924,7 @@ rename_file(const uint8_t* src,const uint8_t* dest,int32_t nbytes){
     if(cp_len>fs.filename_size) cp_len=fs.filename_size;
     strncpy((int8_t*)dentry->filename,(int8_t*)dest,cp_len);
     dentry->filename[cp_len]='\0';
+    // dump_fs();
     return 0;
 }
 
@@ -977,6 +980,7 @@ remove_file(const uint8_t* fname,int32_t nbytes){
     temp_dentry=*dentry;
     *dentry=*swap_dentry;
     *swap_dentry=temp_dentry;
+    // dump_fs();
     return 0;
 
 }

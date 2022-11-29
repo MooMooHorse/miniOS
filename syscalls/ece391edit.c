@@ -1,3 +1,13 @@
+/**
+ * @file ece391edit.c
+ * @author haor2
+ * @brief Editor that supports input output and arrow keys
+ * @version 0.1
+ * @date 2022-11-28
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <stdint.h>
 
 #include "ece391support.h"

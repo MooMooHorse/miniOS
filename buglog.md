@@ -1,34 +1,35 @@
 # Bug Log for ECE 391 MP3
 
-## CP 1 Bug Log
-
-| Stat               | Bug No. |
-| ------------------ | ------- |
-| :white_check_mark: | `000`   |
-| :white_check_mark: | `001`   |
-| :white_check_mark: | `002`   |
-| :white_check_mark: | `003`   |
-| :white_check_mark: | `004`   |
-| :white_check_mark: | `005`   |
-| :white_check_mark: | `006`   |
-| :white_check_mark: | `007`   |
-| :white_check_mark: | `008`   |
-| :white_check_mark: | `009`   |
-| :white_check_mark: | `010`   |
-| :white_check_mark: | `011`   |
-| :white_check_mark: | `012`   |
-| :white_check_mark: | `013`   |
-| :white_check_mark: | `014`   |
-| :white_check_mark: | `015`   |
-| :white_check_mark: | `014`   |
-| :white_check_mark: | `015`   |
-| :white_check_mark: | `016`   |
-| :white_check_mark: | `017`   |
-| :white_check_mark: | `018`   |
-| :white_check_mark: | `019`   |
-| :white_check_mark: | `020`   |
-| :white_check_mark: | `021`   |
-| :white_check_mark: | `022`   |
+| Stat                                                | Bug No.                      |
+| --------------------------------------------------- | ---------------------------- |
+| :white_check_mark:                                  | `000`                        |
+| :white_check_mark:                                  | `001`                        |
+| :white_check_mark:                                  | `002`                        |
+| :white_check_mark:                                  | `003`                        |
+| :white_check_mark:                                  | `004`                        |
+| :white_check_mark:                                  | `005`                        |
+| :white_check_mark:                                  | `006`                        |
+| :white_check_mark:                                  | `007`                        |
+| :white_check_mark:                                  | `008`                        |
+| :white_check_mark:                                  | `009`                        |
+| :white_check_mark:                                  | `010`                        |
+| :white_check_mark:                                  | `011`                        |
+| :white_check_mark:                                  | `012`                        |
+| :white_check_mark:                                  | `013`                        |
+| :white_check_mark:                                  | `014`                        |
+| :white_check_mark:                                  | `015`                        |
+| :white_check_mark:                                  | `014`                        |
+| :white_check_mark:                                  | `015`                        |
+| :white_check_mark:                                  | `016`                        |
+| :white_check_mark:                                  | `017`                        |
+| :white_check_mark:                                  | `018`                        |
+| :white_check_mark:                                  | `019`                        |
+| :white_check_mark:                                  | `020`                        |
+| :white_check_mark:                                  | `021`                        |
+| :white_check_mark:                                  | `022`                        |
+| This table is too much work to maintain after cp5   | abandon this table after cp5 |
+| Afterwards, bugs are sorted w.r.t. their categories | No table is needed           |
+|                                                     |                              |
 
 ### Bug `#000`
 **Description**  
@@ -297,3 +298,161 @@ system call (open/write/read/close). Boundary problem
 **Resolution**  
 
 * Add sanity check
+
+### TS#1
+
+#### Description
+
+* cursor coordinate becomes abnormal when doing context switch quickly
+
+#### Solution
+
+* Terminal switch only change displayed video memory and terminal cursor coordinate
+* Context switch change global properties and load them into terminal properties
+
+### TS#2
+
+#### Description
+
+* cursor coordinate becomes laggy and fixed at certain place when doing context switch 
+
+#### Solution
+
+* Terminal switch still changes the cursor coordinate globally
+
+### TS#3
+
+#### Description
+
+* terminal switch boom when pressing Fn+# with #>3
+
+#### Solution
+
+* ban the illegal keypress
+
+### TS#4
+
+#### Description
+
+* old buffer overflow problem
+
+#### Solution
+
+* original buffer length type is `uint8_t`, changing it larger will do the work
+
+
+
+### TS#5
+
+#### Description
+
+* Spamming terminal while running pingpong has 1/10 chance twisting the output flow to wrong shell
+
+#### Solution
+
+* Program output too fast, after terminal switching, PIT interrupt hasn't occurred, program output first
+* If current program is running, and you do a terminal switch, re-direct the output flow, while not changing the screen_x, screen_y
+
+### SC#1
+
+#### Description
+
+* Page Fault when switching between base shells
+
+#### Solution
+
+* base shell is first switched to then switch to other process.
+* we assume that each process that is switched to has been switched to by other process
+* so we need to fake it as if there is interrupt linkage wrapper for base shell so we can have good stack to do iret
+
+### SC#2
+
+#### Description
+
+* Page Fault when switching between 4-rd program
+
+#### Solution
+
+* bad TSS value
+* TSS value should always be the bottom of the stack
+* the residue on stack is saved by process that is switched out, meaning before the process is scheduled again, it is never ran, so there will be nothing that can contaminate the stack values of the process being switched out.
+* As for the process that is running, it will always have an empty stack on entry because 
+  * the first time we enter the process in one scheduling period, it has empty stack because of PIT assembly linkage 
+  * any system call assembly linkage will clear the stack to the state where we enter the system call linkage
+  * when the system call linkage is entered, the stack is empty
+* So TSS should be set to an empty value
+
+### SC#3
+
+#### Description
+
+* fish failed
+
+#### Solution
+
+* check condition when remap page for new process
+
+### SC#4
+
+#### Description
+
+* When switch fast, kernel double fault
+
+#### Solution
+
+* bad shared variable with multi-terminal
+* re-write terminal (I have a terrible afternoon because of this) so it is independent of scheduler
+
+### SIG#1
+
+#### Description
+
+* when you got interrupted from kernel, sometimes it will break the signal handling
+
+#### Solution
+
+* processor doesn't push ESP&SS when in this context
+* add special case checking
+
+### SIG#2
+
+#### Description
+
+* Page fault before entering handler
+
+### Solution
+
+* Bad code copying to user stack, for code isn't aligned
+* Not adding NOP (don't know how)
+* Change copy size to 8bits each time
+
+### SIG#3
+
+#### Description
+
+* Page fault after sighandler
+
+#### Solution
+
+* Re-calculate stack offset
+
+### SIG#4
+
+#### Description
+
+* Page fault in sigreturn
+
+#### Solution
+
+* Re-calculate stack offset in sigreturn
+
+### SIG#5
+
+* Page fault after sigreturn
+* sigtest failed
+
+### Solution
+
+* bad eax position
+* swap eax before entering stack
+

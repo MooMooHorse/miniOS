@@ -27,9 +27,14 @@
 #include "mmu.h"
 
 enum proc_state {
-    UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE
+    UNUSED, SLEEPING, RUNNABLE, RUNNING
 };
 
+/*!
+ * @brief WARNING: This struct is never intended to be constructed by C. The pointer to the struct
+ * should have a value equal to the current kernel stack pointer `esp` since the struct is
+ * a snapshot of the kernel stack before context switching.
+ */
 typedef struct context {
     uint32_t ebx;
     uint32_t esi;

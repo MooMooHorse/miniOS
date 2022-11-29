@@ -134,7 +134,15 @@ int32_t terminal_update(int32_t index){
  */
 int32_t terminal_switch(int32_t old,int32_t new){
     int32_t i;
+    
     terminal_load(old);
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(_pcb_ptr->terminal==terminal_index){
+        set_vid((char*)terminal[terminal_index].video,
+        get_screen_x(),
+        get_screen_y());
+    }
     terminal_index=new;
     if(!terminal[new].active) terminal[new].open(new,(int32_t*)get_terbuf_addr(new));
     // prog_video_update(new);

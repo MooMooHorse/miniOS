@@ -164,7 +164,7 @@ int32_t sb16_close(file_t* file) {
     return 0;
 }
 
-void sb16_interrupt_handler() {
+void sb16_handler() {
     sb16_interrupted++;     // increment interrupt counter
     inb(SB16_READ_PORT);    // dispose of data
     send_eoi(SB16_IRQ);     // send EOI

@@ -26,7 +26,16 @@
 
 #define SB16_READY              0xAA        // status code for DSP ready
 
+
+#ifndef ASM
+
+#include "types.h"
+
 #define IS_SB16(X)              (X==SB16_16_BIT_PAUSE||X==SB16_16_BIT_RESUME||X==SB16_MASTER_VOLUME)
+extern void sb16_handler();
+extern int32_t sb16_command(int32_t command, int32_t argument);
+
+#endif /* ASM */
 
 #endif
 

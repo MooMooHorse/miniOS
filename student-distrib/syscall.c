@@ -476,6 +476,7 @@ int32_t ioctl(int32_t fd,int32_t command, int32_t args) {
     if(IS_SB16(command)){
         sb16_command(command,args);
     }
+    return 0;
 }
 
 

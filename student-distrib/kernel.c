@@ -17,6 +17,7 @@
 #include "terminal.h"
 #include "process.h"
 #include "signal.h"
+#include "sb16.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */

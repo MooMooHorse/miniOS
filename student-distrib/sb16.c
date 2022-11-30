@@ -4,9 +4,6 @@
 #include "tests.h"
 #include "x86_desc.h"
 
-volatile uint8_t sb16_busy = 0;
-volatile uint8_t sb16_interrupted = 0;
-
 static int32_t sb16_open(file_t* file, const uint8_t* buf, int32_t nbytes);
 static int32_t sb16_read(file_t* file, void* buf, int32_t nbytes);
 static int32_t sb16_write(file_t* file, const void* buf, int32_t nbytes);
@@ -24,7 +21,7 @@ int32_t sb16_init(void) {
     // cli();
 
     // Only one instance can exist at once.
-    if (sb16_busy) {
+    if (sb16.sb16_busy) {
         // sti();
         return -1;
     }
@@ -47,26 +44,27 @@ int32_t sb16_init(void) {
     }
 
     // Set busy flag
-    sb16_busy = 1;
+    sb16.sb16_busy = 1;
 
     // SETTING IRQ
     enable_irq(SB16_IRQ);
 
-    // PROGRAMMING DMA (8 BIT)
-    outb(0x01 + 0x04, 0x0A);
-    outb(0x01, 0x0C);
-    outb(0x0B, 0x48 + 0x01);
-    // NEED TO CHECK IF USING PAGE CORRECTLY
-    outb((uint8_t)SB16_PAGE_ADDRESS >> 16, 0x83);
-    outb((uint8_t)SB16_PAGE_ADDRESS, 0x02);
-    outb((uint8_t)SB16_PAGE_ADDRESS >> 8, 0x02);
+    ////
+    // // PROGRAMMING DMA (8 BIT)
+    // outb(0x01 + 0x04, 0x0A);
+    // outb(0x01, 0x0C);
+    // outb(0x0B, 0x48 + 0x01);
+    // // NEED TO CHECK IF USING PAGE CORRECTLY
+    // outb((uint8_t)SB16_PAGE_ADDRESS >> 16, 0x83);
+    // outb((uint8_t)SB16_PAGE_ADDRESS, 0x02);
+    // outb((uint8_t)SB16_PAGE_ADDRESS >> 8, 0x02);
 
-    outb((uint8_t)(SB16_DATA_LENGTH), 0x03);
-    outb((uint8_t)(SB16_DATA_LENGTH) >> 8, 0x03);
+    // outb((uint8_t)(SB16_DATA_LENGTH), 0x03);
+    // outb((uint8_t)(SB16_DATA_LENGTH) >> 8, 0x03);
 
-
-    // ENABLE CHANNEL 1
-    outb(0x01, 0x0A);
+    // // ENABLE CHANNEL 1
+    // outb(0x01, 0x0A);
+    ////
 
     // PROGRAMMING DMA (16 BIT)
     outb(0x01 + 0x04, 0xD4);
@@ -80,6 +78,25 @@ int32_t sb16_init(void) {
     outb((uint8_t)(SB16_DATA_LENGTH), 0xC6);
     outb((uint8_t)(SB16_DATA_LENGTH) >> 8, 0xC6);
 
+    // default sample rate and stuff for testing
+    outb(SB16_SET_SAMPLE_RATE, SB16_WRITE_PORT);
+    outb(44100, SB16_WRITE_PORT);
+    outb(0xB0, SB16_WRITE_PORT);
+    outb(0x00, SB16_WRITE_PORT);
+    outb(0xFE, SB16_WRITE_PORT);
+    outb(0xFF, SB16_WRITE_PORT);
+
+    // ENABLE CHANNEL 1
+    outb(0x01, 0xD4);
+
+    // initialize sb 16 ioctl and struct
+    sb16.ioctl.open = sb16_open;
+    sb16.ioctl.read = sb16_read;
+    sb16.ioctl.write = sb16_write;
+    sb16.ioctl.close = sb16_close;
+    sb16.sb16_busy = 0;
+    sb16.sb16_interrupted = 0;
+
     return 0;
 }
 
@@ -89,6 +106,9 @@ int32_t sb16_init(void) {
  * @return int32_t Return code from init().
  */
 int32_t sb16_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
+    if (sb16.sb16_busy == 1) {
+        return -1;
+    }
     return sb16_init();
 }
 
@@ -101,15 +121,15 @@ int32_t sb16_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
  * @return int32_t Return code; 0 for success, -1 for failure.
  */
 int32_t sb16_read(file_t* file, void* buf, int32_t nbytes) {
-    if (!sb16_busy) {
+    if (!sb16.sb16_busy) {
         // SB_16 must be initialized before read
         return -1;
     }
 
-    uint8_t prev_id = sb16_interrupted;
+    uint8_t prev_id = sb16.sb16_interrupted;
 
     // Wait for interrupt
-    while (prev_id == sb16_interrupted) {
+    while (prev_id == sb16.sb16_interrupted) {
         // Do nothing
     }
 
@@ -126,7 +146,7 @@ int32_t sb16_read(file_t* file, void* buf, int32_t nbytes) {
  */
 int32_t sb16_write(file_t* file, const void* buf, int32_t nbytes) {
     // SANITY CHECKS
-    if (!sb16_busy) {
+    if (!sb16.sb16_busy) {
         // if sb16 is not initialized, abort!
         return -1;
     }
@@ -155,24 +175,26 @@ int32_t sb16_write(file_t* file, const void* buf, int32_t nbytes) {
  * SIDE EFFECTS : SB16 is no longer considered busy.
  */
 int32_t sb16_close(file_t* file) {
-    if (!sb16_busy) {
+    if (!sb16.sb16_busy) {
         // SB16 must be initialized before close
         return -1;
     }
-    sb16_busy = 0;
+    sb16.sb16_busy = 0;
+
+    outb(0x41, SB16_WRITE_PORT);
 
     return 0;
 }
 
 void sb16_handler() {
-    sb16_interrupted++;     // increment interrupt counter
+    sb16.sb16_interrupted++;     // increment interrupt counter
     inb(SB16_READ_PORT);    // dispose of data
     send_eoi(SB16_IRQ);     // send EOI
 }
 
 int32_t sb16_command(int32_t command, int32_t argument) {
     // SANITY CHECKS
-    if (!sb16_busy) {
+    if (!sb16.sb16_busy) {
         // if sb16 is not initialized, abort!
         return -1;
     }
@@ -193,6 +215,20 @@ int32_t sb16_command(int32_t command, int32_t argument) {
             outb(SB16_MASTER_VOLUME, SB16_WRITE_PORT);
             outb(argument, SB16_WRITE_PORT);
             break;
+
+        case SB16_SET_TIME_CONST:
+            // set time constant
+            outb(SB16_SET_TIME_CONST, SB16_WRITE_PORT);
+            outb(argument, SB16_WRITE_PORT);
+            break;
+
+        case SB16_SET_SAMPLE_RATE:
+            // set sample rate
+            outb(SB16_SET_SAMPLE_RATE, SB16_WRITE_PORT);
+            // need filtering
+            outb(argument, SB16_WRITE_PORT);
+            break;
+
         default:
             return -1;
     }

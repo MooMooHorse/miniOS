@@ -26,6 +26,14 @@
 
 #define SB16_READY              0xAA        // status code for DSP ready
 
+typedef struct sb16 {
+    fops_t ioctl;
+    int32_t sb16_busy;
+    int32_t sb16_interrupted;
+} sb16_t;
+
+volatile sb16_t sb16;
+
 
 #ifndef ASM
 

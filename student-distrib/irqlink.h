@@ -17,7 +17,7 @@
 
 /* jump table for interrupt hanlder */
 
-extern uint32_t interrupt_handler_jump_table[2];
+extern uint32_t interrupt_handler_jump_table[10];
 #endif /* ASM */
 
 #endif

@@ -32,7 +32,7 @@ DO_CALL(ece391_get_cursor,SYS_GET_CURSOR)
 DO_CALL(ece391_file_create,SYS_FILE_CREATE)
 DO_CALL(ece391_file_remove,SYS_FILE_REMOVE)
 DO_CALL(ece391_file_rename,SYS_FILE_RENAME)
-DO_CALL(ece391_ioctl,SYS_IOCTL)
+DO_CALL(ece391_ioctl,SYS_SB16_IOCTL)
 
 /* Call the main() function, then halt with its return value. */
 

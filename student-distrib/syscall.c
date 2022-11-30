@@ -489,6 +489,7 @@ int32_t sb16_ioctl(int32_t fd,int32_t command, int32_t args) {
     return 0;
 }
 
+/**
  * @brief get user character
  * 
  * @return ** int32_t user character
@@ -525,7 +526,6 @@ install_syscall(){
     syscall_table[SYS_FILE_CREATE]=(uint32_t)file_create;
     syscall_table[SYS_FILE_REMOVE]=(uint32_t)file_remove;
     syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
-    
     syscall_table[SYS_GETC]=(uint32_t)getc;
     syscall_table[SYS_SB16_IOCTL]=(uint32_t)sb16_ioctl;
 }

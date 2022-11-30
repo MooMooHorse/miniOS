@@ -1,5 +1,7 @@
 #ifndef _SB16_H
 #define _SB16_H
+#include "types.h"
+#include "filesystem.h"
 
 #define SB16_PAGE_ADDRESS       0x4000000   // memory address for SB16 DMA
 #define SB16_DATA_LENGTH        0xFFFF    // size of data buffer for SB16 DMA
@@ -26,7 +28,7 @@
 
 #define SB16_READY              0xAA        // status code for DSP ready
 
-typedef struct sb16 {
+typedef struct SB16 {
     fops_t ioctl;
     int32_t sb16_busy;
     int32_t sb16_interrupted;

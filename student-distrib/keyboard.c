@@ -36,6 +36,7 @@
 
 // Modifiers flags.
 static uint8_t mod;
+static uint8_t user_c;
 
 static const uint8_t map_basics[MAP_SIZE] = {
     [2] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', '\t',
@@ -118,6 +119,7 @@ void keyboard_init(void) {
 static int32_t
 kgetc(void) {
     uint8_t c;
+    int32_t i;
     uint8_t stat = inb(KEYBOARD_STAT);
     if (!(stat & 0x01)) { return -1; }  // ERROR: Empty keyboard buffer!
     uint8_t code = inb(KEYBOARD_DATA) & SCAN_MASK;  // Extract the least-significant byte.
@@ -137,6 +139,23 @@ kgetc(void) {
         c = ISLOWER(c) ? TOUPPER(c) : ISUPPER(c) ? TOLOWER(c) : c;
     }
 
+    if(code==DOUBLE_WORD||IS_DIR(code)){
+        user_c=code;
+    }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)){
+        user_c=c;
+    }else{
+        /* keyboard enable doesn't have any effect on not-selected characters */
+        return c;
+    }
+    /* for all the selected characters, we singal the currently displaying & running user programs */
+    for(i=1;i<=PCB_MAX;i++){
+        if(PCB(i)->terminal==terminal_index&&
+        (PCB(i)->state==RUNNING||PCB(i)->state==RUNNABLE)){
+            PCB(i)->sig_num=SIG_USER1;
+            break;
+        }
+    }
+    if(!PCB(i)->keyboard_enable) c=0;
     return c;
 }
 
@@ -228,4 +247,8 @@ keyboard_handler(void) {
     if(_pcb_ptr->terminal==terminal_index){
         set_vid((char*)VIDEO,terminal[terminal_index].screen_x,terminal[terminal_index].screen_y);
     }
+}
+
+uint8_t get_c(){
+    return user_c;
 }

@@ -28,7 +28,7 @@
 #define NUM_ENT     1024
 
 /* number of system call for system call table */
-#define SYSTABLE_NUM 20
+#define SYSTABLE_NUM 60
 
 /* stipulated in document, the maximum number of file struct array entries is 8 */
 #define FILE_ARRAY_MAX 8

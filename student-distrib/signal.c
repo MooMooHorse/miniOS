@@ -131,7 +131,7 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
     uint32_t pid=get_pid();
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if(pid==0||_pcb_ptr->sig_num==-1||
-    sig_table[_pcb_ptr->sig_num].handler==NULL||*((uint32_t*)(kesp)+9)==0x10){
+    sig_table[_pcb_ptr->sig_num].handler==NULL){
         /* no signal, change back to original stack */
         asm volatile("              \n\
         movl    %%ecx,%%esp         \n\
@@ -156,6 +156,20 @@ do_signal(uint32_t kesp,uint32_t uesp,uint8_t* prog_start,uint8_t* prog_end){
         :
         :"c"(kesp)
         );
+        while(1);
+    }
+    /* not returning to user level, directly go back and keep the signal */
+    if(*((uint32_t*)(kesp)+9)==0x10){
+        /* no signal, change back to original stack */
+        asm volatile("              \n\
+        movl    %%ecx,%%esp         \n\
+        popal                       \n\
+        iret                        \n\
+        "
+        :
+        :"c"(kesp)
+        );
+        printf("double fault in do_signal\n");
         while(1);
     }
 
@@ -265,6 +279,12 @@ sigkill_handler (int32_t signum){
     return ;
 }
 
+
+/**
+ * @brief send signal alarm every 10 seconds to currently running or runnable
+ * process under current terminal.
+ * @return ** void 
+ */
 void sendsig_alarm(){
     int32_t i;
     for(i=1;i<=PCB_MAX;i++){
@@ -272,5 +292,28 @@ void sendsig_alarm(){
             PCB(i)->sig_num=SIG_ALARM;
         }
     }
+}
+
+
+/**
+ * @brief restore signum handler to default kernel handler
+ * 
+ * @param signum - signal number
+ * @return ** void 
+ */
+void set_default_handler(int32_t signum){
+    switch (signum)
+    {
+    case SIG_ALARM:
+        sig_table[signum].handler=sigignore_handler;
+        break;
+    case SIG_USER1:
+        sig_table[signum].handler=sigignore_handler;
+        break;
+    default:
+        sig_table[signum].handler=sigkill_handler;
+        break;
+    }
+    sig_table[signum].user_space=0;
 }
 

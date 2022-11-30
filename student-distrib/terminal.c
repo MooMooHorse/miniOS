@@ -22,6 +22,7 @@
 static int32_t _terminal_read(uint8_t* buf, int32_t n);
 static int32_t _terminal_write(const uint8_t* buf, int32_t n);
 static int32_t _open(int32_t,int32_t*);
+uint8_t keyboard_enable=0;
 
 int32_t terminal_index; /* global variable : track current displayed terminal in OS */
 
@@ -133,7 +134,15 @@ int32_t terminal_update(int32_t index){
  */
 int32_t terminal_switch(int32_t old,int32_t new){
     int32_t i;
+    
     terminal_load(old);
+    uint32_t pid=get_pid();
+    pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
+    if(_pcb_ptr->terminal==terminal_index){
+        set_vid((char*)terminal[terminal_index].video,
+        get_screen_x(),
+        get_screen_y());
+    }
     terminal_index=new;
     if(!terminal[new].active) terminal[new].open(new,(int32_t*)get_terbuf_addr(new));
     // prog_video_update(new);
@@ -252,12 +261,14 @@ terminal_write(__attribute__((unused)) file_t* file, const void* buf, int32_t nb
  */
 static int32_t
 _terminal_read(uint8_t* buf, int32_t n) {
-    sti();
     int32_t target = n;
     uint8_t c = '\0';
     uint32_t pid=get_pid();
     pcb_t* _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     int32_t prog_terminal=_pcb_ptr->terminal; /* terminal index for current running program : background/foreground */
+    _pcb_ptr->keyboard_enable=1;
+
+    sti();
 
     if (NULL == buf || 0 > n) { return -1; }  // Invalid input parameter!
 
@@ -269,6 +280,8 @@ _terminal_read(uint8_t* buf, int32_t n) {
         *buf++ = c;
         --n;  // NOTE: Linefeed ('\n') is written to the buffer AND counted.
     }
+    cli();
+    _pcb_ptr->keyboard_enable=0;
 
     return target - n;
 }

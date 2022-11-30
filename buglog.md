@@ -340,6 +340,19 @@ system call (open/write/read/close). Boundary problem
 
 * original buffer length type is `uint8_t`, changing it larger will do the work
 
+
+
+### TS#5
+
+#### Description
+
+* Spamming terminal while running pingpong has 1/10 chance twisting the output flow to wrong shell
+
+#### Solution
+
+* Program output too fast, after terminal switching, PIT interrupt hasn't occurred, program output first
+* If current program is running, and you do a terminal switch, re-direct the output flow, while not changing the screen_x, screen_y
+
 ### SC#1
 
 #### Description

@@ -27,9 +27,14 @@
 #include "mmu.h"
 
 enum proc_state {
-    UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE
+    UNUSED, SLEEPING, RUNNABLE, RUNNING
 };
 
+/*!
+ * @brief WARNING: This struct is never intended to be constructed by C. The pointer to the struct
+ * should have a value equal to the current kernel stack pointer `esp` since the struct is
+ * a snapshot of the kernel stack before context switching.
+ */
 typedef struct context {
     uint32_t ebx;
     uint32_t esi;
@@ -50,6 +55,7 @@ typedef struct PCB{
     uint32_t kebp; /* kernel ebp */
     uint32_t terminal; /* which terminal this process belongs to */
     int32_t sig_num; /* delivered signal number for current process */
+    uint8_t keyboard_enable;
     uint8_t pname[33]; /* program name, aligned with filesystem, max length 32 : 33 with NUL*/
     /* Below is file struct array (open file table) */
     /* file struct entries array : with maximum items 8, defined in FILE_ARRAY_MAX */

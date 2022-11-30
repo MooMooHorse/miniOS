@@ -1,3 +1,14 @@
+/**
+ * @file ata.c
+ * @author 
+ * haor2
+ * http://learnitonweb.com/2020/05/22/12-developing-an-operating-system-tutorial-episode-6-ata-pio-driver-osdev/
+ * https://wiki.osdev.org/ATA_PIO_Mode
+ * @brief ATA driver 
+ * @version 0.1
+ * @date 2022-11-29
+ * @copyright Copyright (c) 2022
+ */
 #include "ata.h"
 #include "lib.h"
 #include "filesystem.h"
@@ -31,12 +42,10 @@
 #define STATUS_BSY 0x80
 #define STATUS_RDY 0x40
 
-static void ATA_wait_BSY()   //Wait for bsy to be 0
-{
+static void ATA_wait_BSY(){
 	while(inb(0x1F7)&STATUS_BSY);
 }
-static void ATA_wait_DRQ()  //Wait fot drq to be 1
-{
+static void ATA_wait_DRQ(){
 	while(!(inb(0x1F7)&STATUS_RDY));
 }
 
@@ -78,7 +87,8 @@ detect_devtype (int32_t slavebit){
 // }
 
 /* This, from OSdev, works */
-void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_count,uint32_t slave_bit){
+static void 
+read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_count,uint32_t slave_bit){
     int32_t i,j;
 	ATA_wait_BSY();
 	if(slave_bit) outb(SLAVE_IN | ((LBA >>24) & 0xF),DRIVE_SELECT);
@@ -100,7 +110,8 @@ void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_
 	}
 }
 
-void write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t target_address,uint32_t slave_bit){
+static void 
+write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t target_address,uint32_t slave_bit){
 	int32_t i,j;
 	ATA_wait_BSY();
 	if(slave_bit) outb(SLAVE_IN | ((LBA >>24) & 0xF),0x1F6);

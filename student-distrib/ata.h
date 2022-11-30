@@ -1,3 +1,4 @@
+/* ATA driver header file */
 #ifndef _ATA_H
 #define _ATA_H
 

@@ -3,9 +3,9 @@
 #include "types.h"
 #include "filesystem.h"
 
-#define SB16_PAGE_ADDRESS       0x4000000   // memory address for SB16 DMA
-#define SB16_DATA_LENGTH        0xFFFF    // size of data buffer for SB16 DMA
-#define SB16_IRQ                6           // IRQ number for SB16
+#define SB16_PAGE_ADDRESS       0x800000    // memory address for SB16 DMA
+#define SB16_DATA_LENGTH        0x10000      // size of data buffer for SB16 DMA
+#define SB16_IRQ                5           // IRQ number for SB16
 
 #define SB16_MIXER_PORT         0x224
 #define SB16_MIXER_DATA_PORT    0x225
@@ -28,6 +28,7 @@
 
 #define SB16_READY              0xAA        // status code for DSP ready
 
+
 typedef struct SB16 {
     fops_t ioctl;
     int32_t sb16_busy;
@@ -36,16 +37,9 @@ typedef struct SB16 {
 
 volatile sb16_t sb16;
 
-
-#ifndef ASM
-
-#include "types.h"
-
-#define IS_SB16(X)              (X==SB16_16_BIT_PAUSE||X==SB16_16_BIT_RESUME||X==SB16_MASTER_VOLUME)
-extern void sb16_handler();
+extern int32_t sb16_init(void);
+extern void sb16_handler(void);
 extern int32_t sb16_command(int32_t command, int32_t argument);
-
-#endif /* ASM */
 
 #endif
 

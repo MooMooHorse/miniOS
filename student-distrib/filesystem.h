@@ -3,12 +3,13 @@
 #include "types.h"
 #include "x86_desc.h"
 /* flags for file struct table */
-/* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
+/* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3), sb16 (4) */
 #define DESCRIPTOR_ENTRY_RTC 0
 #define DESCRIPTOR_ENTRY_DIR 1
 #define DESCRIPTOR_ENTRY_FILE 2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
-#define F_OPEN (1 << 2)
+#define DESCRIPTOR_ENTRY_SB16 4
+#define F_OPEN (1 << 3)
 #define F_CLOSE 0
 
 #define N_INODE 64

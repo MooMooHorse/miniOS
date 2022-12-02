@@ -285,8 +285,9 @@ int32_t open (const uint8_t* filename){
             return -1;
         }
     }
-    else if (strncmp((int8_t)"sb16", (int8_t*)filename,4) == 0) {
-        if (sb16.ioctl.open(file_entry, filename, terminal_index) == -1) {
+    /* if sb16 */
+    else if (strncmp((int8_t*)"sb16", (int8_t*)filename,5) == 0) {
+        if (sb16.ioctl.open(file_entry, filename, 0) == -1) {
             return -1;
         }
     }
@@ -483,9 +484,7 @@ int32_t file_rename(const uint8_t* src, const uint8_t* dest){
 }
 
 int32_t sb16_ioctl(int32_t fd,int32_t command, int32_t args) {
-    if(IS_SB16(command)){
-        sb16_command(command,args);
-    }
+    sb16_command(command,args);
     return 0;
 }
 

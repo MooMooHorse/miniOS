@@ -3,7 +3,7 @@
 #include "types.h"
 #include "filesystem.h"
 
-#define SB16_PAGE_ADDRESS       0x120000     // memory address for SB16 DMA
+#define SB16_PAGE_ADDRESS       0x120000    // memory address for SB16 DMA
 #define SB16_DATA_LENGTH        0x10000     // size of data buffer for SB16 DMA
 #define SB16_IRQ                5           // IRQ number for SB16
 

@@ -3,8 +3,8 @@
 #include "ece391support.h"
 #include "ece391syscall.h"
 
-#define SB16_PAGE_ADDRESS       0x120000   // memory address for SB16 DMA
-#define SB16_CHUNK_LENGTH       0x10000    // size of data buffer for SB16 DMA
+#define SB16_PAGE_ADDRESS       0x120000    // memory address for SB16 DMA
+#define SB16_CHUNK_LENGTH       0x10000      // size of data buffer for SB16 DMA
 #define SB16_IRQ                5           // IRQ number for SB16
 
 #define SB16_MIXER_PORT         0x224
@@ -59,7 +59,7 @@ typedef struct {
 int main() {
     wav_meta_t wav_meta;
     int32_t sb16_fd, audio_fd;
-    int32_t data_input_size, data_write_size;
+    int32_t data_input_size;
     int32_t i;
     char data_input[SB16_CHUNK_LENGTH];
     char file_name[1024]; // used for file input, hardcoded file for now
@@ -80,7 +80,6 @@ int main() {
         ece391_fdputs(1, (uint8_t*)"file not found\n");
         return 2;
     }
-
 
     // initialize sb16
     sb16_fd = ece391_open((uint8_t*)"sb16");
@@ -161,12 +160,16 @@ int main() {
         return 3;
     }
 
-    ece391_fdputs(1, (uint8_t*)"START PLAYBACK\n");
-
     // default sample rate and stuff for testing
     outb(SB16_SET_SAMPLE_RATE, SB16_WRITE_PORT);
-    outb((uint8_t) (44100 >> 8) & 0xFF, SB16_WRITE_PORT);
-    outb((uint8_t) 44100 & 0xFF, SB16_WRITE_PORT);
+    outb((uint8_t) (wav_meta.sample_rate >> 8) & 0xFF, SB16_WRITE_PORT);
+    outb((uint8_t) wav_meta.sample_rate & 0xFF, SB16_WRITE_PORT);
+
+    // causes syserr in qemu
+    // "sb16: warning: command 0x42,2 is not truly understood yet"
+    // outb(0x42, SB16_WRITE_PORT);
+    // outb((uint8_t) (wav_meta.sample_rate >> 8) & 0xFF, SB16_WRITE_PORT);
+    // outb((uint8_t) wav_meta.sample_rate & 0xFF, SB16_WRITE_PORT);
 
     // outb(0xB0, SB16_WRITE_PORT);
     // outb(0x10, SB16_WRITE_PORT);
@@ -174,7 +177,8 @@ int main() {
     outb(0x00, SB16_WRITE_PORT);
     outb((uint8_t) (SB16_CHUNK_LENGTH - 1) & 0xFF, SB16_WRITE_PORT); // L
     outb((uint8_t) ((SB16_CHUNK_LENGTH - 1) >> 8) & 0xFF, SB16_WRITE_PORT); // H
-
+    outb(0xD4, SB16_WRITE_PORT); // Continue 8-bit DMA mode digitized sound I/O paused using command D0.
+    
     while (1) {
         ece391_fdputs(1, (uint8_t*)"READY TO LOAD NEW CHUNK...\n");
 
@@ -182,10 +186,11 @@ int main() {
         if (ece391_read(sb16_fd, 0, 0) == -1) {
             return 5;
         }
+        
 
         ece391_fdputs(1, (uint8_t*)"LOADING NEW CHUNK...\n");
 
-        outb(0xDA, SB16_WRITE_PORT);
+        outb(0xD0, SB16_WRITE_PORT);
 
         data_input_size = ece391_read(audio_fd, data_input, SB16_CHUNK_LENGTH);
 

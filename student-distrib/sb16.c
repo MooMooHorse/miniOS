@@ -26,14 +26,14 @@ void sb16_init(void) {
     sb16.sb16_busy = -1;
 
     // RESETTING SB16
+    // (OSDEV) 1.1 Send 1 to DSP reset port 
+    // (OSDEV) 1.2 Wait 3 us (skipped)
+    // (OSDEV) 1.3 Send 0 to DSP reset port 
     outb(0x1, SB16_RESET_PORT);
-
-    // wait for reset
-    // how do we do that LMAO?? for loop and given estimated clock speed?
-
     outb(0x0, SB16_RESET_PORT);
 
-    // Check if card is initialized
+    // CHECK CARD INITIALIZATION
+    // (OSDEV) 1.4 Now should be in DSP read port 0xAA. 
     // If SB16_READY status code is not given, abort!
     uint8_t data = inb(SB16_READ_PORT);
     if (data != SB16_READY) {
@@ -41,29 +41,37 @@ void sb16_init(void) {
     }
 
     // SETTING IRQ
+    // (OSDEV) 2.1 Send 0x80 to Mixer port 
+    // (OSDEV) 2.2 Send value of your IRQ (0x02) to Mixer data port
     outb(0x80, SB16_MIXER_PORT);
     outb(0x02, SB16_MIXER_DATA_PORT);
     enable_irq(SB16_IRQ); // set IRQ 5
 
     // PROGRAMMING DMA (8 BIT)
-    outb(0x01 + 0x04, 0x0A);
+    // (OSDEV) 3.1 Disable channel by writing to port 0x0A value 0x05 (channel number + 0x04) 
+    // (OSDEV) 3.2 Write value to flip-flop port 0x0C (any value e.g. 1) 
+    outb(0x01 | 0x04, 0x0A);
     outb(0xFF, 0x0C);
 
-    // set address
-    outb((uint8_t)SB16_PAGE_ADDRESS, 0x02);
-    outb((uint8_t)(SB16_PAGE_ADDRESS >> 8), 0x02);
+    // Set Address
+    // (OSDEV) 3.3 Send transfer mode to 0x0B (0x48 for single mode/0x58 for auto mode + channel number) 
+    outb(0x58 + 0x01, 0x0B);
+    
+    // (OSDEV) 3.4 Send page number to 0x83(page port of channel 1) For example if you have sound data at 0x100450, page is 0x10
+    // (OSDEV) 3.5 Send low bits of position to port 0x02(addr. port of channel 1) For example(see above) is 0x50.
+    // (OSDEV) 3.6 Send high bits of position to port 0x02(addr. port of channel 1) For example(see above) is 0x04. 
+    outb((uint8_t) (SB16_PAGE_ADDRESS >> 16) & 0xFF, 0x83);
+    outb((uint8_t) (SB16_PAGE_ADDRESS) & 0xFF, 0x02);
+    outb((uint8_t) (SB16_PAGE_ADDRESS >> 8) & 0xFF, 0x02);
 
-    outb(0xFF, 0x0C);
+    // (OSDEV) 3.7 Send low bits of length of data to port 0x03(count port of channel 1) For example if is length 0x0FFF, send 0xFF
+    // (OSDEV) 3.8 Send high bits of length of data to port 0x03(count port of channel 1) For example if is length 0x0FFF, send 0x0F 
+    outb((uint8_t) (SB16_DATA_LENGTH - 1) & 0xFF, 0x03);
+    outb((uint8_t) ((SB16_DATA_LENGTH - 1) >> 8) & 0xFF, 0x03);
 
-    outb((uint8_t) (SB16_DATA_LENGTH - 1), 0x03);
-    outb((uint8_t) ((SB16_DATA_LENGTH - 1) >> 8), 0x03);
-
-    // Set page address
-    outb((uint8_t) (SB16_PAGE_ADDRESS >> 16), 0x83);
-
-    outb(0x48 + 0x01, 0x0B);
 
     // ENABLE CHANNEL 1
+    // (OSDEV) 3.9 Enable channel by writing channel number to port 0x0A 
     outb(0x01, 0x0A);
 
     // // PROGRAMMING DMA (16 BIT)
@@ -83,7 +91,7 @@ void sb16_init(void) {
     // // ENABLE CHANNEL 1
     // outb(0x01, 0xD4);
 
-    // initialize sb 16 ioctl and struct
+    // Initialize SB16 struct with IOCTL and flags
     sb16.ioctl.open = sb16_open;
     sb16.ioctl.read = sb16_read;
     sb16.ioctl.write = sb16_write;
@@ -125,16 +133,17 @@ int32_t sb16_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
  * @return int32_t Return code; 0 for success, -1 for failure.
  */
 int32_t sb16_read(file_t* file, void* buf, int32_t nbytes) {
+    sti();
     if (!sb16.sb16_busy) {
         // SB_16 must be initialized before read
         return -1;
     }
 
-    uint8_t prev_id = sb16.sb16_interrupted;
+    int32_t prev_id = sb16.sb16_interrupted;
 
     // Wait for interrupt
     while (prev_id == sb16.sb16_interrupted) {
-        // Do nothing
+        // do nothing
     }
 
     return 0;
@@ -179,12 +188,11 @@ int32_t sb16_write(file_t* file, const void* buf, int32_t nbytes) {
  * SIDE EFFECTS : SB16 is no longer considered busy.
  */
 int32_t sb16_close(file_t* file) {
-    // if (!sb16.sb16_busy) {
-    //     // SB16 must be initialized before close
-    //     return -1;
-    // }
-    sb16.sb16_busy = 0;
-    sb16.sb16_interrupted = 0;
+    if (!sb16.sb16_busy) {
+        // SB16 must be initialized before close
+        return -1;
+    }
+
     file->fops.close = NULL;
     file->fops.read = NULL;
     file->fops.write = NULL;
@@ -192,7 +200,10 @@ int32_t sb16_close(file_t* file) {
     file->inode = -1;
     file->pos = 0;
     file->flags = F_CLOSE;
-
+    
+    sb16.sb16_busy = 0;
+    sb16.sb16_interrupted = 0;
+    
     // outb(0x41, SB16_WRITE_PORT);
 
     return 0;
@@ -201,7 +212,6 @@ int32_t sb16_close(file_t* file) {
 void sb16_handler(void) {
     // inb(SB16_INT_ACK_PORT);    // dispose of data
     inb(SB16_READ_STATUS_PORT);    // dispose of data
-    outb(0x20, 0x20);    // send EOI
     sb16.sb16_interrupted++;     // increment interrupt counter
     send_eoi(SB16_IRQ);     // send EOI
 }

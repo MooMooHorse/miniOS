@@ -17,11 +17,13 @@ static int32_t sb16_close(file_t* file);
  * SIDE EFFECTS : Enables DMA channel 1, enables IRQ 6, and sets the
  *              sample rate.
  */
-int32_t sb16_init(void) {
+void sb16_init(void) {
     // Only one instance can exist at once.
     if (sb16.sb16_busy) {
-        return -1;
+        return;
     }
+
+    sb16.sb16_busy = -1;
 
     // RESETTING SB16
     outb(0x1, SB16_RESET_PORT);
@@ -35,11 +37,13 @@ int32_t sb16_init(void) {
     // If SB16_READY status code is not given, abort!
     uint8_t data = inb(SB16_READ_PORT);
     if (data != SB16_READY) {
-        return -1;
+        return;
     }
 
     // SETTING IRQ
-    enable_irq(SB16_IRQ);
+    outb(0x80, SB16_MIXER_PORT);
+    outb(0x02, SB16_MIXER_DATA_PORT);
+    enable_irq(SB16_IRQ); // set IRQ 5
 
     // PROGRAMMING DMA (8 BIT)
     outb(0x01 + 0x04, 0x0A);
@@ -57,7 +61,7 @@ int32_t sb16_init(void) {
     // Set page address
     outb((uint8_t) (SB16_PAGE_ADDRESS >> 16), 0x83);
 
-    outb(0x58 + 0x01, 0x0B);
+    outb(0x48 + 0x01, 0x0B);
 
     // ENABLE CHANNEL 1
     outb(0x01, 0x0A);
@@ -87,7 +91,7 @@ int32_t sb16_init(void) {
     sb16.sb16_busy = 0;
     sb16.sb16_interrupted = 0;
 
-    return 0;
+    return;
 }
 
 /**
@@ -97,7 +101,7 @@ int32_t sb16_init(void) {
  */
 int32_t sb16_open(file_t* file, const uint8_t* buf, int32_t nbytes) {
 
-    if (sb16.sb16_busy == 1) {
+    if (sb16.sb16_busy != 0) {
         return -1;
     }
 
@@ -146,7 +150,6 @@ int32_t sb16_read(file_t* file, void* buf, int32_t nbytes) {
  */
 int32_t sb16_write(file_t* file, const void* buf, int32_t nbytes) {
     // SANITY CHECKS
-    sb16.sb16_busy = 1;
     if (!sb16.sb16_busy) {
         // if sb16 is not initialized, abort!
         return -1;
@@ -196,8 +199,9 @@ int32_t sb16_close(file_t* file) {
 }
 
 void sb16_handler(void) {
-    inb(SB16_INT_ACK_PORT);    // dispose of data
+    // inb(SB16_INT_ACK_PORT);    // dispose of data
     inb(SB16_READ_STATUS_PORT);    // dispose of data
+    outb(0x20, 0x20);    // send EOI
     sb16.sb16_interrupted++;     // increment interrupt counter
     send_eoi(SB16_IRQ);     // send EOI
 }

@@ -3,8 +3,8 @@
 #include "types.h"
 #include "filesystem.h"
 
-#define SB16_PAGE_ADDRESS       0x800000    // memory address for SB16 DMA
-#define SB16_DATA_LENGTH        0x10000      // size of data buffer for SB16 DMA
+#define SB16_PAGE_ADDRESS       0x120000     // memory address for SB16 DMA
+#define SB16_DATA_LENGTH        0x10000     // size of data buffer for SB16 DMA
 #define SB16_IRQ                5           // IRQ number for SB16
 
 #define SB16_MIXER_PORT         0x224
@@ -37,7 +37,7 @@ typedef struct SB16 {
 
 volatile sb16_t sb16;
 
-extern int32_t sb16_init(void);
+extern void sb16_init(void);
 extern void sb16_handler(void);
 extern int32_t sb16_command(int32_t command, int32_t argument);
 

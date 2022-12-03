@@ -25,10 +25,20 @@
  */
 void
 vm_init(void) {
+    int32_t i;
     pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
     pgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
-    pgdir[2] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #2 --> 64M ~ 68M
+    // pgdir[2] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #2 --> 64M ~ 68M
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
+
+    // turn to macro later
+    for (i = 0x120000; i < 0x140000; i += PGSIZE) {
+        if (i != VIDEO) {
+            pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW;
+        }
+    }
+
+
     // Turn on page size extension for 4MB pages.
     asm volatile(
         "movl %%cr4, %%eax      \n\t\

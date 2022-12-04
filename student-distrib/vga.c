@@ -371,14 +371,14 @@ struct lnode_t{
 /* each bucket node is a sinly linked-list */
 /* lnode_stk stores the sinly linked list nodes */
 lnode_t lnode_stk[LEVEL_4_SIZE];
-lnode_t* buckets[LEVEL_4_SIZE];
+lnode_t* buckets[IMAGE_X_DIM*IMAGE_Y_DIM];
 int32_t lnode_r;
 
 
 void bucket_sort(){
     int32_t i,j;
     lnode_r=0;
-    for(i=0;i<LEVEL_4_SIZE;i++)
+    for(i=0;i<IMAGE_X_DIM*IMAGE_Y_DIM;i++)
         buckets[i]=NULL;
     for(i=0;i<LEVEL_4_SIZE;i++){
         lnode_stk[lnode_r].val=lev_4[i];
@@ -386,7 +386,7 @@ void bucket_sort(){
         buckets[lev_4[i].num]=&lnode_stk[lnode_r++];
     }
     j=0;
-    for(i=LEVEL_4_SIZE-1;i>=0;i--){
+    for(i=IMAGE_X_DIM*IMAGE_Y_DIM-1;i>=0;i--){
         lnode_t* pt=buckets[i];
         while(pt){
             lev_4[j++]=pt->val;

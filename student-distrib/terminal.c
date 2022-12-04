@@ -317,6 +317,6 @@ _terminal_write(const uint8_t* buf, int32_t n) {
  */
 uint32_t get_terbuf_addr(int32_t index){
     // no sanity check here 
-    return VIDEO+0x8000+(terminal_index+1)*VIDEO_SIZE;
+    return VIDEO+0x100000+(terminal_index+1)*VIDEO_SIZE;
 }
 

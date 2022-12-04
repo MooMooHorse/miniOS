@@ -1315,9 +1315,19 @@ void test_picture(){
     test_print((uint16_t*)display.img);
 }
 
+void sleep_2(){
+    int32_t rtc_fd,i;
+    rtc_fd = ece391_open((uint8_t*)"rtc");
+    for(i=0;i<4;i++){
+        ece391_read(rtc_fd,NULL,0);
+    }
+
+    ece391_close(rtc_fd);
+}
+
 int main(){
 
-    int32_t fd,rtc_fd;
+    int32_t fd;
     int32_t text_len,i;
     int32_t label_len;
 
@@ -1362,12 +1372,7 @@ int main(){
 
     /* display for two seconds : start */
 
-    rtc_fd = ece391_open((uint8_t*)"rtc");
-    for(i=0;i<4;i++){
-        ece391_read(rtc_fd,NULL,0);
-    }
-
-    ece391_close(rtc_fd);
+    sleep_2();
 
     /* display for two seconds : end */
 
@@ -1402,7 +1407,7 @@ int main(){
     }
 
 
-    label_len=ece391_strlen("USER NAME");
+    label_len=ece391_strlen((uint8_t*)"USER NAME");
     init_text(&text[2],0,1,
     (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
     ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)-FONT_HEIGHT/2-PADDING_HEIGHT*3,
@@ -1414,7 +1419,7 @@ int main(){
         ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
     }
 
-    label_len=ece391_strlen("PASSWORD");
+    label_len=ece391_strlen((uint8_t*)"PASSWORD");
     init_text(&text[3],0,1,
     (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
     ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+FONT_HEIGHT/2+PADDING_HEIGHT*3,
@@ -1438,7 +1443,20 @@ int main(){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
     }
+
+    sleep_2();
+
+    /* clear all texts */
+    for(i=0;i<4;i++) display.text_list[i]=NULL;
+    display.num_text=0;
     
+    assemble_picture();
+
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+    }
+
 
     while(1);
     // test_picture();

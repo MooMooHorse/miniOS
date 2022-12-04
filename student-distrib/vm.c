@@ -42,7 +42,7 @@ vm_init(void) {
     // turn to macro later
     for (i = 0x120000; i < 0x130000; i += PGSIZE) {
         if (i != VIDEO) {
-            pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;
+            pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW | PAGE_G;
         }
     }
 

@@ -19,6 +19,8 @@
 #include "signal.h"
 #include "ata.h"
 #include "vga.h"
+#include "sb16.h"
+
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
@@ -169,24 +171,6 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
-
-    if(detect_devtype(0)) printf("ATA master detected\n");
-    if(detect_devtype(1)) printf("ATA slave  detected\n");
-
-    // printf("%d\n",VGA_END-VGA_START);
-    // while(1);
-
-    // VGA_test();
-
-    // read_fs(1);
-    // test_read_write();
-    // dump_fs();
-    // read_fs(1,fs_st,fs_ed);
-    // while(1);
-    // test_read_write();
-    // while(1);
-    // fs.open_fs((uint32_t)fs_mod);
-    
 
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */

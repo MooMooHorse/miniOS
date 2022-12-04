@@ -36,6 +36,16 @@ vm_init(void) {
         if(i!=VIDEO) pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW;
     }
     
+    // pgdir[2] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #2 --> 64M ~ 68M
+    pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
+
+    // turn to macro later
+    for (i = 0x120000; i < 0x130000; i += PGSIZE) {
+        if (i != VIDEO) {
+            pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;
+        }
+    }
+
     // Turn on page size extension for 4MB pages.
     asm volatile(
         "movl %%cr4, %%eax      \n\t\

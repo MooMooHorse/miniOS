@@ -33,6 +33,7 @@ DO_CALL(ece391_file_create,SYS_FILE_CREATE)
 DO_CALL(ece391_file_remove,SYS_FILE_REMOVE)
 DO_CALL(ece391_file_rename,SYS_FILE_RENAME)
 DO_CALL(ece391_getc,SYS_GETC)
+DO_CALL(ece391_sb16_ioctl,SYS_SB16_IOCTL)
 
 /* Call the main() function, then halt with its return value. */
 

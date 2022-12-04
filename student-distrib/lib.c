@@ -478,7 +478,7 @@ void* memset_dword(void* s, int32_t c, uint32_t n) {
 /* void* memcpy(void* dest, const void* src, uint32_t n);
  * Inputs:      void* dest = destination of copy
  *         const void* src = source of copy
- *              uint32_t n = number of byets to copy
+ *              uint32_t n = number of bytes to copy
  * Return Value: pointer to dest
  * Function: copy n bytes of src to dest */
 void* memcpy(void* dest, const void* src, uint32_t n) {

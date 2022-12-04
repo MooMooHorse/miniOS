@@ -18,8 +18,6 @@
 extern void rtc_init(void);
 extern void rtc_handler(void);
 
-
-
 typedef struct RTC {
     fops_t ioctl;
     int32_t freq;

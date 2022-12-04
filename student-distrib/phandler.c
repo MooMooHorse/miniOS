@@ -19,6 +19,7 @@
 #include "keyboard.h"
 #include "process.h"
 #include "signal.h"
+#include "sb16.h"
 
 #define SCROLL_SCREEN_ENABLE 0
 
@@ -144,6 +145,9 @@ do_interrupt(old_ireg_t *oldregs) {
         case 0x01:
             keyboard_handler();
             break;
+        case 0x05:
+            sb16_handler();
+            break;  
         case 0x08:
             rtc_handler();
             break;
@@ -163,5 +167,6 @@ void
 install_interrupt_hanlder() {
     SET_IDT_ENTRY(idt[0x20], interrupt_handler_jump_table[0]);
     SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[1]);
-    SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[2]);
+    SET_IDT_ENTRY(idt[0x25], interrupt_handler_jump_table[2]);
+    SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[3]);
 }

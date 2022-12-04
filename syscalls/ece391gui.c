@@ -179,8 +179,8 @@ unsigned char font_data[256][16] = {
      0xC6, 0xD6, 0xDE, 0x7C, 0x0C, 0x0E, 0x00, 0x00},
     {0x00, 0x00, 0xFC, 0x66, 0x66, 0x66, 0x7C, 0x6C,
      0x66, 0x66, 0x66, 0xE6, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x7C, 0xC6, 0xC6, 0x60, 0x38, 0x0C,
-     0x06, 0xC6, 0xC6, 0x7C, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x7C, 0x60, 0x60, 0x60, 0x60, 0x7C,
+     0x0C, 0x0C, 0x0C, 0x7C, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0x7E, 0x7E, 0x5A, 0x18, 0x18, 0x18,
      0x18, 0x18, 0x18, 0x3C, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0xC6, 0xC6, 0xC6, 0xC6, 0xC6, 0xC6,
@@ -614,13 +614,15 @@ void* memset(void* s, int32_t c, uint32_t n) {
 
 /* GUI subfields : TEXT related */
 #define TEXT_X_DIM       160
-#define TEXT_Y_DIM       18
+#define TEXT_Y_DIM       16
 #define FONT_WIDTH   8
 #define FONT_HEIGHT 16
 #define DECODE_PIXEL_LEN 8 /* each line of a character is encapsulated in 1 byte, you have to decode it to 8 bytes with corresponding bits */
-#define PADDING_HEIGHT 2
+#define PADDING_HEIGHT 1
+#define PADDING_WIDTH  1
 #define WHITE_COL   0xffff // 5 : 6 : 5 RGB
 #define BLACK_COL   0x0000 // 5 : 6 : 5 RGB
+#define MAX_LINES_IN_BOX 4 
 
 
 typedef struct photo_header_t photo_header_t;
@@ -633,7 +635,7 @@ typedef struct text_t  text_t;
 /*********************************************************************
  * @brief library code start 
  *********************************************************************/
-
+#define NULL 0
 /* int8_t* strrev(int8_t* s);
  * Inputs: int8_t* s = string to reverse
  * Return Value: reversed string
@@ -932,9 +934,10 @@ struct icon_t{
 
 struct text_t{
     photo_header_t hdr;
-    uint16_t       img[TEXT_Y_DIM][TEXT_X_DIM];
+    uint16_t       img[TEXT_Y_DIM+PADDING_HEIGHT*MAX_LINES_IN_BOX][TEXT_X_DIM+PADDING_WIDTH*2];
     int32_t        filled_col; /* text box inner color */
     int32_t        text_col;   /* text color */
+    int32_t        ignore_col; /* color to ignore : you can set it se filled color to ignore filling */
     uint8_t        present; /* whether this object is present */
     uint16_t       x,y; /* upper left corner */
     uint8_t        level; /* level of this object : 0 is at the bottom, meaning will be cover by any objects with higher level */
@@ -967,7 +970,9 @@ struct photo_t {
 image_t background;     /* background images */
 icon_t icon[NUM_ICON];  /* text-file, exec, device */
 text_t text[NUM_TEXT];  /* text or text-box */
-
+/* variables used by draw_text */
+static char line[MAX_LINES_IN_BOX][TEXT_X_DIM/FONT_WIDTH*MAX_LINES_IN_BOX];
+static int16_t line_len[MAX_LINES_IN_BOX];
 
 photo_t display;
 
@@ -991,7 +996,7 @@ inline int32_t shallow_RGB(image_t* p,int32_t read_val){
     R=(0x1f-R)*p->shallowing/100+R;
     G=(0x3f-G)*p->shallowing/100+G;
     B=(0x1f-B)*p->shallowing/100+B;
-    return R+(B<<5)+(G<<11);
+    return B+(G<<5)+(R<<11);
 }
 
 
@@ -1077,30 +1082,72 @@ draw_img(int32_t fd,image_t* p,int32_t ux,int32_t uy, int32_t w,int32_t h){
  * @return unsigned char*, a pointer to the text buffer
  */
 int32_t
-draw_text(const char* src,int n,text_t* p){
-    if(n>(TEXT_X_DIM/FONT_WIDTH)){
-        return -1;
+draw_text(const char* src,int n,text_t* p,int32_t scale){
+    int32_t r=0,lines=0;
+    int32_t i,j,a,b,mx_w=0,k=0;
+    /* extrac each non-empty line of text : non-empty line number lines */
+    for(i=0;i<n;i++){
+        if(src[i]=='\n'){
+            line_len[lines]=r;
+            if(r>mx_w) mx_w=r;
+            lines++;
+            r=0;
+        }
+        else{
+            line[lines][r++]=src[i];
+            if(r>=TEXT_X_DIM/FONT_WIDTH) return -1; /* text overflow */
+        }
     }
+    line_len[lines]=r;
+    if(r>mx_w) mx_w=r;
+    lines++;
+
+    if(lines>=MAX_LINES_IN_BOX) return -1; /* too many lines (only 4 scales(lines) are supported) */
+    if(lines>scale) return -1; /* with this scale and this line number, text box will overflow */
+    
     memset(p->img,0,sizeof(p->img));
 
-    /* all offsets are in bytes */
-    int i,j,k;
-    for(j=0;j<16;j++){
-        /* height 16, enumerate each line */
-        for(i=0;i<n;i++){
-            /* Corresponding character info is at font_data[src[i]][j]*/
-            int extract_bit=1<<DECODE_PIXEL_LEN;
-            for(k=0;k<DECODE_PIXEL_LEN;k++){
-                extract_bit>>=1;
-                p->img[j+(PADDING_HEIGHT>>1)][i*FONT_WIDTH+k]=
-                ((font_data[(int)src[i]][j]&extract_bit)>0?
-                p->text_col:text->filled_col); /* temporarily, fill each character with white color 2:2:2 bit RGB value */
+    for(i=0;i<lines;i++){
+        for(j=0;j<line_len[i];j++){
+            for(a=0;a<16;a+=scale){
+                int extract_bit=1<<DECODE_PIXEL_LEN;
+                for(b=0;b<DECODE_PIXEL_LEN;b+=scale){
+                    extract_bit>>=scale;
+                    if(scale==1){
+                        p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale]
+                        [PADDING_WIDTH+j*(FONT_WIDTH/scale)+(b/scale)]=
+                        ((font_data[(int)src[k]][a]&extract_bit)>0?
+                        p->text_col:p->filled_col);
+                    }
+                    if(scale==2){
+                        p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale]
+                        [PADDING_WIDTH+j*(FONT_WIDTH/scale)+(b/scale)]=
+                        (((font_data[(int)src[k]][a]|font_data[(int)src[k]][a+1])&extract_bit)>0?
+                        p->text_col:p->filled_col);
+                    }
+                }
+                /* fill front back padding color */
+                for(b=0;b<PADDING_WIDTH;b++){
+                    p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale][b]=p->filled_col;
+                }
+                for(b=PADDING_WIDTH+line_len[i]*(FONT_WIDTH/scale);
+                b<PADDING_WIDTH*2+mx_w*(FONT_WIDTH/scale);b++){
+                    p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale][b]=p->filled_col;
+                }
             }
+            k++;
         }
     }
 
-    p->hdr.height=FONT_HEIGHT+PADDING_HEIGHT;
-    p->hdr.width=FONT_WIDTH*n;
+    /* add line padding color */
+    for(i=0;i<=lines;i++){
+        for(j=0;j<mx_w*FONT_WIDTH/scale+2*PADDING_WIDTH;j++){
+            p->img[i*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)][j]=p->filled_col;
+        }
+    }
+
+    p->hdr.height=FONT_HEIGHT/scale*lines+PADDING_HEIGHT*2;
+    p->hdr.width=FONT_WIDTH/scale*mx_w+PADDING_WIDTH*2;
     p->present=1;
     return 0;
 }
@@ -1155,13 +1202,15 @@ add_text(photo_t* dest,text_t* src){
     return 0;
 }
 
-void init_text(text_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,int32_t filled_col,int32_t text_col){
+void init_text(text_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,
+int32_t filled_col,int32_t text_col,int32_t ignore_col ){
     p->flags=flags;
     p->level=level;
     p->x=x;
     p->y=y;
     p->filled_col=filled_col;
     p->text_col=text_col;
+    p->ignore_col=ignore_col;
 }
 
 /**
@@ -1221,7 +1270,11 @@ void assemble_picture(){
                     for(sy=0;sy<p3->hdr.height;sy++){
                         dx=p3->x;
                         for(sx=0;sx<p3->hdr.width;sx++){
-                            display.img[dy][dx++]=p3->img[sy][sx];
+                            if(p3->img[sy][sx]!=p3->ignore_col)
+                                display.img[dy][dx++]=p3->img[sy][sx];
+                            else{
+                                dx++;
+                            }
                         }
                         dy++;
                     }
@@ -1264,8 +1317,9 @@ void test_picture(){
 
 int main(){
 
-    int32_t fd;
-    int32_t text_len;
+    int32_t fd,rtc_fd;
+    int32_t text_len,i;
+    int32_t label_len;
 
     if(-1==(fd=ece391_open((uint8_t*)"statue.photo"))){
         ece391_fdputs (1, (uint8_t*)"file not found\n");  
@@ -1278,8 +1332,9 @@ int main(){
 
     init_background(&background,0,0,0,0,0);
     init_text(&text[0],0,1,
-    (IMAGE_X_DIM-text_len*FONT_WIDTH)>>1,(IMAGE_Y_DIM-(TEXT_Y_DIM))>>1,
-    WHITE_COL,BLACK_COL);
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH+PADDING_WIDTH*2))>>1,
+    (IMAGE_Y_DIM-(FONT_HEIGHT+PADDING_HEIGHT*2))>>1,
+    WHITE_COL,BLACK_COL,-1);
     
     if(-1==draw_img(fd,&background, 
     (background.hdr.width-IMAGE_X_DIM)>>1, (background.hdr.height-IMAGE_Y_DIM)>>1,
@@ -1287,7 +1342,7 @@ int main(){
         ece391_fdputs (1, (uint8_t*)"background draw failed\n");
     }
 
-    if(-1==draw_text("Hi, ECE391",text_len,&text[0])){
+    if(-1==draw_text("Hi, ECE391",text_len,&text[0],1)){
         ece391_fdputs (1, (uint8_t*)"text draw failed\n");
     }
 
@@ -1305,9 +1360,87 @@ int main(){
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
     }
 
-    while(1);
+    /* display for two seconds : start */
+
+    rtc_fd = ece391_open((uint8_t*)"rtc");
+    for(i=0;i<4;i++){
+        ece391_read(rtc_fd,NULL,0);
+    }
+
+    ece391_close(rtc_fd);
+
+    /* display for two seconds : end */
+
+    display.num_text--;
+    display.text_list[0]=NULL;
+    
+
+    text_len=ece391_strlen((uint8_t*)"MOOMOOHORSE        ");
+
+    init_text(&text[0],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    (IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1,
+    WHITE_COL,BLACK_COL,-1);
+
+    init_text(&text[1],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+2*(FONT_HEIGHT/2+PADDING_HEIGHT*2)+PADDING_HEIGHT*3,
+    WHITE_COL,BLACK_COL,-1);
 
     
+
+
+
+    if(-1==draw_text("MOOMOOHORSE        ",text_len,&text[0],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 1 draw failed\n");
+    }
+
+    if(-1==draw_text("***********        ",text_len,&text[1],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 2 draw failed\n");
+    }
+
+
+    label_len=ece391_strlen("USER NAME");
+    init_text(&text[2],0,1,
+    (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)-FONT_HEIGHT/2-PADDING_HEIGHT*3,
+    BLACK_COL,WHITE_COL,BLACK_COL);
+
+
+    if(-1==draw_text("USER NAME",label_len,&text[2],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+    }
+
+    label_len=ece391_strlen("PASSWORD");
+    init_text(&text[3],0,1,
+    (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+FONT_HEIGHT/2+PADDING_HEIGHT*3,
+    BLACK_COL,WHITE_COL,BLACK_COL);
+
+    if(-1==draw_text("PASSWORD",label_len,&text[3],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+    }
+
+
+    add_text(&display,&text[0]);
+    add_text(&display,&text[1]);
+    add_text(&display,&text[2]);
+    add_text(&display,&text[3]);
+
+
+    assemble_picture();
+
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+    }
+    
+
+    while(1);
     // test_picture();
     
 

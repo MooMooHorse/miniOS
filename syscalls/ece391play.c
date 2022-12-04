@@ -71,8 +71,13 @@ int main() {
     //     return 2;
     // }
 
-    ece391_strcpy((uint8_t*)file_name, (uint8_t*)"stopandsmell8.wav");
+    //ece391_strcpy((uint8_t*)file_name, (uint8_t*)"stopandsmell8.wav");
 
+    // obtain filename
+    if (0 != ece391_getargs ((uint8_t)file_name, 1024)) {
+        ece391_fdputs (1, (uint8_t*)"could not read arguments\n");
+	    return 2;
+    }
     // get file
     audio_fd = ece391_open((uint8_t*)file_name);
 

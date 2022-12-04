@@ -185,6 +185,9 @@ keyboard_handler(void) {
 
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
+        
+        if(get_graphics()) return ; //skip when in graphic mode  
+
         if(c > ALT_BASE){ /* switch terminal */
             if (c - ALT_BASE > MAX_TERMINAL_NUM){
                 #ifdef RUN_TESTS

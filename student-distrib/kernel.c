@@ -18,6 +18,7 @@
 #include "process.h"
 #include "signal.h"
 #include "ata.h"
+#include "vga.h"
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
@@ -28,7 +29,6 @@ void entry(unsigned long magic, unsigned long addr) {
 
     multiboot_info_t *mbi;
     int32_t i;
-    uint32_t fs_st,fs_ed;
 
     /* Clear the screen. */
     clear();
@@ -64,9 +64,6 @@ void entry(unsigned long magic, unsigned long addr) {
         while (mod_count < mbi->mods_count) {
             /* start of file system address for Module 0 */
             if(mod_count==FILESYS_MOD){ /* open file system given module address */
-                fs_st=mod->mod_start;
-                fs_ed=mod->mod_end;
-                read_fs(1,fs_st,fs_ed);
                 fs.open_fs((uint32_t)mod);
             }
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start); 
@@ -176,6 +173,10 @@ void entry(unsigned long magic, unsigned long addr) {
     if(detect_devtype(0)) printf("ATA master detected\n");
     if(detect_devtype(1)) printf("ATA slave  detected\n");
 
+    // printf("%d\n",VGA_END-VGA_START);
+    // while(1);
+
+    // VGA_test();
 
     // read_fs(1);
     // test_read_write();
@@ -209,6 +210,7 @@ void entry(unsigned long magic, unsigned long addr) {
         /* Run tests */
         launch_tests();
     #endif
+
 
     /* Execute the first program ("shell") ... */
     

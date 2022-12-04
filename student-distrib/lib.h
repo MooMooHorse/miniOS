@@ -38,6 +38,10 @@ void panic(const char*);
 /* Used to test RTC. */
 void test_interrupts(void);
 
+/* VGA related */
+void set_graphics(int32_t graphics);
+int32_t get_graphics();
+
 /* change video_mem,screen_x,screen_y */
 extern void set_vid(char* vid_mem,int s_x,int s_y);
 

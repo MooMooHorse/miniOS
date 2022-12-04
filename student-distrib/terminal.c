@@ -167,7 +167,7 @@ int32_t terminal_switch(int32_t old,int32_t new){
  */
 int32_t _open(int32_t index,int32_t* video){
     int32_t i;
-    if(index<0||index>9||(uint32_t)video<VIDEO+VIDEO_SIZE||(uint32_t)video>VIDEO+10*VIDEO_SIZE){
+    if(index<0||index>3){
     #ifdef RUN_TESTS
         printf("invalid terminal number or buffer address\n");
     #endif
@@ -317,6 +317,6 @@ _terminal_write(const uint8_t* buf, int32_t n) {
  */
 uint32_t get_terbuf_addr(int32_t index){
     // no sanity check here 
-    return VIDEO+(terminal_index+1)*VIDEO_SIZE;
+    return VIDEO+0x8000+(terminal_index+1)*VIDEO_SIZE;
 }
 

@@ -31,8 +31,9 @@
 #define CMD_READ_SECTOR  0x20
 #define CMD_WRITE_SECTOR 0x30
 
-#define FS_LBA_BASE      0x2138
-#define FS_LBA_MAX       0x2578
+
+static uint32_t FS_LBA_BASE;
+static uint32_t FS_LBA_MAX;
 
 #define SECTOR_SIZE      512
 #define HPC              16
@@ -181,24 +182,34 @@ void test_read_write(){
 }
 
 /**
+ * @brief open fs for ata to check the load address 
+ * @param st - starting address
+ * @param ed - ending address
+ * @return ** void 
+ */
+void  
+open_fs_ata(uint32_t st,uint32_t ed){
+	FS_LBA_BASE=((st/SECTOR_SIZE/SPT/HPC)*HPC+st/SECTOR_SIZE/SPT%HPC)*SPT+st/SECTOR_SIZE%SPT;
+	FS_LBA_MAX= ((ed/SECTOR_SIZE/SPT/HPC)*HPC+ed/SECTOR_SIZE/SPT%HPC)*SPT+ed/SECTOR_SIZE%SPT;
+}
+
+/**
  * @brief read file system from MASTER/SLAVE hard drive depending on the condition
  * 
  * @param slave_bit 0 : read from master drive - 1 : read from slave drive
  * @return ** void 
  */
-void read_fs(int32_t slave_bit,uint32_t st,uint32_t ed){
+void 
+read_fs_ata(int32_t slave_bit,uint32_t st,uint32_t ed){
 	uint32_t lba;
 	int32_t i,j,size=0;
 	uint16_t  buf[512];
+	
 	for(lba=FS_LBA_BASE;lba<FS_LBA_MAX;lba++){
 		read_sectors_ATA_PIO((uint32_t)buf,lba,1,slave_bit);
 		j=0;
 		for(i=((uint32_t)st)+(lba-FS_LBA_BASE)*SECTOR_SIZE;
 		i<((uint32_t)st)+(lba-FS_LBA_BASE+1)*SECTOR_SIZE;i+=2){
-			// if(*((uint16_t*)i)!=buf[j]){
-			// 	printf("%d\n",i);
-			// 	while(1);
-			// }
 			*((uint16_t*)i)=buf[j++];
 			size++;
 		}

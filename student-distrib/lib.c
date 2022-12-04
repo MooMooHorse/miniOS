@@ -6,12 +6,13 @@
 #include "terminal.h"
 #define VIDEO       0xB8000
 
-
+static int32_t graphics_open=0;
 static int screen_x;
 static int screen_y;
 static char* video_mem = (char *)VIDEO;
 
-
+void    set_graphics(int32_t graphics){ graphics_open=graphics; } 
+int32_t get_graphics(){ return graphics_open; }
 inline char* get_vidmem(){ return video_mem; } /* get video memory for current context */
 inline int   get_screen_x(){ return screen_x; } /* get screen_x for current context */
 inline int   get_screen_y(){ return screen_y; } /* get screen_y for current context */
@@ -207,6 +208,7 @@ int32_t puts(int8_t* s) {
  *   Return Value: None
  *    Function: Scroll the screen up by one row. Reset the y coordinate. */
 static void vertical_scroll(void) {
+    if(graphics_open) return ; // IN graphic mode, none of the following should happen
     int32_t i;
 
     --screen_y;  // Reset `screen_y` to the 23rd line.
@@ -225,6 +227,7 @@ static void vertical_scroll(void) {
 }
 
 static void kvertical_scroll(void){
+    if(graphics_open) return ; // IN graphic mode, none of the following should happen
     int32_t i;
 
     --terminal[terminal_index].screen_y;  // Reset `screen_y` to the 23rd line.
@@ -247,6 +250,7 @@ static void kvertical_scroll(void){
  * Return Value: void
  *  Function: Output a character to the console. Scroll the screen whenever necessary. */
 void putc(uint8_t c) {
+    if(graphics_open) return ; // IN graphic mode, none of the following should happen
     uint32_t pid=get_pid();
     pcb_t*   _pcb_ptr=(pcb_t*)(PCB_BASE-pid*PCB_SIZE);
     if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
@@ -279,6 +283,7 @@ void putc(uint8_t c) {
 }
 
 void kputc(uint8_t c){
+    if(graphics_open) return ; // IN graphic mode, none of the following should happen
     if ('\n' == c) {  // NOTE: Carriage return already converted to linefeed.
         terminal[terminal_index].screen_x = 0;
         if (NUM_ROWS == ++terminal[terminal_index].screen_y) {

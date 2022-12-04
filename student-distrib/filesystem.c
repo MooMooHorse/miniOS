@@ -116,6 +116,10 @@ open_fs(uint32_t addr) {
     int32_t   i;
     uint32_t filled_rate=0;
     // load all functions into struct
+    open_fs_ata(_addr->mod_start,_addr->mod_end);
+    #ifdef DISK_PREPARED
+    read_fs_ata(1,_addr->mod_start,_addr->mod_end);
+    #endif
 
     /* extended functionality : program loader */
     fs.load_prog = load_prog;
@@ -165,20 +169,21 @@ open_fs(uint32_t addr) {
 
 
     /* start initializing iblock, datablock map */
-    for(i=0;i<N_INODE;i++) fs.imap[i]=0;
-    for(i=0;i<D_DBLOCKS;i++) fs.dmap[i]=0;
+    for(i=0;i<fs.iblock_num;i++) fs.imap[i]=0;
+    for(i=0;i<fs.dblock_num;i++) fs.dmap[i]=0;
     if(-1==mark_inode_and_dblock()){
         printf("file system boot failed\n");
         return -1;
     }
+    
     #ifdef RUN_TESTS
-    for(i=0;i<N_INODE;i++){
+    for(i=0;i<fs.iblock_num;i++){
         if(fs.imap[i]){
             printf("inode %d is filled with %d length of file ",i,fs.flength[i]);
         }
     }
 
-    for(i=0;i<D_DBLOCKS;i++){
+    for(i=0;i<fs.dblock_num;i++){
         if(fs.dmap[i]){
             printf("dblock %d is used \n",i);
             filled_rate+=100;
@@ -545,7 +550,7 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
     dentry->inode_num = read_4B(dentry_addr);
 
     /* bad inode # */
-    if(dentry->inode_num>=N_INODE||0==fs.imap[dentry->inode_num]) return -1;
+    if(dentry->inode_num>=fs.iblock_num||0==fs.imap[dentry->inode_num]) return -1;
 
     dentry_addr += 4;
     for (i = 0; i < 6; i++) {
@@ -566,7 +571,7 @@ read_after_fname(uint32_t dentry_addr, dentry_t* dentry) {
  */
 static int32_t
 read_dentry_by_index(uint32_t index, dentry_t* dentry) {
-    if (dentry == NULL || index >= N_INODE ) {
+    if (dentry == NULL || index >= fs.iblock_num ) {
         return -1;
     }
     uint32_t dentry_addr = fs.sys_st_addr + fs.boot_block_padding + index * fs.dentry_size;
@@ -719,15 +724,16 @@ mark_dblock(uint32_t inode){
         return -1;
     }
     fs.flength[inode] = read_4B(inode_addr);
-    uint32_t dblock_num = (fs.flength[inode]-1)/(int32_t)fs.block_size+1;
+    uint32_t dblock_num = ((int32_t)fs.flength[inode]-1)/(int32_t)fs.block_size+1;
     uint32_t dblock_ind;
-    if(dblock_num>=D_DBLOCKS){
+    if(dblock_num>=fs.dblock_num){
+        printf("%d\n",dblock_num);
         printf("bad file length at inode %d\n",inode);
         return -1;
     }
     for(i=0;i<dblock_num;i++){
         dblock_ind=read_4B(data_block_entry_addr);
-        if(dblock_ind>=D_DBLOCKS){
+        if(dblock_ind>=fs.dblock_num){
             printf("toxic dblock index at inode %d\n",inode);
             continue;
         }
@@ -759,7 +765,7 @@ mark_after_fname(uint32_t dentry_addr,dentry_t* dentry){
         return -1;
     dentry->inode_num = read_4B(dentry_addr);
     /* bad inode # */
-    if(dentry->inode_num>=N_INODE) return -1;
+    if(dentry->inode_num>=fs.iblock_num) return -1;
 
     mark_dblock(dentry->inode_num);
 

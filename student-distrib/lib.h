@@ -7,6 +7,7 @@
 #define NUM_COLS    80
 #define NUM_ROWS    25
 #define ATTRIB      0x1E
+#define ATTRIB_NEG  0xE1
 
 #include "types.h"
 
@@ -34,6 +35,8 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 /* Utilities. */
 void panic(const char*);
+void light_pixel(int x, int y);
+void unlight_pixel(int x, int y);
 
 /* Used to test RTC. */
 void test_interrupts(void);

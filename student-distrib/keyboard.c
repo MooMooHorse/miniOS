@@ -129,7 +129,6 @@ kgetc(void) {
     uint8_t stat = inb(KEYBOARD_STAT);
     if (!(stat & 0x01)) { return -1; }  // ERROR: Empty keyboard buffer!
     uint8_t code = inb(KEYBOARD_DATA) & SCAN_MASK;  // Extract the least-significant byte.
-    printf("%u\n", code);
 
     // Scan codes indicating "key release" has the HIGHEST bit set.
     if (code & RELEASE_MASK) {

@@ -704,7 +704,7 @@ int32_t rtc_test_write() {
     printf("RTC test write 2 Hz\n");
     buf[0]=2;
     int32_t test1 = rtc[0].ioctl.write(&file, buf, 4);
-    
+
     printf("RTC test write 2048 Hz\n");
     buf[0]=2048;
     int32_t test2 = rtc[0].ioctl.write(&file, buf, 4);
@@ -763,7 +763,7 @@ int32_t rtc_sanity_check() {
  * it failed. 
  * @return ** not important 
  */
-int32_t 
+int32_t
 exception_squash_program_test(){
     volatile int x = 0;
     return 1 / x;
@@ -887,6 +887,21 @@ int cursor_test(void) {
     return FAIL;
 }
 
+int bool_test(void) {
+    bool b = false;
+    if (b) {
+        assertion_failure();
+        return FAIL;
+    }
+    b = true;
+    if (!b) {
+        assertion_failure();
+        return FAIL;
+    }
+    printf("Size of bool: %u\n", sizeof(b));
+    return PASS;
+}
+
 
 /**
  * @brief launching test function
@@ -933,5 +948,6 @@ void launch_tests(){
     // TEST_OUTPUT("test_write_file",test_write_file());
     // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
     /* TEST_OUTPUT("cursor_test", cursor_test()); */
+    // TEST_OUTPUT("bool_test", bool_test());
 }
 

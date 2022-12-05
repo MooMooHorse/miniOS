@@ -1182,7 +1182,16 @@ add_background(photo_t* dest,image_t* src){
     dest->num_img++;
     return 0;
 }
-
+/**
+ * @brief initialize background object
+ * @param p - ptr to background
+ * @param flags - reserved
+ * @param level - always 0
+ * @param shallowing - similar to alpha
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @return ** void 
+ */
 void init_background(image_t* p,int32_t flags,uint8_t level,int32_t shallowing,int16_t x,int16_t y){
     p->flags=flags;
     p->level=level;
@@ -1191,6 +1200,9 @@ void init_background(image_t* p,int32_t flags,uint8_t level,int32_t shallowing,i
     p->y=y;
 }
 
+/**
+ * @brief add icon to display
+ */
 int32_t 
 add_icon(photo_t* dest,icon_t* src){
     if(dest->num_icon>=NUM_ICON) return -1;
@@ -1199,6 +1211,15 @@ add_icon(photo_t* dest,icon_t* src){
     return 0;
 }
 
+/**
+ * @brief initialize icon object
+ * @param p - icon object ptr
+ * @param flags - reserved
+ * @param level - level of icon
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @return ** void 
+ */
 void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y){
     p->flags=flags;
     p->level=level;
@@ -1206,6 +1227,9 @@ void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y){
     p->y=y;
 }
 
+/**
+ * @brief add text to display
+ */
 int32_t 
 add_text(photo_t* dest,text_t* src){
     if(dest->num_text>=NUM_TEXT) return -1;
@@ -1213,7 +1237,19 @@ add_text(photo_t* dest,text_t* src){
     dest->num_text++;
     return 0;
 }
-
+/**
+ * @brief initialize text object
+ * 
+ * @param p - text  object ptr
+ * @param flags - flags (reserved)
+ * @param level - level of current text object
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @param filled_col - color besides text
+ * @param text_col  - color of text
+ * @param ignore_col - color to ignore
+ * @return ** void 
+ */
 void init_text(text_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,
 int32_t filled_col,int32_t text_col,int32_t ignore_col ){
     p->flags=flags;
@@ -1296,16 +1332,11 @@ void assemble_picture(){
     }
 }
 
-
-
 /**
- * @brief with picture assembled, we draw it to screen using VGA system call
+ * @brief unit test for testing driver
+ * @param buf - input buffer
  * @return ** void 
  */
-void draw_picture(){
-
-}
-
 void test_print(uint16_t* buf){
     int32_t i;
     for(i=IMAGE_X_DIM;i<IMAGE_X_DIM+20;i++){
@@ -1316,6 +1347,11 @@ void test_print(uint16_t* buf){
     }
 }
 
+/**
+ * @brief unit test for VGA output
+ * 
+ * @return ** void 
+ */
 void test_picture(){
     int32_t i,j;
     for(i=1;i<2;i++){
@@ -1326,7 +1362,11 @@ void test_picture(){
     }
     test_print((uint16_t*)display.img);
 }
-
+/**
+ * @brief sleep  for 2 seconds
+ * 
+ * @return ** void 
+ */
 void sleep_2(){
     int32_t rtc_fd,i;
     rtc_fd = ece391_open((uint8_t*)"rtc");
@@ -1337,6 +1377,14 @@ void sleep_2(){
     ece391_close(rtc_fd);
 }
 
+/**
+ * @brief fill the string to login text format
+ * @param s string to return
+ * @param _s string given
+ * @param text_len text length
+ * @param enc - encrypted or not
+ * @return ** int32_t number of characters in s
+ */
 int32_t 
 fill_login_text(char* s,const char* _s,int32_t text_len,uint8_t enc){
     int32_t i,j;
@@ -1389,6 +1437,11 @@ void login_display(const char* _usr,const char* _password,int32_t text_len,int32
 
 login_t loginFSM;
 
+/**
+ * @brief initialization of FSM 1
+ * 
+ * @return ** void 
+ */
 void loginFSM_init(){
     loginFSM.activate=FSM_LOGIN_USR;
     loginFSM.p_r=loginFSM.u_r=0;
@@ -1396,11 +1449,22 @@ void loginFSM_init(){
     memset(loginFSM.usr,0,sizeof(loginFSM.usr));
 }
 
+/**
+ * @brief FSM1 main function
+ * 
+ * @return ** void 
+ */
 void FSM1_main(){
     loginFSM_init();
     while(loginFSM.activate!=FSM_LOGIN_NNN);
 }
 
+/**
+ * @brief FSM1 thread, called by software interrupt
+ * @param CMD - one of 3, see define
+ * @param c  - keypress in Ascii and some encoded
+ * @return ** void 
+ */
 void FSM1_thread(int32_t CMD,int32_t c){
     if(loginFSM.activate==FSM_LOGIN_NNN) return ;
     switch (CMD)
@@ -1475,6 +1539,11 @@ void FSM1_thread(int32_t CMD,int32_t c){
 
 #define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
 
+/**
+ * @brief signal handler
+ * @param signum - signal number
+ * @return ** void 
+ */
 void 
 siguser_handler(int signum){
     uint8_t c[2];
@@ -1506,11 +1575,30 @@ siguser_handler(int signum){
         }
     }
 }
+/**
+ * @brief wrap up FSM 1
+ * 
+ * @return ** void 
+ */
+void FSM1_clear(){
+    int32_t i,fd=loginFSM.fd;
+
+    /* clear all texts */
+    for(i=0;i<4;i++) display.text_list[i]=NULL;
+    display.num_text=0;
+    
+    assemble_picture();
+
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+    }
+}
 
 int main(){
 
     int32_t fd;
-    int32_t text_len,i;
+    int32_t text_len;
     int32_t label_len;
 
     if(-1==ece391_set_handler(USER1,siguser_handler)){
@@ -1621,17 +1709,8 @@ int main(){
 
     FSM1_main();
 
-    /* clear all texts */
-    for(i=0;i<4;i++) display.text_list[i]=NULL;
-    display.num_text=0;
-    
-    assemble_picture();
+    FSM1_clear();
 
-    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
-        ece391_close(fd);
-        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
-        return 2;
-    }
 
     while(1);
     // test_picture();

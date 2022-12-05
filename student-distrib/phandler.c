@@ -17,6 +17,7 @@
 #include "pit.h"
 #include "rtc.h"
 #include "keyboard.h"
+#include "psmouse.h"
 #include "process.h"
 #include "signal.h"
 #include "sb16.h"
@@ -151,6 +152,9 @@ do_interrupt(old_ireg_t *oldregs) {
         case 0x08:
             rtc_handler();
             break;
+        case 0x0C:
+            psmouse_handler();
+            break;
         default:
             printf("unknown interrupt %d\n", interrupt_index);
             break;
@@ -169,4 +173,5 @@ install_interrupt_hanlder() {
     SET_IDT_ENTRY(idt[0x21], interrupt_handler_jump_table[1]);
     SET_IDT_ENTRY(idt[0x25], interrupt_handler_jump_table[2]);
     SET_IDT_ENTRY(idt[0x28], interrupt_handler_jump_table[3]);
+    SET_IDT_ENTRY(idt[0x2C], interrupt_handler_jump_table[4]);
 }

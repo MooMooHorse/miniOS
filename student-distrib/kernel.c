@@ -12,6 +12,7 @@
 #include "tests.h"
 #include "keyboard.h"
 #include "cursor.h"
+#include "psmouse.h"
 #include "filesystem.h"
 #include "syscall.h"
 #include "terminal.h"
@@ -171,6 +172,7 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+    psmouse_init();
 
     dump_fs();
 

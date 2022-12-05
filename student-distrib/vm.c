@@ -13,7 +13,6 @@
 #include "process.h"
 #include "terminal.h"
 
-
 /* vm_init
  * 
  * Sets up the page directory, the first page table, creates direct mapping
@@ -29,13 +28,13 @@ vm_init(void) {
     pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
     pgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
     pgdir[16] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 --> 64M ~ 68M
-    
+
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
-    for(i=VGA_START;i<VGA_END;i+=PGSIZE){ // Map PTE : 0xA0000~0xBFFFF --> 0xA0000~0xBFFFF 
-        if(i!=VIDEO) pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW;
+    for (i = VGA_START; i < VGA_END; i += PGSIZE) { // Map PTE : 0xA0000~0xBFFFF --> 0xA0000~0xBFFFF
+        if (i != VIDEO) pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW;
     }
-    
+
     // pgdir[2] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #2 --> 64M ~ 68M
     // pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
@@ -52,9 +51,9 @@ vm_init(void) {
          orl %0, %%eax          \n\t\
          movl %%eax, %%cr4      \n\t\
          "
-         :
-         : "r" (CR4_PSE)
-         : "eax"
+        :
+        : "r" (CR4_PSE)
+        : "eax"
     );
 
     // Set page directory.
@@ -66,12 +65,11 @@ vm_init(void) {
          orl %0, %%eax          \n\t\
          movl %%eax, %%cr0      \n\t\
          "
-         :
-         : "r" (CR0_PG | CR0_WP)  // WP set to facilitate COW fork.
-         : "eax"
-    );
+        :
+        : "r" (CR0_PG | CR0_WP)  // WP set to facilitate COW fork.
+        : "eax"
+        );
 }
-
 
 /**
  * @brief This function maps 1 extended page (4MB) for program image.
@@ -96,8 +94,8 @@ uvmmap_ext(uint32_t pa) {
  * 0 on normal return 
  */
 int32_t
-uvmmap_tbuf(uint32_t tbufa){
-    if(tbufa << (PTESIZE - PTXOFF)){ /* not 4KB - aligned */
+uvmmap_tbuf(uint32_t tbufa) {
+    if (tbufa << (PTESIZE - PTXOFF)) { /* not 4KB - aligned */
         return -1;
     }
     pgtbl[PTX(tbufa)] = tbufa | PAGE_P | PAGE_RW; /* physical == virtual */

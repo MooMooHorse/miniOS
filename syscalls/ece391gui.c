@@ -631,6 +631,7 @@ typedef struct photo_t photo_t;
 typedef struct image_t image_t;
 typedef struct icon_t  icon_t;
 typedef struct text_t  text_t;
+typedef struct login_t login_t;
 
 /*********************************************************************
  * @brief library code start 
@@ -880,16 +881,6 @@ void* memcpy(void* dest, const void* src, uint32_t n) {
  *********************************************************************/
 
 
-/****************************************************************************************
- * @brief OCTREE start
- ****************************************************************************************/
-
-
-/****************************************************************************************
- * @brief OCTREE end
- ****************************************************************************************/
-
-
 /*
  * Room photo/object image file header for the ECE391 adventure 
  * game (F11 MP2).
@@ -943,6 +934,28 @@ struct text_t{
     uint8_t        level; /* level of this object : 0 is at the bottom, meaning will be cover by any objects with higher level */
     uint32_t       flags; /* reserved */
 };
+/* FSM for login */
+#define FSM_LOGIN_NNN 0
+#define FSM_LOGIN_USR 1
+#define FSM_LOGIN_PSW 2
+
+#define LOGIN_CMD_SWITCH 0
+#define LOGIN_CMD_CHECK  1
+#define LOGIN_CMD_ENTER  2
+
+#define LOGIN_BOX_TEXT_NUM 19
+
+struct login_t{
+    char usr[IMAGE_X_DIM/FONT_WIDTH];
+    char password[IMAGE_X_DIM/FONT_WIDTH];
+    int32_t u_r;
+    int32_t p_r;
+    uint8_t activate;
+    int32_t text_len;
+    int32_t fd;
+};
+
+
 
 
 /* 
@@ -1105,7 +1118,6 @@ draw_text(const char* src,int n,text_t* p,int32_t scale){
     if(lines>=MAX_LINES_IN_BOX) return -1; /* too many lines (only 4 scales(lines) are supported) */
     if(lines>scale) return -1; /* with this scale and this line number, text box will overflow */
     
-    memset(p->img,0,sizeof(p->img));
 
     for(i=0;i<lines;i++){
         for(j=0;j<line_len[i];j++){
@@ -1325,20 +1337,197 @@ void sleep_2(){
     ece391_close(rtc_fd);
 }
 
+int32_t 
+fill_login_text(char* s,const char* _s,int32_t text_len,uint8_t enc){
+    int32_t i,j;
+    i=ece391_strlen((uint8_t*)_s);
+    j=0;
+    while(i--){
+        s[j]=enc?'*':_s[j];
+        j++;
+    }
+    while(j<text_len) s[j++]=' ';
+    return j;
+}
+
+/**
+ * @brief display the login page given displayed user and encrypted password
+ * @param _usr - user name string
+ * @param _password - password string
+ * @param text_len - length of text boxes
+ * @param fd - vga fd number
+ * @return ** void 
+ */
+void login_display(const char* _usr,const char* _password,int32_t text_len,int32_t fd){
+    char usr[IMAGE_Y_DIM/FONT_WIDTH],password[IMAGE_Y_DIM/FONT_WIDTH];
+
+    fill_login_text(usr,_usr,text_len,0);
+    fill_login_text(password,_password,text_len,1);
+
+
+    init_text(&text[0],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    (IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1,
+    WHITE_COL,BLACK_COL,-1);
+
+
+    if(-1==draw_text(usr,text_len,&text[0],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 1 draw failed\n");
+    }
+
+    init_text(&text[1],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+2*(FONT_HEIGHT/2+PADDING_HEIGHT*2)+PADDING_HEIGHT*3,
+    WHITE_COL,BLACK_COL,-1);
+
+    if(-1==draw_text(password,text_len,&text[1],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 2 draw failed\n");
+    }
+}
+
+login_t loginFSM;
+
+void loginFSM_init(){
+    loginFSM.activate=FSM_LOGIN_USR;
+    loginFSM.p_r=loginFSM.u_r=0;
+    memset(loginFSM.password,0,sizeof(loginFSM.password));
+    memset(loginFSM.usr,0,sizeof(loginFSM.usr));
+}
+
+void FSM1_main(){
+    loginFSM_init();
+    while(loginFSM.activate!=FSM_LOGIN_NNN);
+}
+
+void FSM1_thread(int32_t CMD,int32_t c){
+    if(loginFSM.activate==FSM_LOGIN_NNN) return ;
+    switch (CMD)
+    {
+    case LOGIN_CMD_SWITCH:
+        if(loginFSM.activate==FSM_LOGIN_USR) loginFSM.activate=FSM_LOGIN_PSW;
+        else loginFSM.activate=FSM_LOGIN_USR;
+        break;
+    case LOGIN_CMD_CHECK:
+        if(0==ece391_strcmp((uint8_t*)loginFSM.usr,(uint8_t*)"MOOMOOHORSE")
+        &&0==ece391_strcmp((uint8_t*)loginFSM.password,(uint8_t*)"dddd")){
+            loginFSM.activate=FSM_LOGIN_NNN;
+        }else{
+            loginFSM_init();
+        }
+        break;
+    case LOGIN_CMD_ENTER:
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            if(c=='\b'&&loginFSM.u_r){
+                loginFSM.u_r--;
+                loginFSM.usr[loginFSM.u_r]='\0';
+            }
+            if(c!='\b'&&loginFSM.u_r<LOGIN_BOX_TEXT_NUM-1){
+                loginFSM.usr[loginFSM.u_r++]=c;
+                loginFSM.usr[loginFSM.u_r]='\0';
+            }
+        }else{
+            if(c=='\b'&&loginFSM.p_r){
+                loginFSM.p_r--;
+                loginFSM.password[loginFSM.p_r]='\0';
+            }
+            if(c!='\b'&&loginFSM.p_r<LOGIN_BOX_TEXT_NUM-1){
+                loginFSM.password[loginFSM.p_r++]=c;
+                loginFSM.password[loginFSM.p_r]='\0';
+            }
+        }
+        break;
+    
+    default:
+        break;
+    }
+    if(loginFSM.activate!=FSM_LOGIN_NNN){
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            loginFSM.usr[loginFSM.u_r++]='_';
+            loginFSM.usr[loginFSM.u_r]='\0';
+        }
+        login_display(loginFSM.usr,loginFSM.password,loginFSM.text_len,loginFSM.fd);
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            loginFSM.u_r--;
+            loginFSM.usr[loginFSM.u_r]='\0';
+        }
+        assemble_picture();
+
+        if(-1==ece391_write(loginFSM.fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+            ece391_close(loginFSM.fd);
+            ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        }
+    }
+
+}
+
+/* keyboard related functions */
+
+#define ALT_BASE    128
+
+#define TO_DIR(c)         (c+ALT_BASE)
+
+#define LEFT_ARROW  TO_DIR(0x4B)
+#define UP_ARROW    TO_DIR(0x48)
+#define DOWN_ARROW  TO_DIR(0x50)
+#define RIGHT_ARROW TO_DIR(0x4D)
+
+#define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
+
+void 
+siguser_handler(int signum){
+    uint8_t c[2];
+    c[0]=ece391_getc();
+    c[1]='\0';
+    if(IS_ARROW(c[0])){
+        switch (c[0])
+        {
+        case UP_ARROW:
+            break;
+        case DOWN_ARROW:
+            break;
+        case RIGHT_ARROW:
+            break;
+        case LEFT_ARROW:
+            break;
+        default:
+            break;
+        }
+    }else{
+        if(c[0]=='\t'){
+            FSM1_thread(LOGIN_CMD_SWITCH,c[0]);
+        }
+        else if(c[0]=='\n'){
+            FSM1_thread(LOGIN_CMD_CHECK,c[0]);
+        }
+        else{
+            FSM1_thread(LOGIN_CMD_ENTER,c[0]);
+        }
+    }
+}
+
 int main(){
 
     int32_t fd;
     int32_t text_len,i;
     int32_t label_len;
 
+    if(-1==ece391_set_handler(USER1,siguser_handler)){
+        ece391_fdputs (1, (uint8_t*)"handler install failed\n");  
+        return 2;
+    }
+
     if(-1==(fd=ece391_open((uint8_t*)"statue.photo"))){
         ece391_fdputs (1, (uint8_t*)"file not found\n");  
+        return 2;
     }
 
     if(-1==ece391_read(fd,&background.hdr,sizeof(background.hdr))){
         ece391_fdputs (1, (uint8_t*)"file read failed\n");
+        return 2;
     }
-    text_len=ece391_strlen((uint8_t*)"Hi, ECE391");
+    text_len=ece391_strlen((uint8_t*)"MINI OS");
 
     init_background(&background,0,0,0,0,0);
     init_text(&text[0],0,1,
@@ -1352,8 +1541,9 @@ int main(){
         ece391_fdputs (1, (uint8_t*)"background draw failed\n");
     }
 
-    if(-1==draw_text("Hi, ECE391",text_len,&text[0],1)){
+    if(-1==draw_text("MINI OS",text_len,&text[0],1)){
         ece391_fdputs (1, (uint8_t*)"text draw failed\n");
+        return 2;
     }
 
     add_background(&display,&background);
@@ -1363,11 +1553,13 @@ int main(){
 
     if(-1==(fd=ece391_open((uint8_t*)"vga"))){
         ece391_fdputs (1, (uint8_t*)"vga open failed\n");
+        return 2;
     }
 
     if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
     }
 
     /* display for two seconds : start */
@@ -1381,30 +1573,10 @@ int main(){
     
 
     text_len=ece391_strlen((uint8_t*)"MOOMOOHORSE        ");
+    loginFSM.fd=fd;
+    loginFSM.text_len=text_len;
+    login_display("_","",text_len,fd);
 
-    init_text(&text[0],0,1,
-    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
-    (IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1,
-    WHITE_COL,BLACK_COL,-1);
-
-    init_text(&text[1],0,1,
-    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
-    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+2*(FONT_HEIGHT/2+PADDING_HEIGHT*2)+PADDING_HEIGHT*3,
-    WHITE_COL,BLACK_COL,-1);
-
-    
-
-
-
-    if(-1==draw_text("MOOMOOHORSE        ",text_len,&text[0],2)){
-        ece391_close(fd);
-        ece391_fdputs (1, (uint8_t*)"text 1 draw failed\n");
-    }
-
-    if(-1==draw_text("***********        ",text_len,&text[1],2)){
-        ece391_close(fd);
-        ece391_fdputs (1, (uint8_t*)"text 2 draw failed\n");
-    }
 
 
     label_len=ece391_strlen((uint8_t*)"USER NAME");
@@ -1417,6 +1589,7 @@ int main(){
     if(-1==draw_text("USER NAME",label_len,&text[2],2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+        return 2;
     }
 
     label_len=ece391_strlen((uint8_t*)"PASSWORD");
@@ -1428,6 +1601,7 @@ int main(){
     if(-1==draw_text("PASSWORD",label_len,&text[3],2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+        return 2;
     }
 
 
@@ -1442,9 +1616,10 @@ int main(){
     if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
     }
 
-    sleep_2();
+    FSM1_main();
 
     /* clear all texts */
     for(i=0;i<4;i++) display.text_list[i]=NULL;
@@ -1455,8 +1630,8 @@ int main(){
     if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
     }
-
 
     while(1);
     // test_picture();

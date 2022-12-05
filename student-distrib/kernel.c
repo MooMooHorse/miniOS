@@ -171,6 +171,7 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+    sb16_init();
 
     dump_fs();
 

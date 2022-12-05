@@ -19,12 +19,16 @@
 #define MAX_PAGE    4
 #define MAX_SIZE    (NUM_COLS*NUM_ROWS*MAX_PAGE)
 
-#define IS_ARROW(c)       (c==0x4B||c==0x48||c==0x50||c==0x4D)
+#define ALT_BASE    128
 
-#define LEFT_ARROW  0x4B
-#define UP_ARROW    0x48
-#define DOWN_ARROW  0x50
-#define RIGHT_ARROW 0x4D
+#define TO_DIR(c)         (c+ALT_BASE)
+
+#define LEFT_ARROW  TO_DIR(0x4B)
+#define UP_ARROW    TO_DIR(0x48)
+#define DOWN_ARROW  TO_DIR(0x50)
+#define RIGHT_ARROW TO_DIR(0x4D)
+
+#define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
 
 #define VGA_WIDTH   80
 
@@ -178,6 +182,14 @@ siguser_handler (int signum){
         
         BUF_shift_right();
         BUF[buf_map[x][y]]=c[0];
+        if(c[0]=='\n'){
+            cy++;
+            cx=0;
+        }else{
+            cx++;
+            cx%=NUM_COLS;
+        }
+        ece391_set_cursor(cx,cy);
     }
     // ece391_fdputs (1, c);
 

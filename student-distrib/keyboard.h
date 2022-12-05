@@ -39,6 +39,7 @@
 #define IS_DIR(c)       (c==0x4B||c==0x48||c==0x50||c==0x4D)
 #define IS_DIGIT(c)     (c>='0'&&c<='9')
 #define IS_SPECIAL(c)   (c=='\n'||c=='\b'||c=='\t')
+#define TO_DIR(c)       (c+ALT_BASE)
  
 /*!
  * @brief Circular buffer used to store keyboard input.

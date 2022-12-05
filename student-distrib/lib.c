@@ -619,6 +619,14 @@ panic(const char* s) {
     while (1);
 }
 
+void light_pixel(int x, int y) {
+    *(uint8_t *)(VIDEO + ((NUM_COLS * y + x - 1) << 1) + 1) = ATTRIB_NEG;
+}
+
+void unlight_pixel(int x, int y) {
+    *(uint8_t *)(VIDEO + ((NUM_COLS * y + x - 1) << 1) + 1) = ATTRIB;
+}
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void

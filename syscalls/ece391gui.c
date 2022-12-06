@@ -622,6 +622,9 @@ void* memset(void* s, int32_t c, uint32_t n) {
 #define PADDING_WIDTH  1
 #define WHITE_COL   0xffff // 5 : 6 : 5 RGB
 #define BLACK_COL   0x0000 // 5 : 6 : 5 RGB
+#define RED_COL     0xf800
+#define GREEN_COL   0x07e0
+#define BLUE_COL    0x001f
 #define MAX_LINES_IN_BOX 4 
 
 
@@ -921,6 +924,9 @@ struct icon_t{
     uint16_t       x,y; /* upper left corner */
     uint8_t        level; /* level of this object : 0 is at the bottom, meaning will be cover by any objects with higher level */
     uint32_t       flags; /* 3 types of icons currently */
+    int32_t        filled_col; /* text box inner color */
+    int32_t        text_col;   /* text color */
+    int32_t        ignore_col; /* color to ignore : you can set it se filled color to ignore filling */
 };
 
 struct text_t{
@@ -1164,10 +1170,6 @@ draw_text(const char* src,int n,text_t* p,int32_t scale){
     return 0;
 }
 
-void draw_icon(uint8_t icon_type,icon_t* p){
-
-
-}
 
 /**
  * @brief A series of Adding and Initialization Functions
@@ -1218,13 +1220,20 @@ add_icon(photo_t* dest,icon_t* src){
  * @param level - level of icon
  * @param x - upper left coordinate
  * @param y - upper left coordinate
+ * @param filled_col - color besides color of icon
+ * @param text_col  - color of icon
+ * @param ignore_col - color to ignore
  * @return ** void 
  */
-void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y){
+void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,
+int32_t filled_col,int32_t text_col,int32_t ignore_col ){
     p->flags=flags;
     p->level=level;
     p->x=x;
     p->y=y;
+    p->filled_col=filled_col;
+    p->text_col=text_col;
+    p->ignore_col=ignore_col;
 }
 
 /**
@@ -1302,7 +1311,11 @@ void assemble_picture(){
                     for(sy=0;sy<p2->hdr.height;sy++){
                         dx=p2->x;
                         for(sx=0;sx<p2->hdr.width;sx++){
-                            display.img[dy][dx++]=p2->img[sy][sx];
+                            if(p2->img[sy][sx]!=p2->ignore_col)
+                                display.img[dy][dx++]=p2->img[sy][sx];
+                            else{
+                                dx++;
+                            }
                         }
                         dy++;
                     }
@@ -1526,6 +1539,177 @@ void FSM1_thread(int32_t CMD,int32_t c){
 
 }
 
+void draw_icont_T(icon_t* p,int32_t x,int32_t y,const char* name,int32_t icon_ind,
+int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
+    int32_t i,j;
+    init_icon(p,0,1,x,y,filled_col,text_col,ignore_col);
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            p->img[i][j]=filled_col;
+        }
+    }
+    for(i=h/5;i<h/5+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    for(i=h/5+h/10;i<h-h/5;i++){
+        for(j=w/5+w/4;j<w/5+w/4+w/10;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    /* reserve circle */
+    for(i=0;i<h/5;i++){
+        for(j=0;j<w/5;j++){
+            //(i-h/5)^2+(j-w/5)^2>6^2
+            if((i-h/5)*(i-h/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+    for(i=h-h/5;i<h;i++){
+        for(j=0;j<w/5;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=0;i<h/5;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-h/5)*(i-h/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=h-h/5;i<h;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    init_text(&text[icon_ind],0,1,x,y+h,WHITE_COL,RED_COL,WHITE_COL);
+
+    draw_text(name,ece391_strlen((uint8_t*)name),&text[icon_ind],2);
+
+    p->hdr.height=h;
+    p->hdr.width=w;
+    p->present=1;
+
+    add_text(&display,&text[icon_ind]);
+    add_icon(&display,p);
+
+}
+
+void draw_icont_E(icon_t* p,int32_t x,int32_t y,const char* name,int32_t icon_ind,
+int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
+    int32_t i,j;
+    init_icon(p,0,1,x,y,filled_col,text_col,ignore_col);
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            p->img[i][j]=filled_col;
+        }
+    }
+    
+    for(i=h/5;i<h/5+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    for(i=h/5+h/10+(3*h)/20;i<h/5+h/10+(3*h)/20+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+    for(i=h/5+h/5+(3*h)/10;i<h/5+h/5+(3*h)/10+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+    for(i=h/5;i<h/5+h/5+(3*h)/10+h/10;i++){
+        for(j=w/5;j<w/5+w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+
+
+    /* reserve circle */
+    for(i=0;i<h/5;i++){
+        for(j=0;j<w/5;j++){
+            //(i-h/5)^2+(j-w/5)^2>6^2
+            if((i-h/5)*(i-h/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+    for(i=h-h/5;i<h;i++){
+        for(j=0;j<w/5;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=0;i<h/5;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-h/5)*(i-h/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=h-h/5;i<h;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    init_text(&text[icon_ind],0,1,x,y+h,WHITE_COL,RED_COL,WHITE_COL);
+
+    draw_text(name,ece391_strlen((uint8_t*)name),&text[icon_ind],2);
+
+    p->hdr.height=h;
+    p->hdr.width=w;
+    p->present=1;
+
+    add_text(&display,&text[icon_ind]);
+    add_icon(&display,p);
+}
+
+int32_t fname_display_processing(char* s){
+    int32_t n=ece391_strlen((uint8_t*)s),m,ret=1;
+    int32_t i,j;
+    for(i=0;i<n;i++) if(s[i]=='.') ret=0;
+    
+    for(i=0;i<n;i++){
+        if((int32_t)s[i]>=(int32_t)'a'&&(int32_t)s[i]<=(int32_t)'z'){
+            s[i]=(int32_t)s[i]-(int32_t)'a'+(int32_t)'A';
+        }
+    }
+    if(n>=6){
+        for(i=6;i<n;i++) s[i]='\0';
+        return ret;
+    }
+    m=(6-n)>>1;
+    for(j=0;j<m;j++){
+        for(i=6;i>0;i--) s[i]=s[i-1];
+    }
+    for(i=0;i<m;i++) s[i]=' ';
+    for(i=n+m;i<6;i++) s[i]=' ';
+    s[6]='\0';
+    return ret;
+}
+
 /* keyboard related functions */
 
 #define ALT_BASE    128
@@ -1650,7 +1834,7 @@ int main(){
         return 2;
     }
 
-    /* display for two seconds : start */
+    // /* display for two seconds : start */
 
     sleep_2();
 
@@ -1711,7 +1895,48 @@ int main(){
 
     FSM1_clear();
 
+    char buf[40];
+    int32_t d_fd,cnt,fcount=0,fx=0,fy=0;
+    int32_t f_displacement=40;
 
+    if (-1 == (d_fd = ece391_open ((uint8_t*)"."))) {
+        ece391_fdputs (1, (uint8_t*)"directory open failed\n");
+        return 2;
+    }
+
+    while (0 != (cnt = ece391_read (d_fd, buf, 40-1))) {
+        if (-1 == cnt) {
+	        ece391_fdputs (1, (uint8_t*)"directory entry read failed\n");
+	        return 3;
+	    }
+        if(ece391_strcmp((uint8_t*)buf,(uint8_t*)".")==0){
+            continue;
+        }
+	    buf[cnt] = '\0';
+	    if(fname_display_processing(buf)){
+            draw_icont_E(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+        }
+        else{
+            draw_icont_T(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+        }
+        fy+=f_displacement;
+        if(fy+f_displacement>IMAGE_Y_DIM){
+            fy=0;
+            fx+=f_displacement;
+        }
+        fcount++;
+
+    }
+
+    assemble_picture();
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
+    }
+
+
+    
     while(1);
     // test_picture();
     

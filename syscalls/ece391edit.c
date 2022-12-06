@@ -158,6 +158,7 @@ siguser_handler (int signum){
     uint8_t c[2];
     c[0]=ece391_getc();
     c[1]='\0';
+    if(c[0]==0) return ;
     if(IS_ARROW(c[0])){
         switch (c[0])
         {
@@ -270,14 +271,9 @@ int main ()
         flength+=cnt;
     }
 
-    rtc_fd = ece391_open((uint8_t*)"rtc");
-    rtc_val = 128;
-    rtc_val = ece391_write(rtc_fd, &rtc_val, 4);
     clear();
     show_text();
-    while(1){
-        ece391_read(rtc_fd, &buf, 4); // buf = garbage 
-    }   
+    while(1);
 
     return 0;
 }

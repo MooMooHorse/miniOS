@@ -6,6 +6,7 @@
 
 #include "lib.h"
 #include "i8259.h"
+#include "x86_desc.h"
 
 #define PSMOUSE_IRQ      12
 #define PSMOUSE_DATA     0x60
@@ -29,5 +30,6 @@
 
 extern void psmouse_init(void);
 extern void psmouse_handler(void);
+extern int32_t mouse_open(file_t* file, const uint8_t* fname, int32_t dump);
 
 #endif

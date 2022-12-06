@@ -30,6 +30,7 @@
 #include "cursor.h"
 #include "keyboard.h"
 #include "vga.h"
+#include "psmouse.h"
 
 extern void swtchret(void);
 extern void pseudoret(void);
@@ -280,7 +281,13 @@ int32_t open (const uint8_t* filename){
     if(!if_file_available){
         return -1;
     }
-    if(strncmp((int8_t*)"vga",(int8_t*)filename,4)==0){
+    if(strncmp((int8_t*)"psmouse",(int8_t*)filename,4)==0){
+        /* if vga */
+        if(-1==mouse_open(file_entry,filename,0)){
+            return -1;
+        }
+    }
+    else if(strncmp((int8_t*)"vga",(int8_t*)filename,4)==0){
         /* if vga */
         if(-1==vga_open(file_entry,filename,0)){
             return -1;

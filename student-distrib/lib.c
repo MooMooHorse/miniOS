@@ -627,6 +627,10 @@ void unlight_pixel(int x, int y) {
     *(uint8_t *)(VIDEO + ((NUM_COLS * y + x - 1) << 1) + 1) = ATTRIB;
 }
 
+uint8_t get_attr(){
+    return ATTRIB;
+}
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void

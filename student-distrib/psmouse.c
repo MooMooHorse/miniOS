@@ -92,14 +92,16 @@ psmouse_handler(void) {
     delta_x = (stat & PSMOUSE_XS) ? SIGN_EXTENSION(delta_x) : delta_x;
     delta_y = (stat & PSMOUSE_YS) ? SIGN_EXTENSION(delta_y) : delta_y;
 
-    unlight_pixel(screen_x, screen_y);
+    if(!get_graphics()) 
+        unlight_pixel(screen_x, screen_y);
     screen_x += delta_x;
     screen_y -= delta_y;
 
     // Reset to edges if out of bounds.
     screen_x = (1 > screen_x) ? 1 : (SCREEN_WIDTH < screen_x) ? SCREEN_WIDTH : screen_x;
     screen_y = (0 > screen_y) ? 0 : (SCREEN_HEIGHT - 1 < screen_y) ? SCREEN_HEIGHT - 1 : screen_y;
-    light_pixel(screen_x, screen_y);
+    if(!get_graphics()) 
+        light_pixel(screen_x, screen_y);
 
     // Handle left clicks...
     if (stat & PSMOUSE_LB) {

@@ -146,7 +146,7 @@ kgetc(void) {
     }
 
     if(code==DOUBLE_WORD||IS_DIR(code)){
-        user_c=code;
+        user_c=TO_DIR(code);
     }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)||ISALT(c)){
         user_c=c;
     }else{

@@ -179,8 +179,8 @@ unsigned char font_data[256][16] = {
      0xC6, 0xD6, 0xDE, 0x7C, 0x0C, 0x0E, 0x00, 0x00},
     {0x00, 0x00, 0xFC, 0x66, 0x66, 0x66, 0x7C, 0x6C,
      0x66, 0x66, 0x66, 0xE6, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x7C, 0xC6, 0xC6, 0x60, 0x38, 0x0C,
-     0x06, 0xC6, 0xC6, 0x7C, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x7C, 0x60, 0x60, 0x60, 0x60, 0x7C,
+     0x0C, 0x0C, 0x0C, 0x7C, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0x7E, 0x7E, 0x5A, 0x18, 0x18, 0x18,
      0x18, 0x18, 0x18, 0x3C, 0x00, 0x00, 0x00, 0x00},
     {0x00, 0x00, 0xC6, 0xC6, 0xC6, 0xC6, 0xC6, 0xC6,
@@ -614,13 +614,18 @@ void* memset(void* s, int32_t c, uint32_t n) {
 
 /* GUI subfields : TEXT related */
 #define TEXT_X_DIM       160
-#define TEXT_Y_DIM       18
+#define TEXT_Y_DIM       16
 #define FONT_WIDTH   8
 #define FONT_HEIGHT 16
 #define DECODE_PIXEL_LEN 8 /* each line of a character is encapsulated in 1 byte, you have to decode it to 8 bytes with corresponding bits */
-#define PADDING_HEIGHT 2
+#define PADDING_HEIGHT 1
+#define PADDING_WIDTH  1
 #define WHITE_COL   0xffff // 5 : 6 : 5 RGB
 #define BLACK_COL   0x0000 // 5 : 6 : 5 RGB
+#define RED_COL     0xf800
+#define GREEN_COL   0x07e0
+#define BLUE_COL    0x001f
+#define MAX_LINES_IN_BOX 4 
 
 
 typedef struct photo_header_t photo_header_t;
@@ -629,11 +634,12 @@ typedef struct photo_t photo_t;
 typedef struct image_t image_t;
 typedef struct icon_t  icon_t;
 typedef struct text_t  text_t;
+typedef struct login_t login_t;
 
 /*********************************************************************
  * @brief library code start 
  *********************************************************************/
-
+#define NULL 0
 /* int8_t* strrev(int8_t* s);
  * Inputs: int8_t* s = string to reverse
  * Return Value: reversed string
@@ -878,16 +884,6 @@ void* memcpy(void* dest, const void* src, uint32_t n) {
  *********************************************************************/
 
 
-/****************************************************************************************
- * @brief OCTREE start
- ****************************************************************************************/
-
-
-/****************************************************************************************
- * @brief OCTREE end
- ****************************************************************************************/
-
-
 /*
  * Room photo/object image file header for the ECE391 adventure 
  * game (F11 MP2).
@@ -928,18 +924,44 @@ struct icon_t{
     uint16_t       x,y; /* upper left corner */
     uint8_t        level; /* level of this object : 0 is at the bottom, meaning will be cover by any objects with higher level */
     uint32_t       flags; /* 3 types of icons currently */
+    int32_t        filled_col; /* text box inner color */
+    int32_t        text_col;   /* text color */
+    int32_t        ignore_col; /* color to ignore : you can set it se filled color to ignore filling */
 };
 
 struct text_t{
     photo_header_t hdr;
-    uint16_t       img[TEXT_Y_DIM][TEXT_X_DIM];
+    uint16_t       img[TEXT_Y_DIM+PADDING_HEIGHT*MAX_LINES_IN_BOX][TEXT_X_DIM+PADDING_WIDTH*2];
     int32_t        filled_col; /* text box inner color */
     int32_t        text_col;   /* text color */
+    int32_t        ignore_col; /* color to ignore : you can set it se filled color to ignore filling */
     uint8_t        present; /* whether this object is present */
     uint16_t       x,y; /* upper left corner */
     uint8_t        level; /* level of this object : 0 is at the bottom, meaning will be cover by any objects with higher level */
     uint32_t       flags; /* reserved */
 };
+/* FSM for login */
+#define FSM_LOGIN_NNN 0
+#define FSM_LOGIN_USR 1
+#define FSM_LOGIN_PSW 2
+
+#define LOGIN_CMD_SWITCH 0
+#define LOGIN_CMD_CHECK  1
+#define LOGIN_CMD_ENTER  2
+
+#define LOGIN_BOX_TEXT_NUM 19
+
+struct login_t{
+    char usr[IMAGE_X_DIM/FONT_WIDTH];
+    char password[IMAGE_X_DIM/FONT_WIDTH];
+    int32_t u_r;
+    int32_t p_r;
+    uint8_t activate;
+    int32_t text_len;
+    int32_t fd;
+};
+
+
 
 
 /* 
@@ -967,7 +989,9 @@ struct photo_t {
 image_t background;     /* background images */
 icon_t icon[NUM_ICON];  /* text-file, exec, device */
 text_t text[NUM_TEXT];  /* text or text-box */
-
+/* variables used by draw_text */
+static char line[MAX_LINES_IN_BOX][TEXT_X_DIM/FONT_WIDTH*MAX_LINES_IN_BOX];
+static int16_t line_len[MAX_LINES_IN_BOX];
 
 photo_t display;
 
@@ -991,7 +1015,7 @@ inline int32_t shallow_RGB(image_t* p,int32_t read_val){
     R=(0x1f-R)*p->shallowing/100+R;
     G=(0x3f-G)*p->shallowing/100+G;
     B=(0x1f-B)*p->shallowing/100+B;
-    return R+(B<<5)+(G<<11);
+    return B+(G<<5)+(R<<11);
 }
 
 
@@ -1077,38 +1101,75 @@ draw_img(int32_t fd,image_t* p,int32_t ux,int32_t uy, int32_t w,int32_t h){
  * @return unsigned char*, a pointer to the text buffer
  */
 int32_t
-draw_text(const char* src,int n,text_t* p){
-    if(n>(TEXT_X_DIM/FONT_WIDTH)){
-        return -1;
+draw_text(const char* src,int n,text_t* p,int32_t scale){
+    int32_t r=0,lines=0;
+    int32_t i,j,a,b,mx_w=0,k=0;
+    /* extrac each non-empty line of text : non-empty line number lines */
+    for(i=0;i<n;i++){
+        if(src[i]=='\n'){
+            line_len[lines]=r;
+            if(r>mx_w) mx_w=r;
+            lines++;
+            r=0;
+        }
+        else{
+            line[lines][r++]=src[i];
+            if(r>=TEXT_X_DIM/FONT_WIDTH) return -1; /* text overflow */
+        }
     }
-    memset(p->img,0,sizeof(p->img));
+    line_len[lines]=r;
+    if(r>mx_w) mx_w=r;
+    lines++;
 
-    /* all offsets are in bytes */
-    int i,j,k;
-    for(j=0;j<16;j++){
-        /* height 16, enumerate each line */
-        for(i=0;i<n;i++){
-            /* Corresponding character info is at font_data[src[i]][j]*/
-            int extract_bit=1<<DECODE_PIXEL_LEN;
-            for(k=0;k<DECODE_PIXEL_LEN;k++){
-                extract_bit>>=1;
-                p->img[j+(PADDING_HEIGHT>>1)][i*FONT_WIDTH+k]=
-                ((font_data[(int)src[i]][j]&extract_bit)>0?
-                p->text_col:text->filled_col); /* temporarily, fill each character with white color 2:2:2 bit RGB value */
+    if(lines>=MAX_LINES_IN_BOX) return -1; /* too many lines (only 4 scales(lines) are supported) */
+    if(lines>scale) return -1; /* with this scale and this line number, text box will overflow */
+    
+
+    for(i=0;i<lines;i++){
+        for(j=0;j<line_len[i];j++){
+            for(a=0;a<16;a+=scale){
+                int extract_bit=1<<DECODE_PIXEL_LEN;
+                for(b=0;b<DECODE_PIXEL_LEN;b+=scale){
+                    extract_bit>>=scale;
+                    if(scale==1){
+                        p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale]
+                        [PADDING_WIDTH+j*(FONT_WIDTH/scale)+(b/scale)]=
+                        ((font_data[(int)src[k]][a]&extract_bit)>0?
+                        p->text_col:p->filled_col);
+                    }
+                    if(scale==2){
+                        p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale]
+                        [PADDING_WIDTH+j*(FONT_WIDTH/scale)+(b/scale)]=
+                        (((font_data[(int)src[k]][a]|font_data[(int)src[k]][a+1])&extract_bit)>0?
+                        p->text_col:p->filled_col);
+                    }
+                }
+                /* fill front back padding color */
+                for(b=0;b<PADDING_WIDTH;b++){
+                    p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale][b]=p->filled_col;
+                }
+                for(b=PADDING_WIDTH+line_len[i]*(FONT_WIDTH/scale);
+                b<PADDING_WIDTH*2+mx_w*(FONT_WIDTH/scale);b++){
+                    p->img[(i+1)*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)+a/scale][b]=p->filled_col;
+                }
             }
+            k++;
         }
     }
 
-    p->hdr.height=FONT_HEIGHT+PADDING_HEIGHT;
-    p->hdr.width=FONT_WIDTH*n;
+    /* add line padding color */
+    for(i=0;i<=lines;i++){
+        for(j=0;j<mx_w*FONT_WIDTH/scale+2*PADDING_WIDTH;j++){
+            p->img[i*PADDING_HEIGHT+i*(FONT_HEIGHT/scale)][j]=p->filled_col;
+        }
+    }
+
+    p->hdr.height=FONT_HEIGHT/scale*lines+PADDING_HEIGHT*2;
+    p->hdr.width=FONT_WIDTH/scale*mx_w+PADDING_WIDTH*2;
     p->present=1;
     return 0;
 }
 
-void draw_icon(uint8_t icon_type,icon_t* p){
-
-
-}
 
 /**
  * @brief A series of Adding and Initialization Functions
@@ -1123,7 +1184,16 @@ add_background(photo_t* dest,image_t* src){
     dest->num_img++;
     return 0;
 }
-
+/**
+ * @brief initialize background object
+ * @param p - ptr to background
+ * @param flags - reserved
+ * @param level - always 0
+ * @param shallowing - similar to alpha
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @return ** void 
+ */
 void init_background(image_t* p,int32_t flags,uint8_t level,int32_t shallowing,int16_t x,int16_t y){
     p->flags=flags;
     p->level=level;
@@ -1132,6 +1202,9 @@ void init_background(image_t* p,int32_t flags,uint8_t level,int32_t shallowing,i
     p->y=y;
 }
 
+/**
+ * @brief add icon to display
+ */
 int32_t 
 add_icon(photo_t* dest,icon_t* src){
     if(dest->num_icon>=NUM_ICON) return -1;
@@ -1140,13 +1213,32 @@ add_icon(photo_t* dest,icon_t* src){
     return 0;
 }
 
-void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y){
+/**
+ * @brief initialize icon object
+ * @param p - icon object ptr
+ * @param flags - reserved
+ * @param level - level of icon
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @param filled_col - color besides color of icon
+ * @param text_col  - color of icon
+ * @param ignore_col - color to ignore
+ * @return ** void 
+ */
+void init_icon(icon_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,
+int32_t filled_col,int32_t text_col,int32_t ignore_col ){
     p->flags=flags;
     p->level=level;
     p->x=x;
     p->y=y;
+    p->filled_col=filled_col;
+    p->text_col=text_col;
+    p->ignore_col=ignore_col;
 }
 
+/**
+ * @brief add text to display
+ */
 int32_t 
 add_text(photo_t* dest,text_t* src){
     if(dest->num_text>=NUM_TEXT) return -1;
@@ -1154,14 +1246,28 @@ add_text(photo_t* dest,text_t* src){
     dest->num_text++;
     return 0;
 }
-
-void init_text(text_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,int32_t filled_col,int32_t text_col){
+/**
+ * @brief initialize text object
+ * 
+ * @param p - text  object ptr
+ * @param flags - flags (reserved)
+ * @param level - level of current text object
+ * @param x - upper left coordinate
+ * @param y - upper left coordinate
+ * @param filled_col - color besides text
+ * @param text_col  - color of text
+ * @param ignore_col - color to ignore
+ * @return ** void 
+ */
+void init_text(text_t* p,int32_t flags,uint8_t level,int16_t x,int16_t y,
+int32_t filled_col,int32_t text_col,int32_t ignore_col ){
     p->flags=flags;
     p->level=level;
     p->x=x;
     p->y=y;
     p->filled_col=filled_col;
     p->text_col=text_col;
+    p->ignore_col=ignore_col;
 }
 
 /**
@@ -1205,7 +1311,11 @@ void assemble_picture(){
                     for(sy=0;sy<p2->hdr.height;sy++){
                         dx=p2->x;
                         for(sx=0;sx<p2->hdr.width;sx++){
-                            display.img[dy][dx++]=p2->img[sy][sx];
+                            if(p2->img[sy][sx]!=p2->ignore_col)
+                                display.img[dy][dx++]=p2->img[sy][sx];
+                            else{
+                                dx++;
+                            }
                         }
                         dy++;
                     }
@@ -1221,7 +1331,11 @@ void assemble_picture(){
                     for(sy=0;sy<p3->hdr.height;sy++){
                         dx=p3->x;
                         for(sx=0;sx<p3->hdr.width;sx++){
-                            display.img[dy][dx++]=p3->img[sy][sx];
+                            if(p3->img[sy][sx]!=p3->ignore_col)
+                                display.img[dy][dx++]=p3->img[sy][sx];
+                            else{
+                                dx++;
+                            }
                         }
                         dy++;
                     }
@@ -1231,16 +1345,11 @@ void assemble_picture(){
     }
 }
 
-
-
 /**
- * @brief with picture assembled, we draw it to screen using VGA system call
+ * @brief unit test for testing driver
+ * @param buf - input buffer
  * @return ** void 
  */
-void draw_picture(){
-
-}
-
 void test_print(uint16_t* buf){
     int32_t i;
     for(i=IMAGE_X_DIM;i<IMAGE_X_DIM+20;i++){
@@ -1251,6 +1360,11 @@ void test_print(uint16_t* buf){
     }
 }
 
+/**
+ * @brief unit test for VGA output
+ * 
+ * @return ** void 
+ */
 void test_picture(){
     int32_t i,j;
     for(i=1;i<2;i++){
@@ -1261,25 +1375,437 @@ void test_picture(){
     }
     test_print((uint16_t*)display.img);
 }
+/**
+ * @brief sleep  for 2 seconds
+ * 
+ * @return ** void 
+ */
+void sleep_2(){
+    int32_t rtc_fd,i;
+    rtc_fd = ece391_open((uint8_t*)"rtc");
+    for(i=0;i<4;i++){
+        ece391_read(rtc_fd,NULL,0);
+    }
+
+    ece391_close(rtc_fd);
+}
+
+/**
+ * @brief fill the string to login text format
+ * @param s string to return
+ * @param _s string given
+ * @param text_len text length
+ * @param enc - encrypted or not
+ * @return ** int32_t number of characters in s
+ */
+int32_t 
+fill_login_text(char* s,const char* _s,int32_t text_len,uint8_t enc){
+    int32_t i,j;
+    i=ece391_strlen((uint8_t*)_s);
+    j=0;
+    while(i--){
+        s[j]=enc?'*':_s[j];
+        j++;
+    }
+    while(j<text_len) s[j++]=' ';
+    return j;
+}
+
+/**
+ * @brief display the login page given displayed user and encrypted password
+ * @param _usr - user name string
+ * @param _password - password string
+ * @param text_len - length of text boxes
+ * @param fd - vga fd number
+ * @return ** void 
+ */
+void login_display(const char* _usr,const char* _password,int32_t text_len,int32_t fd){
+    char usr[IMAGE_Y_DIM/FONT_WIDTH],password[IMAGE_Y_DIM/FONT_WIDTH];
+
+    fill_login_text(usr,_usr,text_len,0);
+    fill_login_text(password,_password,text_len,1);
+
+
+    init_text(&text[0],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    (IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1,
+    WHITE_COL,BLACK_COL,-1);
+
+
+    if(-1==draw_text(usr,text_len,&text[0],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 1 draw failed\n");
+    }
+
+    init_text(&text[1],0,1,
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+2*(FONT_HEIGHT/2+PADDING_HEIGHT*2)+PADDING_HEIGHT*3,
+    WHITE_COL,BLACK_COL,-1);
+
+    if(-1==draw_text(password,text_len,&text[1],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 2 draw failed\n");
+    }
+}
+
+login_t loginFSM;
+
+/**
+ * @brief initialization of FSM 1
+ * 
+ * @return ** void 
+ */
+void loginFSM_init(){
+    loginFSM.activate=FSM_LOGIN_USR;
+    loginFSM.p_r=loginFSM.u_r=0;
+    memset(loginFSM.password,0,sizeof(loginFSM.password));
+    memset(loginFSM.usr,0,sizeof(loginFSM.usr));
+}
+
+/**
+ * @brief FSM1 main function
+ * 
+ * @return ** void 
+ */
+void FSM1_main(){
+    loginFSM_init();
+    while(loginFSM.activate!=FSM_LOGIN_NNN);
+}
+
+/**
+ * @brief FSM1 thread, called by software interrupt
+ * @param CMD - one of 3, see define
+ * @param c  - keypress in Ascii and some encoded
+ * @return ** void 
+ */
+void FSM1_thread(int32_t CMD,int32_t c){
+    if(loginFSM.activate==FSM_LOGIN_NNN) return ;
+    switch (CMD)
+    {
+    case LOGIN_CMD_SWITCH:
+        if(loginFSM.activate==FSM_LOGIN_USR) loginFSM.activate=FSM_LOGIN_PSW;
+        else loginFSM.activate=FSM_LOGIN_USR;
+        break;
+    case LOGIN_CMD_CHECK:
+        if(0==ece391_strcmp((uint8_t*)loginFSM.usr,(uint8_t*)"MOOMOOHORSE")
+        &&0==ece391_strcmp((uint8_t*)loginFSM.password,(uint8_t*)"dddd")){
+            loginFSM.activate=FSM_LOGIN_NNN;
+        }else{
+            loginFSM_init();
+        }
+        break;
+    case LOGIN_CMD_ENTER:
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            if(c=='\b'&&loginFSM.u_r){
+                loginFSM.u_r--;
+                loginFSM.usr[loginFSM.u_r]='\0';
+            }
+            if(c!='\b'&&loginFSM.u_r<LOGIN_BOX_TEXT_NUM-1){
+                loginFSM.usr[loginFSM.u_r++]=c;
+                loginFSM.usr[loginFSM.u_r]='\0';
+            }
+        }else{
+            if(c=='\b'&&loginFSM.p_r){
+                loginFSM.p_r--;
+                loginFSM.password[loginFSM.p_r]='\0';
+            }
+            if(c!='\b'&&loginFSM.p_r<LOGIN_BOX_TEXT_NUM-1){
+                loginFSM.password[loginFSM.p_r++]=c;
+                loginFSM.password[loginFSM.p_r]='\0';
+            }
+        }
+        break;
+    
+    default:
+        break;
+    }
+    if(loginFSM.activate!=FSM_LOGIN_NNN){
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            loginFSM.usr[loginFSM.u_r++]='_';
+            loginFSM.usr[loginFSM.u_r]='\0';
+        }
+        login_display(loginFSM.usr,loginFSM.password,loginFSM.text_len,loginFSM.fd);
+        if(loginFSM.activate==FSM_LOGIN_USR){
+            loginFSM.u_r--;
+            loginFSM.usr[loginFSM.u_r]='\0';
+        }
+        assemble_picture();
+
+        if(-1==ece391_write(loginFSM.fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+            ece391_close(loginFSM.fd);
+            ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        }
+    }
+
+}
+
+void draw_icont_T(icon_t* p,int32_t x,int32_t y,const char* name,int32_t icon_ind,
+int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
+    int32_t i,j;
+    init_icon(p,0,1,x,y,filled_col,text_col,ignore_col);
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            p->img[i][j]=filled_col;
+        }
+    }
+    for(i=h/5;i<h/5+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    for(i=h/5+h/10;i<h-h/5;i++){
+        for(j=w/5+w/4;j<w/5+w/4+w/10;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    /* reserve circle */
+    for(i=0;i<h/5;i++){
+        for(j=0;j<w/5;j++){
+            //(i-h/5)^2+(j-w/5)^2>6^2
+            if((i-h/5)*(i-h/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+    for(i=h-h/5;i<h;i++){
+        for(j=0;j<w/5;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=0;i<h/5;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-h/5)*(i-h/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=h-h/5;i<h;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    init_text(&text[icon_ind],0,1,x,y+h,WHITE_COL,RED_COL,WHITE_COL);
+
+    draw_text(name,ece391_strlen((uint8_t*)name),&text[icon_ind],2);
+
+    p->hdr.height=h;
+    p->hdr.width=w;
+    p->present=1;
+
+    add_text(&display,&text[icon_ind]);
+    add_icon(&display,p);
+
+}
+
+void draw_icont_E(icon_t* p,int32_t x,int32_t y,const char* name,int32_t icon_ind,
+int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
+    int32_t i,j;
+    init_icon(p,0,1,x,y,filled_col,text_col,ignore_col);
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            p->img[i][j]=filled_col;
+        }
+    }
+    
+    for(i=h/5;i<h/5+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+    for(i=h/5+h/10+(3*h)/20;i<h/5+h/10+(3*h)/20+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+    for(i=h/5+h/5+(3*h)/10;i<h/5+h/5+(3*h)/10+h/10;i++){
+        for(j=w/5;j<w-w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+    for(i=h/5;i<h/5+h/5+(3*h)/10+h/10;i++){
+        for(j=w/5;j<w/5+w/5;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+
+
+    /* reserve circle */
+    for(i=0;i<h/5;i++){
+        for(j=0;j<w/5;j++){
+            //(i-h/5)^2+(j-w/5)^2>6^2
+            if((i-h/5)*(i-h/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+    for(i=h-h/5;i<h;i++){
+        for(j=0;j<w/5;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-w/5)*(j-w/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=0;i<h/5;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-h/5)*(i-h/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    for(i=h-h/5;i<h;i++){
+        for(j=4*w/5;j<w;j++){
+            if((i-(4*h)/5)*(i-(4*h)/5)+(j-(4*w)/5)*(j-(4*w)/5)>5*5){
+                p->img[i][j]=ignore_col;
+            }
+        }
+    }
+
+    init_text(&text[icon_ind],0,1,x,y+h,WHITE_COL,RED_COL,WHITE_COL);
+
+    draw_text(name,ece391_strlen((uint8_t*)name),&text[icon_ind],2);
+
+    p->hdr.height=h;
+    p->hdr.width=w;
+    p->present=1;
+
+    add_text(&display,&text[icon_ind]);
+    add_icon(&display,p);
+}
+
+int32_t fname_display_processing(char* s){
+    int32_t n=ece391_strlen((uint8_t*)s),m,ret=1;
+    int32_t i,j;
+    for(i=0;i<n;i++) if(s[i]=='.') ret=0;
+    
+    for(i=0;i<n;i++){
+        if((int32_t)s[i]>=(int32_t)'a'&&(int32_t)s[i]<=(int32_t)'z'){
+            s[i]=(int32_t)s[i]-(int32_t)'a'+(int32_t)'A';
+        }
+    }
+    if(n>=6){
+        for(i=6;i<n;i++) s[i]='\0';
+        return ret;
+    }
+    m=(6-n)>>1;
+    for(j=0;j<m;j++){
+        for(i=6;i>0;i--) s[i]=s[i-1];
+    }
+    for(i=0;i<m;i++) s[i]=' ';
+    for(i=n+m;i<6;i++) s[i]=' ';
+    s[6]='\0';
+    return ret;
+}
+
+/* keyboard related functions */
+
+#define ALT_BASE    128
+
+#define TO_DIR(c)         (c+ALT_BASE)
+
+#define LEFT_ARROW  TO_DIR(0x4B)
+#define UP_ARROW    TO_DIR(0x48)
+#define DOWN_ARROW  TO_DIR(0x50)
+#define RIGHT_ARROW TO_DIR(0x4D)
+
+#define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
+
+/**
+ * @brief signal handler
+ * @param signum - signal number
+ * @return ** void 
+ */
+void 
+siguser_handler(int signum){
+    uint8_t c[2];
+    c[0]=ece391_getc();
+    c[1]='\0';
+    if(IS_ARROW(c[0])){
+        switch (c[0])
+        {
+        case UP_ARROW:
+            break;
+        case DOWN_ARROW:
+            break;
+        case RIGHT_ARROW:
+            break;
+        case LEFT_ARROW:
+            break;
+        default:
+            break;
+        }
+    }else{
+        if(c[0]=='\t'){
+            FSM1_thread(LOGIN_CMD_SWITCH,c[0]);
+        }
+        else if(c[0]=='\n'){
+            FSM1_thread(LOGIN_CMD_CHECK,c[0]);
+        }
+        else{
+            FSM1_thread(LOGIN_CMD_ENTER,c[0]);
+        }
+    }
+}
+/**
+ * @brief wrap up FSM 1
+ * 
+ * @return ** void 
+ */
+void FSM1_clear(){
+    int32_t i,fd=loginFSM.fd;
+
+    /* clear all texts */
+    for(i=0;i<4;i++) display.text_list[i]=NULL;
+    display.num_text=0;
+    
+    assemble_picture();
+
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+    }
+}
 
 int main(){
 
     int32_t fd;
     int32_t text_len;
+    int32_t label_len;
+
+    if(-1==ece391_set_handler(USER1,siguser_handler)){
+        ece391_fdputs (1, (uint8_t*)"handler install failed\n");  
+        return 2;
+    }
 
     if(-1==(fd=ece391_open((uint8_t*)"statue.photo"))){
         ece391_fdputs (1, (uint8_t*)"file not found\n");  
+        return 2;
     }
 
     if(-1==ece391_read(fd,&background.hdr,sizeof(background.hdr))){
         ece391_fdputs (1, (uint8_t*)"file read failed\n");
+        return 2;
     }
-    text_len=ece391_strlen((uint8_t*)"Hi, ECE391");
+    text_len=ece391_strlen((uint8_t*)"MINI OS");
 
     init_background(&background,0,0,0,0,0);
     init_text(&text[0],0,1,
-    (IMAGE_X_DIM-text_len*FONT_WIDTH)>>1,(IMAGE_Y_DIM-(TEXT_Y_DIM))>>1,
-    WHITE_COL,BLACK_COL);
+    (IMAGE_X_DIM-(text_len*FONT_WIDTH+PADDING_WIDTH*2))>>1,
+    (IMAGE_Y_DIM-(FONT_HEIGHT+PADDING_HEIGHT*2))>>1,
+    WHITE_COL,BLACK_COL,-1);
     
     if(-1==draw_img(fd,&background, 
     (background.hdr.width-IMAGE_X_DIM)>>1, (background.hdr.height-IMAGE_Y_DIM)>>1,
@@ -1287,8 +1813,9 @@ int main(){
         ece391_fdputs (1, (uint8_t*)"background draw failed\n");
     }
 
-    if(-1==draw_text("Hi, ECE391",text_len,&text[0])){
+    if(-1==draw_text("MINI OS",text_len,&text[0],1)){
         ece391_fdputs (1, (uint8_t*)"text draw failed\n");
+        return 2;
     }
 
     add_background(&display,&background);
@@ -1298,16 +1825,119 @@ int main(){
 
     if(-1==(fd=ece391_open((uint8_t*)"vga"))){
         ece391_fdputs (1, (uint8_t*)"vga open failed\n");
+        return 2;
     }
 
     if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
         ece391_close(fd);
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
     }
 
-    while(1);
+    // /* display for two seconds : start */
+
+    sleep_2();
+
+    /* display for two seconds : end */
+
+    display.num_text--;
+    display.text_list[0]=NULL;
+    
+
+    text_len=ece391_strlen((uint8_t*)"MOOMOOHORSE        ");
+    loginFSM.fd=fd;
+    loginFSM.text_len=text_len;
+    login_display("_","",text_len,fd);
+
+
+
+    label_len=ece391_strlen((uint8_t*)"USER NAME");
+    init_text(&text[2],0,1,
+    (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)-FONT_HEIGHT/2-PADDING_HEIGHT*3,
+    BLACK_COL,WHITE_COL,BLACK_COL);
+
+
+    if(-1==draw_text("USER NAME",label_len,&text[2],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+        return 2;
+    }
+
+    label_len=ece391_strlen((uint8_t*)"PASSWORD");
+    init_text(&text[3],0,1,
+    (IMAGE_X_DIM-(label_len*FONT_WIDTH/2+PADDING_WIDTH*2))>>1,
+    ((IMAGE_Y_DIM-(FONT_HEIGHT/2+PADDING_HEIGHT*2))>>1)+FONT_HEIGHT/2+PADDING_HEIGHT*3,
+    BLACK_COL,WHITE_COL,BLACK_COL);
+
+    if(-1==draw_text("PASSWORD",label_len,&text[3],2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"text 3 draw failed\n");
+        return 2;
+    }
+
+
+    add_text(&display,&text[0]);
+    add_text(&display,&text[1]);
+    add_text(&display,&text[2]);
+    add_text(&display,&text[3]);
+
+
+    assemble_picture();
+
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
+    }
+
+    FSM1_main();
+
+    FSM1_clear();
+
+    char buf[40];
+    int32_t d_fd,cnt,fcount=0,fx=0,fy=0;
+    int32_t f_displacement=40;
+
+    if (-1 == (d_fd = ece391_open ((uint8_t*)"."))) {
+        ece391_fdputs (1, (uint8_t*)"directory open failed\n");
+        return 2;
+    }
+
+    while (0 != (cnt = ece391_read (d_fd, buf, 40-1))) {
+        if (-1 == cnt) {
+	        ece391_fdputs (1, (uint8_t*)"directory entry read failed\n");
+	        return 3;
+	    }
+        if(ece391_strcmp((uint8_t*)buf,(uint8_t*)".")==0){
+            continue;
+        }
+	    buf[cnt] = '\0';
+	    if(fname_display_processing(buf)){
+            draw_icont_E(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+        }
+        else{
+            draw_icont_T(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+        }
+        fy+=f_displacement;
+        if(fy+f_displacement>IMAGE_Y_DIM){
+            fy=0;
+            fx+=f_displacement;
+        }
+        fcount++;
+
+    }
+
+    assemble_picture();
+    if(-1==ece391_write(fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return 2;
+    }
+
 
     
+    while(1);
     // test_picture();
     
 

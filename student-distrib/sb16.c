@@ -192,7 +192,7 @@ int32_t sb16_close(file_t* file) {
         // SB16 must be initialized before close
         return -1;
     }
-
+    outb(0xD0, SB16_WRITE_PORT);
     file->fops.close = NULL;
     file->fops.read = NULL;
     file->fops.write = NULL;

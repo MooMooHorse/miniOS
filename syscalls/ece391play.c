@@ -54,36 +54,49 @@ typedef struct {
     uint32_t subchunk_2_size;
 } wav_meta_t;
 
+int32_t sb16_fd, audio_fd;
 
+void sigint_handler (int signum){
+    ece391_fdputs(1, (uint8_t*)"test\n");
+    ece391_set_handler(INTERRUPT,NULL);
+    audio_fd = ece391_close(audio_fd);
+    if (audio_fd != 0) {
+        ece391_fdputs(1, (uint8_t*)"file close failed\n");
+        return -1;
+    }
+
+    sb16_fd = ece391_close(sb16_fd);
+    if (sb16_fd != 0) {
+        ece391_fdputs(1, (uint8_t*)"sb16 close failed\n");
+        return -1;
+    }
+    ece391_halt(0);
+}
 
 int main() {
     wav_meta_t wav_meta;
-    int32_t sb16_fd, audio_fd;
     int32_t data_input_size;
     int32_t i;
     char data_input[SB16_CHUNK_LENGTH];
-    char file_name[1024]; // used for file input, hardcoded file for now
+    uint8_t file_name[1024];
     char debug_buf[1024];
 
     // obtain filename
-    // if (0 != ece391_getargs((uint8_t)file_name, 1024)) {
-    //     ece391_fdputs(1, (uint8_t*)"Error: no file name provided\n");
-    //     return 2;
-    // }
-
-    //ece391_strcpy((uint8_t*)file_name, (uint8_t*)"stopandsmell8.wav");
-
-    // obtain filename
-    if (0 != ece391_getargs ((uint8_t)file_name, 1024)) {
+    if (0 != ece391_getargs (file_name, 1024)) {
         ece391_fdputs (1, (uint8_t*)"could not read arguments\n");
-	    return 2;
+	return -1;
     }
+
     // get file
     audio_fd = ece391_open((uint8_t*)file_name);
 
     if (audio_fd == -1) {
         ece391_fdputs(1, (uint8_t*)"file not found\n");
-        return 2;
+        return -1;
+    }
+
+    if(-1==ece391_set_handler(INTERRUPT,sigint_handler)){
+        return -1;
     }
 
     // initialize sb16
@@ -91,7 +104,7 @@ int main() {
 
     if (sb16_fd == -1) {
         ece391_fdputs(1, (uint8_t*)"sb16 not found\n");
-        return 2;
+        return -1;
     }
 
     // read in wave meta data
@@ -107,7 +120,7 @@ int main() {
         || 0x61746164 != wav_meta.subchunk_2_id // data
     ) {
         ece391_fdputs(1, (uint8_t*) "invalid wav file\n");
-        return 2;
+        return -1;
     }
 
     // HARDWARE LIMITATION CHECKS
@@ -115,19 +128,19 @@ int main() {
     // ensure no more than 2 channels
     if (wav_meta.num_channels > 2 || wav_meta.num_channels < 1) {
         ece391_fdputs(1, (uint8_t*) "wav file has unplayable number of channels\n");
-        return 2;
+        return -2;
     }
 
     // sample rate upper bound check
     if (wav_meta.sample_rate > 44100 || wav_meta.sample_rate < 5000) {
         ece391_fdputs(1, (uint8_t*) "wav file has unplayable sample rate\n");
-        return 2;
+        return -2;
     }
 
     // bits per sample check
     if (wav_meta.bits_per_sample != 8 && wav_meta.bits_per_sample != 16) {
         ece391_fdputs(1, (uint8_t*) "wav file has unplayable bits depth\n");
-        return 2;
+        return -2;
     }
 
     ece391_fdputs(1, (uint8_t*)"Sample Rate: ");
@@ -151,7 +164,7 @@ int main() {
     // Check for read failure
     if (data_input_size <= 0) {
         ece391_fdputs(1, (uint8_t*)"file read failed\n");
-        return 3;
+        return -3;
     }
 
     // Pad as necessary
@@ -162,7 +175,7 @@ int main() {
     // Write to SB16
     if (data_input_size != ece391_write(sb16_fd, data_input, SB16_CHUNK_LENGTH)) {
         ece391_fdputs(1, (uint8_t*)"sb16 write failed\n");
-        return 3;
+        return -3;
     }
 
     // default sample rate and stuff for testing
@@ -178,7 +191,7 @@ int main() {
 
     // outb(0xB0, SB16_WRITE_PORT);
     // outb(0x10, SB16_WRITE_PORT);
-    outb(0xC6, SB16_WRITE_PORT);
+    outb(0xC0, SB16_WRITE_PORT);
     outb(0x00, SB16_WRITE_PORT);
     outb((uint8_t) (SB16_CHUNK_LENGTH - 1) & 0xFF, SB16_WRITE_PORT); // L
     outb((uint8_t) ((SB16_CHUNK_LENGTH - 1) >> 8) & 0xFF, SB16_WRITE_PORT); // H
@@ -189,7 +202,7 @@ int main() {
 
         // load next data chunk
         if (ece391_read(sb16_fd, 0, 0) == -1) {
-            return 5;
+            return -4;
         }
         
 
@@ -201,7 +214,7 @@ int main() {
 
         if (data_input_size < 0) {
             ece391_fdputs(1, (uint8_t*)"file read failed\n");
-            return 3;
+            return -4;
         }
 
         if (data_input_size == 0) {
@@ -215,14 +228,14 @@ int main() {
 
         if (data_input_size != ece391_write(sb16_fd, data_input, data_input_size)) {
             ece391_fdputs(1, (uint8_t*)"file write failed\n");
-            return 4;
+            return -4;
         }
 
         outb(0xD4, SB16_WRITE_PORT);
 
         if (data_input_size < SB16_CHUNK_LENGTH) {
             if (ece391_read(sb16_fd, 0, 0) == -1) {
-                return 5;
+                return -4;
             }
 
             outb(0xDA, SB16_WRITE_PORT);
@@ -233,13 +246,13 @@ int main() {
     audio_fd = ece391_close(audio_fd);
     if (audio_fd != 0) {
         ece391_fdputs(1, (uint8_t*)"file close failed\n");
-        return 5;
+        return -1;
     }
 
     sb16_fd = ece391_close(sb16_fd);
     if (sb16_fd != 0) {
         ece391_fdputs(1, (uint8_t*)"sb16 close failed\n");
-        return 5;
+        return -1;
     }
 
     return 0;

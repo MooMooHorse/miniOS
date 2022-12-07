@@ -960,7 +960,7 @@ int buddy_malloc_stress_test(void) {
     uint32_t i, j;
     uint32_t alloc_cnt = 0;
     uint32_t dealloc_cnt = 0;
-    static const int32_t round_size = 120;  // Cannot be too large -- stack overflow may occur!
+    static const int32_t round_size = 1000;  // Cannot be too large -- the PCB may get corrupted.
     static const int32_t round_cnt = 1000;  // Stress test.
     void* res[round_size];
 

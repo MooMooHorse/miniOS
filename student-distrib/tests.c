@@ -1045,6 +1045,6 @@ void launch_tests() {
     // TEST_OUTPUT("buddy_block_split_test", buddy_block_split_test());
     // TEST_OUTPUT("buddy_block_search_test", buddy_block_search_test());
     // TEST_OUTPUT("buddy_block_coalesce_test", buddy_block_coalesce_test());
-    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
+    // TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
 }
 

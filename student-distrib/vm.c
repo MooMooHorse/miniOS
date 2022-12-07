@@ -24,19 +24,18 @@
  */
 void
 vm_init(void) {
-    int32_t i;
+    uint32_t i;
     pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
     pgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
-    pgdir[16] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 --> 64M ~ 68M
+    for (i = 16; i < 25; ++i) {
+        pgdir[i] = (i << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 ~ #25 --> 64M ~ 100M
+    }
 
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
     for (i = VGA_START; i < VGA_END; i += PGSIZE) { // Map PTE : 0xA0000~0xBFFFF --> 0xA0000~0xBFFFF
         if (i != VIDEO) pgtbl[PTX(i)] = i | PAGE_P | PAGE_RW;
     }
-
-    // pgdir[2] = (16U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #2 --> 64M ~ 68M
-    // pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
     // turn to macro later
     for (i = 0x120000; i < 0x130000; i += PGSIZE) {

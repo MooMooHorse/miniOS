@@ -966,9 +966,9 @@ int buddy_malloc_stress_test(void) {
 
     for (j = 0; j < round_cnt; ++j) {
         memset(res, NULL, sizeof(res) / sizeof(res[0]));
-        buddy_init((void*) 0x4000000, 4 << 20, 1);
+        buddy_init((void*) 0x4000000, 32 << 20, 1);
         for (i = 0; i < round_size; ++i) {
-            if (NULL != (res[i] = buddy_malloc(rand() % ((4 << 10) + 1 - (1 << 10)) + (1 << 10)))) {
+            if (NULL != (res[i] = buddy_malloc(rand() % ((4 << 19) + 1 - (1 << 10)) + (1 << 10)))) {
                 alloc_cnt++;
             }
         }

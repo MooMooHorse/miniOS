@@ -27,6 +27,9 @@
 #define PSMOUSE_GCS      0x20           // Get Compaq Status byte.
 #define PSMOUSE_DEF      0xF6           // Set Defaults.
 #define PSMOUSE_EPS      0xF4           // Enable Packet Streaming.
+#define PSMOUSE_SAM      0xF3           // Set sample rate.
+
+#define PSMOUSE_SAMPLE_RATE      200
 
 extern void psmouse_init(void);
 extern void psmouse_handler(void);

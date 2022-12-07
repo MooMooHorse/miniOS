@@ -67,6 +67,10 @@ psmouse_init(void) {
     (void) PSMOUSE_READ;  // Waiting for ACK.
     PSMOUSE_WRITE(PSMOUSE_EPS);
     (void) PSMOUSE_READ;  // Waiting for ACK.
+    PSMOUSE_WRITE(PSMOUSE_SAM);
+    (void) PSMOUSE_READ;  // Waiting for ACK.
+    PSMOUSE_WRITE(PSMOUSE_SAMPLE_RATE);
+    (void) PSMOUSE_READ;  // Waiting for ACK.
 
     enable_irq(PSMOUSE_IRQ);
 }
@@ -113,24 +117,23 @@ psmouse_handler(void) {
 
     // Handle left clicks...
     if (stat & PSMOUSE_LB) {
-        if_click=1;
+        if_click = 1;
     }
 
-    for(i=1;i<=PCB_MAX;i++){
-        if(PCB(i)->terminal==terminal_index&&
-        (PCB(i)->state==RUNNING||PCB(i)->state==RUNNABLE)){
-            PCB(i)->sig_num=SIG_USER1;
+    for (i = 1; i <= PCB_MAX; i++) {
+        if (PCB(i)->terminal == terminal_index &&
+            (PCB(i)->state == RUNNING || PCB(i)->state == RUNNABLE)) {
+            PCB(i)->sig_num = SIG_USER1;
             break;
         }
     }
 
 }
 
-
 /**
  * @brief bad call
  */
-int32_t mouse_write(file_t* file, const void* buf, int32_t bytes){
+int32_t mouse_write(file_t* file, const void* buf, int32_t bytes) {
     return -1;
 }
 
@@ -141,12 +144,12 @@ int32_t mouse_write(file_t* file, const void* buf, int32_t bytes){
  * @param nbytes - must 12
  * @return ** int32_t -1 on failure 0 on success 
  */
-int32_t mouse_read(file_t* file,void* buf, int32_t nbytes){
-    if(nbytes!=12) return -1;
-    ((int32_t*)buf)[0]=screen_x;
-    ((int32_t*)buf)[1]=screen_y;
-    ((int32_t*)buf)[2]=if_click;
-    if_click=0;
+int32_t mouse_read(file_t* file, void* buf, int32_t nbytes) {
+    if (nbytes != 12) return -1;
+    ((int32_t*) buf)[0] = screen_x;
+    ((int32_t*) buf)[1] = screen_y;
+    ((int32_t*) buf)[2] = if_click;
+    if_click = 0;
     return 0;
 }
 /**
@@ -154,9 +157,9 @@ int32_t mouse_read(file_t* file,void* buf, int32_t nbytes){
  * @param file - file descriptor
  * @return ** int32_t always 0
  */
-int32_t mouse_close(file_t* file){
-    file->flags=F_CLOSE;
-    file->pos=0;
+int32_t mouse_close(file_t* file) {
+    file->flags = F_CLOSE;
+    file->pos = 0;
     return 0;
 }
 
@@ -167,13 +170,13 @@ int32_t mouse_close(file_t* file){
  * @param dump - dumped
  * @return ** int32_t always 0
  */
-int32_t mouse_open(file_t* file, const uint8_t* fname, int32_t dump){
-    file->flags=F_OPEN;
-    file->fops.write=mouse_write;
-    file->fops.read=mouse_read;
-    file->fops.close=mouse_close;
-    file->pos=0;
-    file->inode=-1;
-    screen_x=screen_y=0;
+int32_t mouse_open(file_t* file, const uint8_t* fname, int32_t dump) {
+    file->flags = F_OPEN;
+    file->fops.write = mouse_write;
+    file->fops.read = mouse_read;
+    file->fops.close = mouse_close;
+    file->pos = 0;
+    file->inode = -1;
+    screen_x = screen_y = 0;
     return 0;
 }

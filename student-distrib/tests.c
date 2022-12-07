@@ -5,6 +5,7 @@
 #include "keyboard.h"
 #include "terminal.h"
 #include "cursor.h"
+#include "kmalloc.h"
 
 
 /* Include constants for testing purposes. */
@@ -242,7 +243,7 @@ int vm_sanity_test() {
  */
 int page_flags_test() {
     TEST_HEADER;
-    uint32_t* it = pgdir;  // Start of page directory.
+    uint32_t * it = pgdir;  // Start of page directory.
     int i;
     if (!(PAGE_FLAGS(*it++) & (PAGE_P | PAGE_RW))) {
         printf("P/RW not set for PDE #0!\n");
@@ -436,7 +437,7 @@ int32_t filesystem_ioctl_test0() {
     }
     printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
-    if(-1==fs.f_ioctl.close(&file)){
+    if (-1 == fs.f_ioctl.close(&file)) {
         return FAIL;
     }
     return result;
@@ -458,7 +459,7 @@ int32_t filesystem_ioctl_test1() {
     }
     printf("pos=%d flag=%d ", file.pos, file.flags);
     printf("inode=%d\n", file.inode);
-    if(-1==fs.d_ioctl.close(&file)){
+    if (-1 == fs.d_ioctl.close(&file)) {
         return FAIL;
     }
     return result;
@@ -482,8 +483,8 @@ int32_t filesystem_ioctl_test2() {
     for (i = 0; i < fs.file_num; i++) {
         file.fops.read(&file, buf, 32);
         puts((int8_t*) buf);
-        fs.f_rw.read_dentry_by_name((uint8_t*)buf,&dentry);
-        printf("          filetype=%d    inode=%d\n",dentry.filetype,dentry.inode_num);
+        fs.f_rw.read_dentry_by_name((uint8_t*) buf, &dentry);
+        printf("          filetype=%d    inode=%d\n", dentry.filetype, dentry.inode_num);
     }
     return result;
 }
@@ -502,15 +503,15 @@ int32_t filesystem_ioctl_test3() {
     if (fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.tx", 0) == -1) {
         return FAIL;
     }
-   uint8_t buf[40001];
+    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.fops.read(&file, buf, 40000);
-    if(nbytes_read==-1){
+    nbytes_read = file.fops.read(&file, buf, 40000);
+    if (nbytes_read == -1) {
         return FAIL;
     }
-    printf("%u\n",nbytes_read);
-    for(i=0;i<nbytes_read;i++) putc(buf[i]);
-    if(fs.f_ioctl.close(&file)==-1){
+    printf("%u\n", nbytes_read);
+    for (i = 0; i < nbytes_read; i++) putc(buf[i]);
+    if (fs.f_ioctl.close(&file) == -1) {
         return FAIL;
     }
     return result;
@@ -531,12 +532,12 @@ int32_t filesystem_ioctl_test4() {
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.fops.read(&file, buf, 40000);
-    if(nbytes_read==-1){
+    nbytes_read = file.fops.read(&file, buf, 40000);
+    if (nbytes_read == -1) {
         return FAIL;
     }
-    printf("%u\n",nbytes_read);
-    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    printf("%u\n", nbytes_read);
+    for (i = 0; i < nbytes_read; i++) putc(buf[i]);
     //     putc(' ');
     // }
     return result;
@@ -557,12 +558,12 @@ int32_t filesystem_ioctl_test5() {
     }
     uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.fops.read(&file, buf, 20);
-    if(nbytes_read==-1){
+    nbytes_read = file.fops.read(&file, buf, 20);
+    if (nbytes_read == -1) {
         return FAIL;
     }
-    printf("%u\n",nbytes_read);
-    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    printf("%u\n", nbytes_read);
+    for (i = 0; i < nbytes_read; i++) putc(buf[i]);
     //     putc(' ');
     // }
     return result;
@@ -581,14 +582,14 @@ int32_t filesystem_ioctl_test6() {
     if (fs.openr(&file, (uint8_t*) "verylargetextwithverylongname.txt", 0) == -1) {
         return PASS;
     }
-   uint8_t buf[40001];
+    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.fops.read(&file, buf, 40000);
-    if(nbytes_read==-1){
+    nbytes_read = file.fops.read(&file, buf, 40000);
+    if (nbytes_read == -1) {
         return FAIL;
     }
-    printf("%u\n",nbytes_read);
-    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    printf("%u\n", nbytes_read);
+    for (i = 0; i < nbytes_read; i++) putc(buf[i]);
     return FAIL;
 }
 
@@ -606,14 +607,14 @@ int32_t filesystem_ioctl_test7() {
     if (fs.openr(&file, (uint8_t*) "frame0.txt", 0) == -1) {
         return FAIL;
     }
-   uint8_t buf[40001];
+    uint8_t buf[40001];
     uint32_t nbytes_read;
-    nbytes_read=file.fops.read(&file, buf, 40000);
-    if(nbytes_read==-1){
+    nbytes_read = file.fops.read(&file, buf, 40000);
+    if (nbytes_read == -1) {
         return FAIL;
     }
-    printf("%u\n",nbytes_read);
-    for(i=0;i<nbytes_read;i++) putc(buf[i]);
+    printf("%u\n", nbytes_read);
+    for (i = 0; i < nbytes_read; i++) putc(buf[i]);
     return result;
 }
 
@@ -662,10 +663,10 @@ terminal_io_test(void) {
  * SIDE EFFECT : Virtual RTC 0 will be instantiated.
  * @return int32_t 
  */
-int32_t rtc_test_open_read(){
+int32_t rtc_test_open_read() {
     file_t file;
 
-    rtc[0].ioctl.open(&file, (uint8_t*)"RTC0", 0); /* second arg discarded so arbitrary */
+    rtc[0].ioctl.open(&file, (uint8_t*) "RTC0", 0); /* second arg discarded so arbitrary */
     uint32_t buf[100];
 
     int i, j, k;
@@ -679,7 +680,7 @@ int32_t rtc_test_open_read(){
             printf("!");
         }
         printf("\n");
-        buf[0]=(2<<i);
+        buf[0] = (2 << i);
         rtc[0].ioctl.write(&file, buf, 4);
     }
 
@@ -698,19 +699,19 @@ int32_t rtc_test_open_read(){
  */
 int32_t rtc_test_write() {
     file_t file;
-    rtc[0].ioctl.open(&file, (uint8_t*)"RTC0" , 0);
+    rtc[0].ioctl.open(&file, (uint8_t*) "RTC0", 0);
     uint32_t buf[100];
 
     printf("RTC test write 2 Hz\n");
-    buf[0]=2;
+    buf[0] = 2;
     int32_t test1 = rtc[0].ioctl.write(&file, buf, 4);
 
     printf("RTC test write 2048 Hz\n");
-    buf[0]=2048;
+    buf[0] = 2048;
     int32_t test2 = rtc[0].ioctl.write(&file, buf, 4);
 
     printf("RTC test write 31 Hz\n");
-    buf[0]=31;
+    buf[0] = 31;
     int32_t test3 = rtc[0].ioctl.write(&file, buf, 4);
 
     // Test 1 should pass, all else should fail.
@@ -736,9 +737,9 @@ int32_t rtc_test_write() {
 int32_t rtc_sanity_check() {
 
     printf("NULL FILE STRUCT TEST\n");
-    int32_t test1 = rtc[0].ioctl.open(NULL, (uint8_t*)"RTC0", 0);
+    int32_t test1 = rtc[0].ioctl.open(NULL, (uint8_t*) "RTC0", 0);
     uint8_t buf[100];
-    buf[0]=4;
+    buf[0] = 4;
     int32_t test2 = rtc[0].ioctl.read(NULL, buf, 0);
     int32_t test3 = rtc[0].ioctl.write(NULL, buf, 4);
     int32_t test4 = rtc[0].ioctl.close(NULL);
@@ -764,7 +765,7 @@ int32_t rtc_sanity_check() {
  * @return ** not important 
  */
 int32_t
-exception_squash_program_test(){
+exception_squash_program_test() {
     volatile int x = 0;
     return 1 / x;
 }
@@ -776,11 +777,10 @@ exception_squash_program_test(){
  * SIDE-EFFECT : print 
  * @return ** void 
  */
-void test_open(file_t* checked_item){
-    if(checked_item->flags&F_OPEN){
+void test_open(file_t* checked_item) {
+    if (checked_item->flags & F_OPEN) {
         printf("open success\n");
-    }
-    else{
+    } else {
         printf("open failed\n");
     }
 }
@@ -791,11 +791,10 @@ void test_open(file_t* checked_item){
  * SIDE-EFFECT : print 
  * @return ** void 
  */
-void test_close(file_t* checked_item){
-    if(checked_item->flags==F_CLOSE){
+void test_close(file_t* checked_item) {
+    if (checked_item->flags == F_CLOSE) {
         printf("close success\n");
-    }
-    else{
+    } else {
         printf("close failed\n");
     }
 }
@@ -807,11 +806,10 @@ void test_close(file_t* checked_item){
  * PASS on success
  * FAIL on failure
  */
-int32_t test_file_create(){
-    if(-1==fs.f_rw.create_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+int32_t test_file_create() {
+    if (-1 == fs.f_rw.create_file((uint8_t*) "testcreate.txt", strlen("testcreate.txt"))) {
         return FAIL;
-    }
-    else{
+    } else {
         return PASS;
     }
 }
@@ -825,11 +823,10 @@ int32_t test_file_create(){
  * FAIL : when there is file to remove -> fail
  * when there is none -> success
  */
-int32_t test_remove_file(){
-    if(-1==fs.f_rw.remove_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+int32_t test_remove_file() {
+    if (-1 == fs.f_rw.remove_file((uint8_t*) "testcreate.txt", strlen("testcreate.txt"))) {
         return FAIL;
-    }
-    else{
+    } else {
         return PASS;
     }
 }
@@ -843,11 +840,10 @@ int32_t test_remove_file(){
  * FAIL : when there is file to rename -> fail
  * when there is none -> success
  */
-int32_t test_rename_file(){
-    if(-1==fs.f_rw.rename_file((uint8_t*)"testcreate.txt",(uint8_t*)"haha.txt",strlen("haha.txt"))){
+int32_t test_rename_file() {
+    if (-1 == fs.f_rw.rename_file((uint8_t*) "testcreate.txt", (uint8_t*) "haha.txt", strlen("haha.txt"))) {
         return FAIL;
-    }
-    else{
+    } else {
         return PASS;
     }
 }
@@ -857,17 +853,20 @@ int32_t test_rename_file(){
  * OUTPUT: PASS/FAIL
  * @return ** int32_t 
  */
-int32_t test_write_file(){
-    int32_t i=0;
-    if(-1==fs.f_rw.create_file((uint8_t*)"testcreate.txt",strlen("testcreate.txt"))){
+int32_t test_write_file() {
+    int32_t i = 0;
+    if (-1 == fs.f_rw.create_file((uint8_t*) "testcreate.txt", strlen("testcreate.txt"))) {
         return FAIL;
     }
     file_t file;
-    if(-1==fs.openr(&file,(uint8_t*)"testcreate.txt",0)){
+    if (-1 == fs.openr(&file, (uint8_t*) "testcreate.txt", 0)) {
         return FAIL;
     }
-    for(i=0;i<4000;i++){
-        if(-1==fs.f_rw.write_data(file.inode,i*strlen("hello,world\n"),(uint8_t*)"hello,world\n",strlen("hello,world\n"))){
+    for (i = 0; i < 4000; i++) {
+        if (-1 == fs.f_rw.write_data(file.inode,
+                                     i * strlen("hello,world\n"),
+                                     (uint8_t*) "hello,world\n",
+                                     strlen("hello,world\n"))) {
             return FAIL;
         }
     }
@@ -902,13 +901,106 @@ int bool_test(void) {
     return PASS;
 }
 
+int rand_test(void) {
+    int32_t i;
+    for (i = 0; i < 20; ++i) {
+        printf("%u\n", rand());
+    }
+    return PASS;
+}
+
+/*!
+ * @brief Unit test for buddy allocator.
+ */
+int buddy_allocator_init_test(void) {
+    buddy_init((void*) 0x4000000, 4 << 20, 1);
+    buddy_init((void*) 0x4000000, 1 << 20, 1);
+    // Succeeded if no panics.
+    return PASS;
+}
+
+int buddy_block_split_test(void) {
+    buddy_init((void*) 0x4000000, 4 << 20, 1);
+    buddy_traverse();
+    buddy_split(buddy_allocator.start, 1 << 18);
+    buddy_traverse();
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
+int buddy_block_search_test(void) {
+    buddy_init((void*) 0x4000000, 4 << 20, 1);
+    (void) buddy_search(1 << 18);
+    buddy_block_t* res = buddy_search(1 << 17);
+    buddy_traverse();
+    printf("\nres: \n", res);
+    buddy_print_block(res);
+    printf("\n");
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
+int buddy_block_coalesce_test(void) {
+    uint32_t i;
+    buddy_init((void*) 0x4000000, 4 << 20, 1);
+    for (i = 0; i < 10000; ++i) {
+        (void) buddy_search(rand() % ((1 << 20) + 1 - (4 << 10)) + (4 << 10));
+    }
+    buddy_traverse();
+    buddy_coalesce();
+    buddy_traverse();
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
+int buddy_malloc_stress_test(void) {
+    uint32_t i, j;
+    uint32_t alloc_cnt = 0;
+    uint32_t dealloc_cnt = 0;
+    static const int32_t round_size = 120;  // Cannot be too large -- stack overflow may occur!
+    static const int32_t round_cnt = 1000;  // Stress test.
+    void* res[round_size];
+
+    for (j = 0; j < round_cnt; ++j) {
+        memset(res, NULL, sizeof(res) / sizeof(res[0]));
+        buddy_init((void*) 0x4000000, 4 << 20, 1);
+        for (i = 0; i < round_size; ++i) {
+            if (NULL != (res[i] = buddy_malloc(rand() % ((4 << 10) + 1 - (1 << 10)) + (1 << 10)))) {
+                alloc_cnt++;
+            }
+        }
+        for (i = 0; i < round_size; ++i) {
+            if (NULL == res[i]) {
+                continue;
+            }
+            if (0 == buddy_free(res[i])) {
+                dealloc_cnt++;
+            }
+        }
+        printf("\nIn round %d:\n", j);
+        printf("Successfully allocated %d blocks of memory.\n", alloc_cnt);
+        printf("Successfully reclaimed %d blocks of memory.\n", dealloc_cnt);
+
+        if (alloc_cnt != dealloc_cnt) {
+            assertion_failure();
+            return FAIL;
+        }
+    }
+//    buddy_coalesce();
+//    buddy_traverse();
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
 
 /**
  * @brief launching test function
  * @param None
  * @return ** void 
  */
-void launch_tests(){
+void launch_tests() {
     // launch your tests here
     // TEST_OUTPUT("syscall inspection",syscall_inspection2());
     // TEST_OUTPUT("syscall inspection",syscall_inspection1());
@@ -949,5 +1041,11 @@ void launch_tests(){
     // TEST_OUTPUT("exception_squash_program_check", exception_squash_program_test());
     /* TEST_OUTPUT("cursor_test", cursor_test()); */
     // TEST_OUTPUT("bool_test", bool_test());
+    // TEST_OUTPUT("rand_test", rand_test());
+    // TEST_OUTPUT("buddy_allocator_init_test", buddy_allocator_init_test());
+    // TEST_OUTPUT("buddy_block_split_test", buddy_block_split_test());
+    // TEST_OUTPUT("buddy_block_search_test", buddy_block_search_test());
+    // TEST_OUTPUT("buddy_block_coalesce_test", buddy_block_coalesce_test());
+    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
 }
 

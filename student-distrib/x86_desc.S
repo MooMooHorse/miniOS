@@ -11,7 +11,7 @@
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
 .globl gdt_desc_ptr # used for lgdt parameter in boot.S (continue:)
-.globl kpgdir, pgtbl, pgtbl_vid
+.globl kpgdir
 .globl virt_rtc
 .globl syscall_table
 .globl kernel_stk_ptr
@@ -121,24 +121,6 @@ _kpgdir:
     .endr
 
 kpgdir_bottom:
-
-    .align PGSIZE
-pgtbl:
-_pgtbl:
-    .rept NUM_ENT
-    .long 0
-    .endr
-
-pgtbl_bottom:
-
-    .align PGSIZE
-pgtbl_vid:
-_pgtbl_vid:
-    .rept NUM_ENT
-    .long 0
-    .endr
-
-pgtbl_vid_bottom:
 
 virt_rtc:
 .long 0

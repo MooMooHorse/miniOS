@@ -260,7 +260,7 @@ int page_flags_test() {
         }
     }
 
-    it = pgtbl;  // Start of the first page table.
+    it = (uint32_t*) PAGE_ADDR(kpgdir[0]);  // Start of the first page table.
     for (i = 0; i < PTX(VIDEO); i++) {
         if (PAGE_FLAGS(*it++) & PAGE_P) {
             printf("P incorrectly set for PDE #0 --> PTE #%d\n", i);
@@ -966,7 +966,6 @@ int buddy_malloc_stress_test(void) {
 
     for (j = 0; j < round_cnt; ++j) {
         memset(res, NULL, sizeof(res) / sizeof(res[0]));
-        buddy_init((void*) 0x4000000, 32 << 20, 1);
         for (i = 0; i < round_size; ++i) {
             if (NULL != (res[i] = buddy_malloc(rand() % ((4 << 19) + 1 - (1 << 10)) + (1 << 10)))) {
                 alloc_cnt++;
@@ -1046,6 +1045,6 @@ void launch_tests() {
     // TEST_OUTPUT("buddy_block_split_test", buddy_block_split_test());
     // TEST_OUTPUT("buddy_block_search_test", buddy_block_search_test());
     // TEST_OUTPUT("buddy_block_coalesce_test", buddy_block_coalesce_test());
-//    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
+    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
 }
 

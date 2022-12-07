@@ -10,8 +10,12 @@
  */
 
 #include "mmu.h"
+#include "kmalloc.h"
 #include "process.h"
 #include "terminal.h"
+
+static pte_t* pgtbl;
+static pte_t* pgtbl_vid;
 
 /* vm_init
  * 
@@ -25,11 +29,20 @@
 void
 vm_init(void) {
     uint32_t i;
-    kpgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
     kpgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
     for (i = 16; i < 25; ++i) {
         kpgdir[i] = (i << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 ~ #25 --> 64M ~ 100M
     }
+
+    buddy_init((void*) BUDDY_START, BUDDY_SIZE, PGSIZE);
+    if (NULL == (pgtbl = kmalloc(PGSIZE)) || NULL == (pgtbl_vid = kmalloc(PGSIZE))) {
+        panic("vm_init fail to allocate page table");
+    }
+
+    memset(pgtbl, 0, PGSIZE);
+    memset(pgtbl_vid, 0, PGSIZE);
+
+    kpgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
 
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
 
@@ -53,7 +66,7 @@ vm_init(void) {
         :
         : "r" (CR4_PSE)
         : "eax"
-    );
+        );
 
     // Set page directory.
     lcr3((uint32_t) kpgdir);
@@ -157,7 +170,7 @@ uvmremap_vid(uint32_t pid) {
         pgtbl_vid[PTX(va)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
     }
 
-DONE_REMAP:
+    DONE_REMAP:
     lcr3((uint32_t) kpgdir);  // Flush TLB.
     return 0;
 }

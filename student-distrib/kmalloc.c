@@ -208,14 +208,16 @@ buddy_free(void* mem) {
 }
 
 void*
-kmalloc(void) {
-    struct mem* m = kmem;
+kmalloc(uint32_t size) {
+//    struct mem* m = kmem;
+//
+//    if (m) {
+//        kmem = m->next;
+//    }
+    void* res;
+    res = buddy_malloc(size);
 
-    if (m) {
-        kmem = m->next;
-    }
-
-    return m;
+    return res;
 }
 
 void
@@ -228,13 +230,15 @@ kfree_range(void* start, void* end) {
 
 void
 kfree(void* v) {
-    struct mem* m = v;
-    if ((uint32_t) v << (PTESIZE - PDXOFF)) {
-        panic("kfree: va not aligned");
-    }
+//    struct mem* m = v;
+//    if ((uint32_t) v << (PTESIZE - PDXOFF)) {
+//        panic("kfree: va not aligned");
+//    }
 
-    memset(v, MEM_MAGIC, PGSIZE);
+    buddy_free(v);
 
-    m->next = kmem;
-    kmem = m;
+//    memset(v, MEM_MAGIC, PGSIZE);
+
+//    m->next = kmem;
+//    kmem = m;
 }

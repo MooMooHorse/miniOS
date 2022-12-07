@@ -635,6 +635,8 @@ typedef struct image_t image_t;
 typedef struct icon_t  icon_t;
 typedef struct text_t  text_t;
 typedef struct login_t login_t;
+typedef struct region_t region_t;
+typedef struct desktop_t desktop_t;
 
 /*********************************************************************
  * @brief library code start 
@@ -960,6 +962,27 @@ struct login_t{
     int32_t text_len;
     int32_t fd;
 };
+
+/* FSM 2 */
+#define EXEC_CMD_LEN  40
+
+struct region_t{
+    int32_t x;
+    int32_t y;
+    char icon_cmd[EXEC_CMD_LEN];
+    int32_t flags;
+};
+
+struct desktop_t{
+    int32_t activate;
+    int32_t cur_x;
+    int32_t cur_y;
+    int32_t icons_num;
+    int32_t vga_fd;
+    int32_t mouse_fd;
+    region_t icons[NUM_ICON];
+};
+
 
 
 
@@ -1686,6 +1709,23 @@ int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
     add_icon(&display,p);
 }
 
+void draw_icont_Mouse(icon_t* p,int32_t x,int32_t y,const char* name,int32_t icon_ind,
+int32_t w,int32_t h,int32_t filled_col,int32_t text_col,int32_t ignore_col){
+    int32_t i,j;
+    init_icon(p,0,2,x,y,filled_col,text_col,ignore_col);
+
+    for(i=0;i<h;i++){
+        for(j=0;j<w;j++){
+            p->img[i][j]=text_col;
+        }
+    }
+
+    p->hdr.height=h;
+    p->hdr.width=w;
+    p->present=1;
+
+}
+
 int32_t fname_display_processing(char* s){
     int32_t n=ece391_strlen((uint8_t*)s),m,ret=1;
     int32_t i,j;
@@ -1710,6 +1750,98 @@ int32_t fname_display_processing(char* s){
     return ret;
 }
 
+desktop_t desktopFSM;
+
+void FSM2_insert(int32_t x,int32_t y,const char* src,int32_t flags,int32_t icon_ind){
+    desktopFSM.icons[icon_ind].x=x;
+    desktopFSM.icons[icon_ind].y=y;
+    ece391_strcpy((uint8_t*)desktopFSM.icons[icon_ind].icon_cmd,(uint8_t*)src);
+    desktopFSM.icons[icon_ind].flags=flags;
+    desktopFSM.icons_num++;
+}
+/**
+ * @brief flush content to VGA
+ * SIDE-EFFECT : must have desktop FSM initalized
+ * @return ** void 
+ */
+void VGA_flush(){
+    assemble_picture();
+    if(-1==ece391_write(desktopFSM.vga_fd,&display,IMAGE_X_DIM*IMAGE_Y_DIM*2)){
+        ece391_close(desktopFSM.vga_fd);
+        ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        return ;
+    }
+}
+
+void FSM2_main(){
+
+    draw_icont_Mouse(&icon[desktopFSM.icons_num],0,0,"",desktopFSM.icons_num,5,5,BLACK_COL,BLACK_COL,-1);
+    add_icon(&display,&icon[desktopFSM.icons_num]);
+
+    desktopFSM.vga_fd=loginFSM.fd;
+    desktopFSM.activate=1;
+    if(-1==(desktopFSM.mouse_fd=ece391_open((uint8_t*)"psmouse"))){
+        ece391_close(desktopFSM.vga_fd);
+        ece391_fdputs (1, (uint8_t*)"mouse open failed\n");
+    }
+    VGA_flush();
+    int32_t tar;
+    for(tar=0;tar<desktopFSM.icons_num;tar++){
+        if(desktopFSM.icons[tar].flags==ICON_T){
+            char buf[40]="edit ";
+            int32_t j=0,k=ece391_strlen((uint8_t*)buf);
+            while(k<40&&desktopFSM.icons[tar].icon_cmd[j]!='\0'){
+                buf[k++]=desktopFSM.icons[tar].icon_cmd[j++];
+            }
+            buf[k]='\0';
+            ece391_strcpy((uint8_t*)desktopFSM.icons[tar].icon_cmd,(uint8_t*)buf);
+        }
+    }
+
+    while(desktopFSM.activate);
+}
+
+#define ICON_X_LEN 25
+#define ICON_Y_LEN 25
+
+int32_t find_tar_icon(int32_t x,int32_t y){
+    int32_t i;
+    for(i=0;i<desktopFSM.icons_num;i++){
+        if(coordinate_check(x-desktopFSM.icons[i].x,y-desktopFSM.icons[i].y,ICON_X_LEN,ICON_Y_LEN)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+void siguser_handler(int signum);
+
+void FSM2_thread(int32_t CMD,int32_t x,int32_t y,int32_t if_click){
+    if(CMD==3){
+        ece391_set_handler(USER1,NULL);
+        ece391_close(desktopFSM.vga_fd);
+        desktopFSM.activate=0;
+        return ;
+    }
+    if(x>=IMAGE_X_DIM||y>=IMAGE_Y_DIM) return ;
+    if(if_click){
+        int32_t tar=find_tar_icon(x,y);
+        if(tar==-1) return ;
+        ece391_set_handler(USER1,NULL);
+        ece391_close(desktopFSM.vga_fd);
+        
+        ece391_execute((uint8_t*)desktopFSM.icons[tar].icon_cmd);
+
+        ece391_set_handler(USER1,siguser_handler);
+        if(-1==(desktopFSM.vga_fd=ece391_open((uint8_t*)"vga"))){
+            ece391_fdputs (1, (uint8_t*)"vga open failed\n");
+            return ;
+        }
+    }
+    draw_icont_Mouse(&icon[desktopFSM.icons_num],x,y,"",desktopFSM.icons_num,5,5,BLACK_COL,BLACK_COL,-1);
+    add_icon(&display,&icon[desktopFSM.icons_num]);
+    VGA_flush();
+}
 /* keyboard related functions */
 
 #define ALT_BASE    128
@@ -1720,6 +1852,7 @@ int32_t fname_display_processing(char* s){
 #define UP_ARROW    TO_DIR(0x48)
 #define DOWN_ARROW  TO_DIR(0x50)
 #define RIGHT_ARROW TO_DIR(0x4D)
+#define ALT(X) ((X)+ALT_BASE)
 
 #define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
 
@@ -1730,6 +1863,18 @@ int32_t fname_display_processing(char* s){
  */
 void 
 siguser_handler(int signum){
+    if(desktopFSM.activate){
+        int32_t buf[4];
+        if(-1==ece391_read(desktopFSM.mouse_fd,buf,12)){
+            ece391_close(desktopFSM.vga_fd);
+            ece391_fdputs (1, (uint8_t*)"vga write failed\n");
+        }
+        buf[0]=buf[0]*5;
+        buf[1]=buf[1]*8;
+        if(buf[2]) FSM2_thread(0,buf[0],buf[1],buf[2]);
+        else FSM2_thread(1,buf[0],buf[1],buf[2]);
+    }
+
     uint8_t c[2];
     c[0]=ece391_getc();
     c[1]='\0';
@@ -1748,7 +1893,9 @@ siguser_handler(int signum){
             break;
         }
     }else{
-        if(c[0]=='\t'){
+        if(c[0]==ALT('q')){
+            FSM2_thread(3,0,0,0);
+        }else if(c[0]=='\t'){
             FSM1_thread(LOGIN_CMD_SWITCH,c[0]);
         }
         else if(c[0]=='\n'){
@@ -1778,6 +1925,8 @@ void FSM1_clear(){
         ece391_fdputs (1, (uint8_t*)"vga write failed\n");
     }
 }
+
+
 
 int main(){
 
@@ -1895,7 +2044,7 @@ int main(){
 
     FSM1_clear();
 
-    char buf[40];
+    char buf[EXEC_CMD_LEN],dbuf[EXEC_CMD_LEN];
     int32_t d_fd,cnt,fcount=0,fx=0,fy=0;
     int32_t f_displacement=40;
 
@@ -1904,7 +2053,7 @@ int main(){
         return 2;
     }
 
-    while (0 != (cnt = ece391_read (d_fd, buf, 40-1))) {
+    while (0 != (cnt = ece391_read (d_fd, buf, EXEC_CMD_LEN-1))) {
         if (-1 == cnt) {
 	        ece391_fdputs (1, (uint8_t*)"directory entry read failed\n");
 	        return 3;
@@ -1913,19 +2062,23 @@ int main(){
             continue;
         }
 	    buf[cnt] = '\0';
+        ece391_strcpy((uint8_t*)dbuf,(uint8_t*)buf);
 	    if(fname_display_processing(buf)){
             draw_icont_E(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+            FSM2_insert(fx,fy,dbuf,ICON_E,fcount);
         }
         else{
             draw_icont_T(&icon[fcount],fx,fy,buf,fcount,25,25,WHITE_COL,BLACK_COL,BLUE_COL);
+            FSM2_insert(fx,fy,dbuf,ICON_T,fcount);
         }
+
         fy+=f_displacement;
         if(fy+f_displacement>IMAGE_Y_DIM){
             fy=0;
             fx+=f_displacement;
         }
         fcount++;
-
+        
     }
 
     assemble_picture();
@@ -1935,9 +2088,8 @@ int main(){
         return 2;
     }
 
-
+    FSM2_main();
     
-    while(1);
     // test_picture();
     
 

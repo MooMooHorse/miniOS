@@ -73,7 +73,7 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
  */
 #define A(X) ((X)+ALT_BASE)
 static const uint8_t map_alt[MAP_SIZE] = {
-    [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3)
+    [0x10]=A('q'), [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3)
     // ,
     // [0x3E]=A(4), [0x3F]=A(5), [0x40]=A(6),
     // [0x41]=A(7), [0x42]=A(8), [0x43]=A(9),
@@ -274,5 +274,7 @@ keyboard_handler(void) {
 }
 
 uint8_t get_c(){
-    return user_c;
+    uint8_t ret=user_c;
+    user_c=0;
+    return ret;
 }

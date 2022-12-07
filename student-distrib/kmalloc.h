@@ -17,8 +17,8 @@ struct {
     uint32_t alignment;
 } buddy_allocator;
 
-void* kmalloc(void);
-void kfree(void*);
+void* kmalloc(uint32_t size);
+void kfree(void* mem);
 void buddy_init(void* mem, uint32_t size, uint32_t alignment);
 buddy_block_t* buddy_search(uint32_t size);
 buddy_block_t* buddy_split(buddy_block_t* b, uint32_t size);

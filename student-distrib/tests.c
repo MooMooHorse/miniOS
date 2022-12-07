@@ -243,7 +243,7 @@ int vm_sanity_test() {
  */
 int page_flags_test() {
     TEST_HEADER;
-    uint32_t * it = pgdir;  // Start of page directory.
+    uint32_t * it = kpgdir;  // Start of page directory.
     int i;
     if (!(PAGE_FLAGS(*it++) & (PAGE_P | PAGE_RW))) {
         printf("P/RW not set for PDE #0!\n");
@@ -1046,6 +1046,6 @@ void launch_tests() {
     // TEST_OUTPUT("buddy_block_split_test", buddy_block_split_test());
     // TEST_OUTPUT("buddy_block_search_test", buddy_block_search_test());
     // TEST_OUTPUT("buddy_block_coalesce_test", buddy_block_coalesce_test());
-    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
+//    TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
 }
 

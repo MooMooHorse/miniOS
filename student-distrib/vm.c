@@ -25,10 +25,10 @@
 void
 vm_init(void) {
     uint32_t i;
-    pgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
-    pgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
+    kpgdir[0] = (uint32_t) pgtbl | PAGE_P | PAGE_RW | PAGE_G;  // Map the first page table.
+    kpgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
     for (i = 16; i < 25; ++i) {
-        pgdir[i] = (i << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 ~ #25 --> 64M ~ 100M
+        kpgdir[i] = (i << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 ~ #25 --> 64M ~ 100M
     }
 
     pgtbl[PTX(VIDEO)] = VIDEO | PAGE_P | PAGE_RW;   // Map PTE: 0xB8000 ~ 0xB9000
@@ -56,7 +56,7 @@ vm_init(void) {
     );
 
     // Set page directory.
-    lcr3((uint32_t) pgdir);
+    lcr3((uint32_t) kpgdir);
 
     // Turn on paging.
     asm volatile(
@@ -80,8 +80,8 @@ uvmmap_ext(uint32_t pa) {
     if (pa << (PTESIZE - PDXOFF)) {
         return -1;  // Physical address not 4MB-aligned.
     }
-    pgdir[PDX(IMG_START)] = pa | PAGE_P | PAGE_RW | PAGE_PS | PAGE_U;  // Map virtual address starting from 128MB.
-    lcr3((uint32_t) pgdir);  // Flush TLB.
+    kpgdir[PDX(IMG_START)] = pa | PAGE_P | PAGE_RW | PAGE_PS | PAGE_U;  // Map virtual address starting from 128MB.
+    lcr3((uint32_t) kpgdir);  // Flush TLB.
     return 0;
 }
 
@@ -98,7 +98,7 @@ uvmmap_tbuf(uint32_t tbufa) {
         return -1;
     }
     pgtbl[PTX(tbufa)] = tbufa | PAGE_P | PAGE_RW; /* physical == virtual */
-    lcr3((uint32_t) pgdir);  // Flush TLB.
+    lcr3((uint32_t) kpgdir);  // Flush TLB.
     return 0;
 }
 
@@ -126,7 +126,7 @@ uvmmap_vid(uint8_t** screen_start) {
     // Commit changes to user pointer.
     *screen_start = (uint8_t*) (UVM_START + UVM_SIZE);
 
-    pgdir[PDX(*screen_start)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
+    kpgdir[PDX(*screen_start)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
     /* change to proper video memory instead of static VIDEO */
     if (p->terminal == terminal_index) {
         pgtbl_vid[PTX(*screen_start)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
@@ -134,7 +134,7 @@ uvmmap_vid(uint8_t** screen_start) {
         pgtbl_vid[PTX(*screen_start)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
     }
 
-    lcr3((uint32_t) pgdir);  // Flush TLB.
+    lcr3((uint32_t) kpgdir);  // Flush TLB.
 
     return 0;
 }
@@ -150,7 +150,7 @@ uvmremap_vid(uint32_t pid) {
     }
 
     // Update user video memory mapping.
-    pgdir[PDX(va)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
+    kpgdir[PDX(va)] = (uint32_t) pgtbl_vid | PAGE_P | PAGE_RW | PAGE_U;
     if (p->terminal == terminal_index) {
         pgtbl_vid[PTX(va)] = VIDEO | PAGE_P | PAGE_RW | PAGE_U;
     } else {
@@ -158,7 +158,7 @@ uvmremap_vid(uint32_t pid) {
     }
 
 DONE_REMAP:
-    lcr3((uint32_t) pgdir);  // Flush TLB.
+    lcr3((uint32_t) kpgdir);  // Flush TLB.
     return 0;
 }
 
@@ -173,10 +173,10 @@ uvmunmap_vid(void) {
     uint32_t va = UVM_START + UVM_SIZE;
 
     // Undo user video memory mapping.
-    pgdir[PDX(va)] &= ~PAGE_P;
+    kpgdir[PDX(va)] &= ~PAGE_P;
     pgtbl_vid[PTX(va)] &= ~PAGE_P;
 
-    lcr3((uint32_t) pgdir);  // Flush TLB.
+    lcr3((uint32_t) kpgdir);  // Flush TLB.
 
     return 0;
 }

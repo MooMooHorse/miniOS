@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+
 /* All calls return >= 0 on success or -1 on failure. */
 
 /*  
@@ -27,6 +28,7 @@ extern int32_t ece391_file_create(const uint8_t* fname);
 extern int32_t ece391_file_remove(const uint8_t* fname);
 extern int32_t ece391_file_rename(const uint8_t* src, const uint8_t* dest);
 extern int32_t ece391_getc();
+extern int32_t ece391_sb16_ioctl(int32_t fd,int32_t command, int32_t args);
 
 enum signums {
 	DIV_ZERO = 0,

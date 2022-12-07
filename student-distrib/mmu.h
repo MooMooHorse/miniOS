@@ -33,6 +33,8 @@
 #define PAGE_G          (1L << 8)           // Global page
 #define VIDEO           0xB8000             // Copied from `lib.c`.
 #define VIDEO_SIZE      (4<<10)             // each video buffer size : 4KB
+#define VGA_START       (0xA0000)            // start of VGA
+#define VGA_END         (0xBFFFF)            // end of VGA
 
 // Control registers setting.
 #define CR0_PE          (1L << 0)           // Protection enable

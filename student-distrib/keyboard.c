@@ -14,8 +14,13 @@
  * @author haor2
  * @date 2022-11-18
  * @brief support multiple terminals
- * @copyright Copyright (c) 2022
  * 
+ * @version 3.0
+ * @author haor2
+ * @date 2022-11-28
+ * @brief support signal, and user level program input handling
+ * 
+ * @copyright Copyright (c) 2022
  */
 #include "keyboard.h"
 #include "terminal.h"
@@ -30,6 +35,7 @@
 #define ISUPPER(x)  ('A' <= (x) && (x) <= 'Z')
 #define TOLOWER(x)  ((x) + 'a' - 'A')
 #define TOUPPER(x)  ((x) + 'A' - 'a')
+#define ISALT(x)    (x>ALT_BASE&&x!=A(1)&&x!=A(2)&&x!=A(3))
 
 // Global circular buffer with R/W/E indices.
 // input_t input;
@@ -67,7 +73,7 @@ static const uint8_t map_ctrl[MAP_SIZE] = {
  */
 #define A(X) ((X)+ALT_BASE)
 static const uint8_t map_alt[MAP_SIZE] = {
-    [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3)
+    [0x10]=A('q'), [0x3B]=A(1), [0x3C]=A(2), [0x3D]=A(3)
     // ,
     // [0x3E]=A(4), [0x3F]=A(5), [0x40]=A(6),
     // [0x41]=A(7), [0x42]=A(8), [0x43]=A(9),
@@ -140,8 +146,8 @@ kgetc(void) {
     }
 
     if(code==DOUBLE_WORD||IS_DIR(code)){
-        user_c=code;
-    }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)){
+        user_c=TO_DIR(code);
+    }else if(ISLOWER(c)||ISUPPER(c)||IS_DIGIT(c)||IS_SPECIAL(c)||ISALT(c)){
         user_c=c;
     }else{
         /* keyboard enable doesn't have any effect on not-selected characters */
@@ -179,6 +185,9 @@ keyboard_handler(void) {
 
     send_eoi(KEYBOARD_IRQ);
     if (0 < (c = kgetc())) {  // Ignore NUL character.
+        
+        if(get_graphics()) return ; //skip when in graphic mode  
+
         if(c > ALT_BASE){ /* switch terminal */
             if (c - ALT_BASE > MAX_TERMINAL_NUM){
                 #ifdef RUN_TESTS
@@ -189,8 +198,15 @@ keyboard_handler(void) {
             }
             return;
         }
+        if(IS_DIR(c)){ /* nothing shows on screen, so no need to reset screen_x,screen_y */
+            if (INPUT_SIZE < terminal[terminal_index].input.e 
+            - terminal[terminal_index].input.r + 1) { return ; }
+            terminal[terminal_index].input.buf[
+                terminal[terminal_index].input.e++ % INPUT_SIZE
+            ] = c;
+            return ;
+        }
         switch (c) {
-            
             case '\b':  // Eliminate the last character in buffer & screen.
                 if (terminal[terminal_index].input.e != terminal[terminal_index].input.w) {
                     kputc(c);
@@ -198,15 +214,23 @@ keyboard_handler(void) {
                 }
                 break;
             case '\t':
+                /* current version leaves handling tab to user level programs */
                 // Enough space to place a tab (4 spaces + 1 linefeed)?
+                // if (INPUT_SIZE < terminal[terminal_index].input.e 
+                // - terminal[terminal_index].input.r + 5) { break; }
+                // for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
+                //     kputc(' ');
+                //     terminal[terminal_index].input.buf[
+                //         terminal[terminal_index].input.e++ % INPUT_SIZE
+                //     ] = ' ';
+                // }
+                // enough space for a '\t'  ?
                 if (INPUT_SIZE < terminal[terminal_index].input.e 
-                - terminal[terminal_index].input.r + 5) { break; }
-                for (i = 0; i < 4; ++i) {  // Substitute '\t' with four spaces for now.
-                    kputc(' ');
-                    terminal[terminal_index].input.buf[
-                        terminal[terminal_index].input.e++ % INPUT_SIZE
-                    ] = ' ';
-                }
+                - terminal[terminal_index].input.r + 1) { break; }
+                terminal[terminal_index].input.buf[
+                    terminal[terminal_index].input.e++ % INPUT_SIZE
+                ] = c;
+                /* no printing in screen at current version */
                 break;
             case C('C'):
                 for(i=1;i<=PCB_MAX;i++){
@@ -250,5 +274,7 @@ keyboard_handler(void) {
 }
 
 uint8_t get_c(){
-    return user_c;
+    uint8_t ret=user_c;
+    user_c=0;
+    return ret;
 }

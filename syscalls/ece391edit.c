@@ -1,3 +1,13 @@
+/**
+ * @file ece391edit.c
+ * @author haor2
+ * @brief Editor that supports input output and arrow keys
+ * @version 0.1
+ * @date 2022-11-28
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <stdint.h>
 
 #include "ece391support.h"
@@ -9,12 +19,16 @@
 #define MAX_PAGE    4
 #define MAX_SIZE    (NUM_COLS*NUM_ROWS*MAX_PAGE)
 
-#define IS_ARROW(c)       (c==0x4B||c==0x48||c==0x50||c==0x4D)
+#define ALT_BASE    128
 
-#define LEFT_ARROW  0x4B
-#define UP_ARROW    0x48
-#define DOWN_ARROW  0x50
-#define RIGHT_ARROW 0x4D
+#define TO_DIR(c)         (c+ALT_BASE)
+
+#define LEFT_ARROW  TO_DIR(0x4B)
+#define UP_ARROW    TO_DIR(0x48)
+#define DOWN_ARROW  TO_DIR(0x50)
+#define RIGHT_ARROW TO_DIR(0x4D)
+
+#define IS_ARROW(c)       (c==LEFT_ARROW||c==UP_ARROW||c==DOWN_ARROW||c==RIGHT_ARROW)
 
 #define VGA_WIDTH   80
 
@@ -144,6 +158,7 @@ siguser_handler (int signum){
     uint8_t c[2];
     c[0]=ece391_getc();
     c[1]='\0';
+    if(c[0]==0) return ;
     if(IS_ARROW(c[0])){
         switch (c[0])
         {
@@ -168,6 +183,14 @@ siguser_handler (int signum){
         
         BUF_shift_right();
         BUF[buf_map[x][y]]=c[0];
+        if(c[0]=='\n'){
+            cy++;
+            cx=0;
+        }else{
+            cx++;
+            cx%=NUM_COLS;
+        }
+        ece391_set_cursor(cx,cy);
     }
     // ece391_fdputs (1, c);
 
@@ -248,14 +271,9 @@ int main ()
         flength+=cnt;
     }
 
-    rtc_fd = ece391_open((uint8_t*)"rtc");
-    rtc_val = 128;
-    rtc_val = ece391_write(rtc_fd, &rtc_val, 4);
     clear();
     show_text();
-    while(1){
-        ece391_read(rtc_fd, &buf, 4); // buf = garbage 
-    }   
+    while(1);
 
     return 0;
 }

@@ -3,16 +3,17 @@
 #include "types.h"
 #include "x86_desc.h"
 /* flags for file struct table */
-/* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3) */
+/* lower 2 bits will be used to identify file type : directory(0), rtc(1), file(2), terminal (3), sb16 (4) */
 #define DESCRIPTOR_ENTRY_RTC 0
 #define DESCRIPTOR_ENTRY_DIR 1
 #define DESCRIPTOR_ENTRY_FILE 2
 #define DESCRIPTOR_ENTRY_TERMINAL 3
-#define F_OPEN (1 << 2)
+#define DESCRIPTOR_ENTRY_SB16 4
+#define F_OPEN (1 << 3)
 #define F_CLOSE 0
 
-#define N_INODE 64
-#define D_DBLOCKS 59
+#define MAX_INODE   256
+#define MAX_DBLOCK  1024
 
 /* directory entry, 64 Bytes : for read */
 typedef struct
@@ -103,9 +104,9 @@ typedef struct
     uint32_t boot_block_padding;
     uint32_t dentry_size;
     uint32_t filename_size;
-    uint8_t imap[N_INODE];
-    uint8_t dmap[D_DBLOCKS];
-    uint32_t flength[N_INODE];
+    uint8_t imap[MAX_INODE];
+    uint8_t dmap[MAX_DBLOCK];
+    uint32_t flength[MAX_INODE];
 } fs_t;
 
 extern fs_t fs;

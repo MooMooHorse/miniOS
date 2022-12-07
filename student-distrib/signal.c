@@ -1,3 +1,13 @@
+/**
+ * @file signal.c
+ * @author haor2
+ * @brief Full signal support 
+ * @version 1.0
+ * @date 2022-11-28
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "signal.h"
 #include "process.h"
 #include "lib.h"

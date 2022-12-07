@@ -22,7 +22,9 @@
 interrupt_handler_jump_table:
 .long pit_interrupt
 .long keyboard_interrupt
+.long sb16_interrupt
 .long rtc_interrupt
+.long psmouse_interrupt
 
 /* Before assembly linkage, IF is cleared since we have interrupt gate 
 *  eflags register is saved by proecessor 
@@ -58,7 +60,17 @@ keyboard_interrupt:
     pushl $0xfffffffe # ~0xfffffffe = 1  ;
     jmp common_interrupt_handler 
 
+/* 5  */ 
+sb16_interrupt:
+    pushl $0xfffffffa # ~0xfffffffa = 5  ;
+    jmp common_interrupt_handler 
+
 /* 8 */
 rtc_interrupt:
     pushl $0xfffffff7 # ~0xfffffff7 = 8  ;
+    jmp common_interrupt_handler 
+
+/* 12 */
+psmouse_interrupt:
+    pushl $0xfffffff3 # ~0xfffffff3 = 12  ;
     jmp common_interrupt_handler 

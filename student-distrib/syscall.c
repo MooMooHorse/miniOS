@@ -26,8 +26,11 @@
 #include "tests.h"
 #include "signal.h"
 #include "terminal.h"
+#include "sb16.h"
 #include "cursor.h"
 #include "keyboard.h"
+#include "vga.h"
+#include "psmouse.h"
 
 extern void swtchret(void);
 extern void pseudoret(void);
@@ -278,9 +281,27 @@ int32_t open (const uint8_t* filename){
     if(!if_file_available){
         return -1;
     }
-    /* if rtc */
-    if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
+    if(strncmp((int8_t*)"psmouse",(int8_t*)filename,4)==0){
+        /* if vga */
+        if(-1==mouse_open(file_entry,filename,0)){
+            return -1;
+        }
+    }
+    else if(strncmp((int8_t*)"vga",(int8_t*)filename,4)==0){
+        /* if vga */
+        if(-1==vga_open(file_entry,filename,0)){
+            return -1;
+        }
+    }
+    else if(strncmp((int8_t*)"rtc",(int8_t*)filename,4)==0){
+        /* if rtc */
         if(rtc[terminal_index].ioctl.open(file_entry,filename,terminal_index)==-1){
+            return -1;
+        }
+    }
+    /* if sb16 */
+    else if (strncmp((int8_t*)"sb16", (int8_t*)filename,5) == 0) {
+        if (sb16.ioctl.open(file_entry, filename, 0) == -1) {
             return -1;
         }
     }
@@ -476,6 +497,11 @@ int32_t file_rename(const uint8_t* src, const uint8_t* dest){
     return fs.f_rw.rename_file(src,dest,strlen((int8_t*)dest));
 }
 
+int32_t sb16_ioctl(int32_t fd,int32_t command, int32_t args) {
+    sb16_command(command,args);
+    return 0;
+}
+
 /**
  * @brief get user character
  * 
@@ -514,5 +540,6 @@ install_syscall(){
     syscall_table[SYS_FILE_REMOVE]=(uint32_t)file_remove;
     syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
     syscall_table[SYS_GETC]=(uint32_t)getc;
+    syscall_table[SYS_SB16_IOCTL]=(uint32_t)sb16_ioctl;
 }
 

@@ -12,11 +12,15 @@
 #include "tests.h"
 #include "keyboard.h"
 #include "cursor.h"
+#include "psmouse.h"
 #include "filesystem.h"
 #include "syscall.h"
 #include "terminal.h"
 #include "process.h"
 #include "signal.h"
+#include "ata.h"
+#include "vga.h"
+#include "sb16.h"
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -55,7 +59,6 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Is the command line passed? */
     if (CHECK_FLAG(mbi->flags, 2))
         printf("cmdline = %s\n", (char *)mbi->cmdline);
-
     /* Module 0 : File System Image */
     if (CHECK_FLAG(mbi->flags, 3)) {
         int mod_count = 0;
@@ -107,6 +110,13 @@ void entry(unsigned long magic, unsigned long addr) {
                     (unsigned)mmap->type,
                     (unsigned)mmap->length_high,
                     (unsigned)mmap->length_low);
+    }
+
+    if(CHECK_FLAG(mbi->flags,7)){
+        drive_t* drive_info=(drive_t*)mbi->drives_addr;
+        // printf("drive number %d\n",drive_info->drive_number);
+        printf("drive : head = %d cylinders = %d sectors = %d\n",
+        drive_info->drive_heads,drive_info->drive_cylinders,drive_info->drive_sectors);
     }
 
     /* Construct an LDT entry in the GDT */
@@ -162,6 +172,10 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
     keyboard_init();
     cursor_init();
+    sb16_init();
+    psmouse_init();
+
+    dump_fs();
 
     terminal_index=1; /* default : terminal 1 */
     terminal[1].open(1,(int32_t*)get_terbuf_addr(terminal_index)); /* open active terminal */
@@ -185,6 +199,7 @@ void entry(unsigned long magic, unsigned long addr) {
         /* Run tests */
         launch_tests();
     #endif
+
 
     /* Execute the first program ("shell") ... */
     

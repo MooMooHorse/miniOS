@@ -189,7 +189,6 @@ buddy_malloc(uint32_t size) {
         return NULL;
     }
     res->free = false;
-    memset((uint8_t*) res + ALIGN, MEM_MAGIC, size);
     return (void*) ((uint8_t*) res + ALIGN);
 }
 
@@ -204,6 +203,7 @@ buddy_free(void* mem) {
         return 1;
     }
     b->free = true;
+    memset((uint8_t*) b + HEADER_SIZE, MEM_MAGIC, b->size - HEADER_SIZE);
     return 0;
 }
 

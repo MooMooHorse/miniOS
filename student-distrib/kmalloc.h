@@ -4,7 +4,9 @@
 #include "lib.h"
 #include "mmu.h"
 
-#define MEM_MAGIC 0xA5
+#define MEM_MAGIC       0xA5
+#define BUDDY_START     (1U << 26)
+#define BUDDY_SIZE      (1U << 25)
 
 typedef struct buddy_block {
     uint32_t size;

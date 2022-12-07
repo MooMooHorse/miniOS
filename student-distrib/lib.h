@@ -35,6 +35,7 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 /* Utilities. */
 void panic(const char*);
+uint32_t rand();
 void light_pixel(int x, int y);
 void unlight_pixel(int x, int y);
 

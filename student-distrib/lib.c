@@ -631,6 +631,13 @@ uint8_t get_attr(){
     return ATTRIB;
 }
 
+uint32_t rand() {
+    static uint16_t seed = 0xACE1u;
+    static uint32_t rand;
+    rand = ((seed >> 0) ^ (seed >> 2) ^ (seed >> 3) ^ (seed >> 5)) & 1;
+    return seed = (seed >> 1) | (rand << 15);
+}
+
 /* void test_interrupts(void)
  * Inputs: void
  * Return Value: void

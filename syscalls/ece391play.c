@@ -3,8 +3,10 @@
 #include "ece391support.h"
 #include "ece391syscall.h"
 
+#define NULL 0
+
 #define SB16_PAGE_ADDRESS       0x120000    // memory address for SB16 DMA
-#define SB16_CHUNK_LENGTH       0x10000      // size of data buffer for SB16 DMA
+#define SB16_CHUNK_LENGTH       0x01000      // size of data buffer for SB16 DMA
 #define SB16_IRQ                5           // IRQ number for SB16
 
 #define SB16_MIXER_PORT         0x224
@@ -23,10 +25,15 @@
 #define SB16_8_BIT_RESUME       0xD4
 #define SB16_16_BIT_PAUSE       0xD5
 #define SB16_16_BIT_RESUME      0xD6
+#define SB16_8_BIT_EXIT         0xDA
 #define SB16_DSP_VERSION        0xE1
 #define SB16_MASTER_VOLUME      0x22
 
 #define SB16_READY              0xAA        // status code for DSP ready
+
+#define SB16_UNSIGNED           0x00
+#define SB16_MONO               0x00
+#define SB16_STEREO             0x20
 
 /* Writes a byte to a port */
 #define outb(data, port)                \
@@ -55,21 +62,29 @@ typedef struct {
 } wav_meta_t;
 
 
+int32_t sb16_fd, audio_fd;
+
+void
+sigint_handler (int signum){
+    ece391_set_handler(INTERRUPT,NULL);
+    ece391_close(sb16_fd);
+    ece391_close(audio_fd);
+    ece391_halt(0);
+}
 
 int main() {
     wav_meta_t wav_meta;
-    int32_t sb16_fd, audio_fd;
     int32_t data_input_size;
     int32_t i;
-    char data_input[SB16_CHUNK_LENGTH];
-    char file_name[1024]; // used for file input, hardcoded file for now
-    char debug_buf[1024];
+    uint8_t data_input[SB16_CHUNK_LENGTH];
+    uint8_t file_name[1024]; // used for file input, hardcoded file for now
+    uint8_t debug_buf[1024];
 
     // obtain filename
-    // if (0 != ece391_getargs((uint8_t)file_name, 1024)) {
-    //     ece391_fdputs(1, (uint8_t*)"Error: no file name provided\n");
-    //     return 2;
-    // }
+    if (0 != ece391_getargs(file_name, 1024)) {
+        ece391_fdputs(1, (uint8_t*)"Error: no file name provided\n");
+        return 2;
+    }
 
     ece391_strcpy((uint8_t*)file_name, (uint8_t*)"stopandsmell8.wav");
 
@@ -85,9 +100,16 @@ int main() {
     sb16_fd = ece391_open((uint8_t*)"sb16");
 
     if (sb16_fd == -1) {
-        ece391_fdputs(1, (uint8_t*)"sb16 not found\n");
+        ece391_fdputs(1, (uint8_t*)"SB16 already in use\n");
         return 2;
     }
+
+    if (-1 == ece391_set_handler(INTERRUPT, sigint_handler)) {
+        ece391_fdputs(1, (uint8_t*)"Error: could not set handler\n");
+        return 2;
+    }
+
+
 
     // read in wave meta data
     ece391_read(audio_fd, &wav_meta, (int32_t)sizeof(wav_meta_t));
@@ -156,7 +178,7 @@ int main() {
 
     // Write to SB16
     if (data_input_size != ece391_write(sb16_fd, data_input, SB16_CHUNK_LENGTH)) {
-        ece391_fdputs(1, (uint8_t*)"sb16 write failed\n");
+        ece391_fdputs(1, (uint8_t*)"SB16 write failed\n");
         return 3;
     }
 
@@ -173,24 +195,19 @@ int main() {
 
     // outb(0xB0, SB16_WRITE_PORT);
     // outb(0x10, SB16_WRITE_PORT);
-    outb(0xC6, SB16_WRITE_PORT);
-    outb(0x00, SB16_WRITE_PORT);
+    outb(0xC0, SB16_WRITE_PORT);
+    outb((wav_meta.num_channels == 2 ? SB16_STEREO : SB16_MONO | SB16_UNSIGNED) & 0xFF, SB16_WRITE_PORT);
     outb((uint8_t) (SB16_CHUNK_LENGTH - 1) & 0xFF, SB16_WRITE_PORT); // L
     outb((uint8_t) ((SB16_CHUNK_LENGTH - 1) >> 8) & 0xFF, SB16_WRITE_PORT); // H
-    outb(0xD4, SB16_WRITE_PORT); // Continue 8-bit DMA mode digitized sound I/O paused using command D0.
+    outb(SB16_8_BIT_RESUME, SB16_WRITE_PORT); // Continue 8-bit DMA mode digitized sound I/O paused using command D0.
     
     while (1) {
-        ece391_fdputs(1, (uint8_t*)"READY TO LOAD NEW CHUNK...\n");
-
         // load next data chunk
         if (ece391_read(sb16_fd, 0, 0) == -1) {
             return 5;
         }
         
-
-        ece391_fdputs(1, (uint8_t*)"LOADING NEW CHUNK...\n");
-
-        outb(0xD0, SB16_WRITE_PORT);
+        outb(SB16_8_BIT_PAUSE, SB16_WRITE_PORT);
 
         data_input_size = ece391_read(audio_fd, data_input, SB16_CHUNK_LENGTH);
 
@@ -213,14 +230,14 @@ int main() {
             return 4;
         }
 
-        outb(0xD4, SB16_WRITE_PORT);
+        outb(SB16_8_BIT_RESUME, SB16_WRITE_PORT);
 
         if (data_input_size < SB16_CHUNK_LENGTH) {
             if (ece391_read(sb16_fd, 0, 0) == -1) {
                 return 5;
             }
 
-            outb(0xDA, SB16_WRITE_PORT);
+            outb(SB16_8_BIT_EXIT, SB16_WRITE_PORT);
             break;
         }
     }

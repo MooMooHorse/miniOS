@@ -28,6 +28,7 @@ struct mem {
 typedef struct slab {
     struct mem* freelist;
     struct slab* next;
+    uint32_t refcount;
     uint32_t size;
 } slab_t;
 

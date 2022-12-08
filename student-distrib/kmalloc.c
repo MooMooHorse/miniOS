@@ -276,6 +276,7 @@ _slab_alloc(slab_t* s) {
     struct mem* mem;
     mem = s->freelist;
     s->freelist = s->freelist->next;
+    s->refcount++;
     return mem;
 }
 
@@ -300,14 +301,24 @@ SLAB_ALLOC:
 int32_t
 slab_free(void* mem) {
     struct mem* m = mem;
-    slab_t* s = slab_head;
+    slab_t** indirect = &slab_head;
+    slab_t* target;
 
-    for (; s; s = s->next) {
-        if ((void*) s > mem || (uint8_t*) s + PGSIZE < (uint8_t*) mem) {
+    for (; *indirect; indirect = &(*indirect)->next) {
+        if ((void*) (*indirect) > mem || (uint8_t*) (*indirect) + PGSIZE < (uint8_t*) mem) {
             continue;
         }
-        m->next = s->freelist;
-        s->freelist = m;
+        if (0 == (*indirect)->refcount--) {
+            panic("slab double free!");
+        }
+        if (!(*indirect)->refcount) {
+            target = *indirect;
+            *indirect = (*indirect)->next;
+            buddy_free(target);
+        } else {
+            m->next = (*indirect)->freelist;
+            (*indirect)->freelist = m;
+        }
         return 0;
     }
 

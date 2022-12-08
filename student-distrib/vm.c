@@ -30,7 +30,7 @@ void
 vm_init(void) {
     uint32_t i;
     kpgdir[1] = (1U << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #1 --> 4M ~ 8M
-    for (i = 16; i < 25; ++i) {
+    for (i = 16; i < 24; ++i) {
         kpgdir[i] = (i << PDXOFF) | PAGE_P | PAGE_RW | PAGE_PS | PAGE_G;  // PDE #16 ~ #25 --> 64M ~ 100M
     }
 
@@ -170,7 +170,7 @@ uvmremap_vid(uint32_t pid) {
         pgtbl_vid[PTX(va)] = (uint32_t) t->video | PAGE_P | PAGE_RW | PAGE_U;
     }
 
-    DONE_REMAP:
+DONE_REMAP:
     lcr3((uint32_t) kpgdir);  // Flush TLB.
     return 0;
 }

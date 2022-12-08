@@ -1150,6 +1150,6 @@ void launch_tests() {
     // TEST_OUTPUT("buddy_alloc_stress_test", buddy_alloc_stress_test());
     // TEST_OUTPUT("slab_alloc_test", slab_alloc_test());
     // TEST_OUTPUT("slab_stress_test", slab_stress_test());
-    TEST_OUTPUT("kmalloc_stress_test", kmalloc_stress_test());
+    // TEST_OUTPUT("kmalloc_stress_test", kmalloc_stress_test());
 }
 

@@ -956,7 +956,7 @@ int buddy_block_coalesce_test(void) {
     return PASS;
 }
 
-int buddy_malloc_stress_test(void) {
+int buddy_alloc_stress_test(void) {
     uint32_t i, j;
     uint32_t alloc_cnt = 0;
     uint32_t dealloc_cnt = 0;
@@ -967,7 +967,7 @@ int buddy_malloc_stress_test(void) {
     for (j = 0; j < round_cnt; ++j) {
         memset(res, NULL, sizeof(res) / sizeof(res[0]));
         for (i = 0; i < round_size; ++i) {
-            if (NULL != (res[i] = buddy_malloc(rand() % ((4 << 19) + 1 - (1 << 10)) + (1 << 10)))) {
+            if (NULL != (res[i] = buddy_alloc(rand() % ((4 << 19) + 1 - (1 << 10)) + (1 << 10)))) {
                 alloc_cnt++;
             }
         }
@@ -993,6 +993,108 @@ int buddy_malloc_stress_test(void) {
     // Succeeded if no panics & correct statistics.
     return PASS;
 }
+
+int slab_alloc_test() {
+    int32_t i = 9;
+    for (i = 0; i < 9; ++i) {
+        slab_alloc(4 << i);
+    }
+    slab_traverse();
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
+int slab_stress_test() {
+    uint32_t i, j;
+    uint32_t alloc_cnt = 0;
+    uint32_t dealloc_cnt = 0;
+    uint32_t size;
+    uint32_t round_total_size;
+    static const int32_t round_size = 1000;  // Cannot be too large -- the PCB may get corrupted.
+    static const int32_t round_cnt = 1000;  // Stress test.
+    void* res[round_size];
+
+    for (j = 0; j < round_cnt; ++j) {
+        memset(res, NULL, sizeof(res) / sizeof(res[0]));
+        round_total_size = 0;
+        for (i = 0; i < round_size; ++i) {
+            size = rand() % ((2 << 10) + 1 - (8)) + (8);
+            if (NULL != (res[i] = buddy_alloc(size))) {
+                alloc_cnt++;
+                round_total_size += size;
+            }
+        }
+        for (i = 0; i < round_size; ++i) {
+            if (NULL == res[i]) {
+                continue;
+            }
+            if (0 == buddy_free(res[i])) {
+                dealloc_cnt++;
+            }
+        }
+        printf("\nIn round %d:\n", j);
+        printf("Successfully allocated %d blocks of memory.\n", alloc_cnt);
+        printf("Successfully reclaimed %d blocks of memory.\n", dealloc_cnt);
+        printf("Memory involved in this round: 0x%x.\n", round_total_size);
+
+        if (alloc_cnt != dealloc_cnt) {
+            assertion_failure();
+            return FAIL;
+        }
+    }
+
+    buddy_traverse();
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
+int kmalloc_stress_test() {
+    uint32_t i, j;
+    uint32_t alloc_cnt = 0;
+    uint32_t dealloc_cnt = 0;
+    uint32_t size;
+    uint32_t round_total_size;
+    static const int32_t round_size = 1000;  // Cannot be too large -- the PCB may get corrupted.
+    static const int32_t round_cnt = 1000;  // Stress test.
+    void* res[round_size];
+
+    for (j = 0; j < round_cnt; ++j) {
+        memset(res, NULL, sizeof(res) / sizeof(res[0]));
+        round_total_size = 0;
+        for (i = 0; i < round_size; ++i) {
+            size = rand() % ((4 << 18) + 1 - (8)) + (8);
+            if (NULL != (res[i] = kmalloc(size))) {
+                alloc_cnt++;
+                round_total_size += size;
+            }
+        }
+        for (i = 0; i < round_size; ++i) {
+            if (NULL == res[i]) {
+                continue;
+            }
+            if (0 == kfree(res[i])) {
+                dealloc_cnt++;
+            }
+        }
+        printf("\nIn round %d:\n", j);
+        printf("Successfully allocated %d blocks of memory.\n", alloc_cnt);
+        printf("Successfully reclaimed %d blocks of memory.\n", dealloc_cnt);
+        printf("Memory involved in this round: 0x%x.\n", round_total_size);
+
+        if (alloc_cnt != dealloc_cnt) {
+            assertion_failure();
+            return FAIL;
+        }
+    }
+
+    buddy_traverse();
+
+    // Succeeded if no panics & correct statistics.
+    return PASS;
+}
+
 
 /**
  * @brief launching test function
@@ -1045,6 +1147,9 @@ void launch_tests() {
     // TEST_OUTPUT("buddy_block_split_test", buddy_block_split_test());
     // TEST_OUTPUT("buddy_block_search_test", buddy_block_search_test());
     // TEST_OUTPUT("buddy_block_coalesce_test", buddy_block_coalesce_test());
-    // TEST_OUTPUT("buddy_malloc_stress_test", buddy_malloc_stress_test());
+    // TEST_OUTPUT("buddy_alloc_stress_test", buddy_alloc_stress_test());
+    // TEST_OUTPUT("slab_alloc_test", slab_alloc_test());
+    // TEST_OUTPUT("slab_stress_test", slab_stress_test());
+    TEST_OUTPUT("kmalloc_stress_test", kmalloc_stress_test());
 }
 

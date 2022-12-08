@@ -33,6 +33,9 @@ typedef struct slab {
 
 slab_t* slab_head;
 
+uint32_t buddy_cnt;
+uint32_t slab_cnt;
+
 void* kmalloc(uint32_t size);
 int32_t kfree(void* mem);
 void buddy_init(void* mem, uint32_t size, uint32_t alignment);
@@ -47,7 +50,7 @@ int32_t slab_free(void* mem);
 void slab_traverse(void);
 
 // DEBUG
-void buddy_traverse(void);
+int32_t buddy_traverse(void);
 void buddy_print_block(const buddy_block_t* b);
 
 #endif

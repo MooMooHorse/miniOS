@@ -18,6 +18,8 @@
 #define SYS_FILE_RENAME 15
 #define SYS_GETC        16
 
-#define SYS_SB16_IOCTL  17
+#define SYS_SB16_IOCTL    17
+#define SYS_KMALLOC_DEMO  18
+#define SYS_BUDDY_TRAVERSE 19
 
 #endif /* ECE391SYSNUM_H */

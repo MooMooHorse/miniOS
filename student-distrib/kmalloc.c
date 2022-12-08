@@ -161,17 +161,30 @@ buddy_print_block(const buddy_block_t* b) {
     printf("block.free: %s\n", b->free ? "true" : "false");
 }
 
-void
+int32_t
 buddy_traverse(void) {
     buddy_block_t* curr = START;
     int32_t i = 0;
+    uint32_t free = 0;
+    uint32_t occupied = 0;
     printf("\nBuddy Allocator Traverse\n");
 
     while (curr < END) {
         printf("\nBuddy block #%d\n", i++);
         buddy_print_block(curr);
+        if (curr->free) {
+            free += curr->size;
+        } else {
+            occupied += curr->size;
+        }
         curr = GET_NEXT(curr);
     }
+
+    printf("\nMemory available: 0x%x\n", free);
+    printf("\nMemory used: 0x%x\n", occupied);
+    printf("\nAggregate: 0x%x\n", free + occupied);
+
+    return 0;
 }
 
 void*
@@ -304,8 +317,10 @@ slab_free(void* mem) {
 void*
 kmalloc(uint32_t size) {
     if (BUDDY_MIN < size) {
+        buddy_cnt++;
         return buddy_alloc(size);
     }
+    slab_cnt++;
     return slab_alloc(size);
 }
 

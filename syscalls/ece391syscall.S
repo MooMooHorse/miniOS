@@ -34,6 +34,8 @@ DO_CALL(ece391_file_remove,SYS_FILE_REMOVE)
 DO_CALL(ece391_file_rename,SYS_FILE_RENAME)
 DO_CALL(ece391_getc,SYS_GETC)
 DO_CALL(ece391_sb16_ioctl,SYS_SB16_IOCTL)
+DO_CALL(ece391_kmalloc_demo,SYS_KMALLOC_DEMO)
+DO_CALL(ece391_buddy_traverse,SYS_BUDDY_TRAVERSE)
 
 /* Call the main() function, then halt with its return value. */
 

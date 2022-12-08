@@ -22,6 +22,7 @@
 #include "filesystem.h"
 #include "rtc.h"
 #include "mmu.h"
+#include "kmalloc.h"
 #include "err.h"
 #include "tests.h"
 #include "signal.h"
@@ -502,6 +503,44 @@ int32_t sb16_ioctl(int32_t fd,int32_t command, int32_t args) {
     return 0;
 }
 
+int32_t kmalloc_demo(void) {
+    uint32_t i, j;
+    uint32_t alloc_cnt = 0;
+    uint32_t dealloc_cnt = 0;
+    uint32_t size;
+    uint32_t round_total_size;
+    static const int32_t round_size = 1000;  // Cannot be too large -- the PCB may get corrupted.
+    static const int32_t round_cnt = 100;  // Stress test.
+    void* res[round_size];
+
+    for (j = 0; j < round_cnt; ++j) {
+        memset(res, NULL, sizeof(res) / sizeof(res[0]));
+        round_total_size = 0;
+        for (i = 0; i < round_size; ++i) {
+            size = rand() % ((1 << 20) + 1 - (8)) + (8);
+            if (NULL != (res[i] = kmalloc(size))) {
+                alloc_cnt++;
+                round_total_size += size;
+            }
+        }
+        for (i = 0; i < round_size; ++i) {
+            if (NULL == res[i]) {
+                continue;
+            }
+            if (0 == kfree(res[i])) {
+                dealloc_cnt++;
+            }
+        }
+        printf("\nIn round %d:\n", j);
+        printf("Successfully allocated %d blocks of memory.\n", alloc_cnt);
+        printf("Memory involved in this round: 0x%x bytes.\n", round_total_size);
+        printf("Buddy allocator called %u times.\n", buddy_cnt);
+        printf("Slab allocator called %u times.\n", slab_cnt);
+        printf("Successfully reclaimed %d blocks of memory.\n", dealloc_cnt);
+    }
+    return 0;
+}
+
 /**
  * @brief get user character
  * 
@@ -541,5 +580,7 @@ install_syscall(){
     syscall_table[SYS_FILE_RENAME]=(uint32_t)file_rename;
     syscall_table[SYS_GETC]=(uint32_t)getc;
     syscall_table[SYS_SB16_IOCTL]=(uint32_t)sb16_ioctl;
+    syscall_table[SYS_KMALLOC_DEMO]=(uint32_t)kmalloc_demo;
+    syscall_table[SYS_BUDDY_TRAVERSE]=(uint32_t)buddy_traverse;
 }
 

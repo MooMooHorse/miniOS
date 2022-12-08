@@ -29,6 +29,7 @@ extern int32_t ece391_file_remove(const uint8_t* fname);
 extern int32_t ece391_file_rename(const uint8_t* src, const uint8_t* dest);
 extern int32_t ece391_getc();
 extern int32_t ece391_sb16_ioctl(int32_t fd,int32_t command, int32_t args);
+extern int32_t ece391_kmalloc_demo(void);
 
 enum signums {
 	DIV_ZERO = 0,

@@ -147,11 +147,11 @@ buddy_init(void* mem, uint32_t size, uint32_t align) {
     // DEBUG
     printf("\nBuddy allocator initialized!\n");
     printf("sizeof buddy_block_t: %u\n", sizeof(buddy_block_t));
-    printf("start: %u\n", START);
-    printf("start.size: %u\n", START->size);
-    printf("start.free: %u\n", START->free);
-    printf("end: %u\n", END);
-    printf("alignment: %u\n", ALIGN);
+    printf("start: 0x%x\n", START);
+    printf("start.size: 0x%x\n", START->size);
+    printf("start.free: %s\n", START->free ? "true" : "false");
+    printf("end: 0x%x\n", END);
+    printf("alignment: 0x%x\n\n", ALIGN);
 }
 
 void

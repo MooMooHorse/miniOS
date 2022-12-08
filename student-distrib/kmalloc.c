@@ -6,7 +6,7 @@
 #define HEADER_SIZE  (sizeof(buddy_block_t))
 #define START        (buddy_allocator.start)
 #define END          (buddy_allocator.end)
-#define ALIGN        (buddy_allocator.alignment)
+#define ALIGN        (buddy_allocator.align)
 
 #define GET_NEXT(b)         \
     ((buddy_block_t*) ((uint8_t*) b + ((buddy_block_t*) b)->size))
@@ -23,11 +23,12 @@
         sz;                                 \
     })
 
-struct mem {
-    struct mem* next;
-};
-
-struct mem* kmem;
+#define GET_SLAB_SIZE(x)                    \
+    ({                                      \
+        uint32_t sz = MIN_SIZE;             \
+        while (sz < x) { sz <<= 1; }        \
+        sz;                                 \
+    })
 
 buddy_block_t*
 buddy_split(buddy_block_t* b, uint32_t size) {
@@ -124,15 +125,15 @@ buddy_coalesce(void) {
 }
 
 void
-buddy_init(void* mem, uint32_t size, uint32_t alignment) {
+buddy_init(void* mem, uint32_t size, uint32_t align) {
     if (!mem || !CHECK_ALIGNMENT(size)) {
         panic("buddy allocator init, invalid pointer/size");
     }
 
     // The alignment must be large enough to hold metadata.
-    alignment = alignment < sizeof(buddy_block_t) ? sizeof(buddy_block_t) : alignment;
+    align = align < sizeof(buddy_block_t) ? sizeof(buddy_block_t) : align;
 
-    if (!CHECK_ALIGNMENT(alignment) || 0 != (uint32_t) mem % alignment) {
+    if (!CHECK_ALIGNMENT(align) || 0 != (uint32_t) mem % align) {
         panic("buddy allocator init, alignment");
     }
 
@@ -141,7 +142,7 @@ buddy_init(void* mem, uint32_t size, uint32_t alignment) {
     START->size = size;
     START->free = true;
     END = GET_NEXT(START);
-    ALIGN = alignment;
+    ALIGN = align;
 
     // DEBUG
     printf("\nBuddy allocator initialized!\n");
@@ -174,7 +175,7 @@ buddy_traverse(void) {
 }
 
 void*
-buddy_malloc(uint32_t size) {
+buddy_alloc(uint32_t size) {
     buddy_block_t* res;
     uint32_t sz;
     if (0 == size) { return NULL; }
@@ -207,17 +208,105 @@ buddy_free(void* mem) {
     return 0;
 }
 
+void
+slab_traverse(void) {
+    slab_t* s = slab_head;
+    struct mem* m;
+    int32_t i = 0;
+    int32_t j;
+    printf("\nSlab Allocator Traverse\n");
+
+    while (s) {
+        printf("Slab #%d\n", i++);
+        printf("slab.size: %u\n", s->size);
+        m = s->freelist;
+        j = 0;
+        while (m) {
+//            printf("slab object at 0x%x\n", m);
+            j++;
+            m = m->next;
+        }
+        printf("%u slab objects found.\n", j);
+        s = s->next;
+    }
+}
+
+slab_t*
+slab_create(uint32_t size) {
+    int32_t i;
+    slab_t* s;
+    struct mem* mem;
+    if (NULL == (s = buddy_alloc(PGSIZE))) {
+        return NULL;  // No available memory in buddy allocator.
+    }
+    memset(s, 0, PGSIZE);
+
+    // Add the new slab to the global slab list.
+    s->next = slab_head;
+    slab_head = s;
+
+    // Initialize struct slab.
+    s->size = size;
+    mem = (struct mem*) ((uint8_t*) s + sizeof(*s));
+    s->freelist = mem;
+
+    for (i = 1; (uint8_t*) mem + size < (uint8_t*) s + PGSIZE; ++i) {
+        mem->next = (struct mem*) ((uint8_t*) s->freelist + i * size);
+        mem = mem->next;
+    }
+
+    return s;
+}
+
+static struct mem*
+_slab_alloc(slab_t* s) {
+    struct mem* mem;
+    mem = s->freelist;
+    s->freelist = s->freelist->next;
+    return mem;
+}
+
+void*
+slab_alloc(uint32_t size) {
+    slab_t* s = slab_head;
+    size = (size < MIN_SIZE) ? MIN_SIZE : GET_SLAB_SIZE(size);
+    while (s) {
+        if (s->freelist && size == s->size) {
+            goto SLAB_ALLOC;
+        }
+        s = s->next;
+    }
+    if (NULL == (s = slab_create(size))) {
+        return NULL;
+    }
+
+SLAB_ALLOC:
+    return (void*) _slab_alloc(s);
+}
+
+int32_t
+slab_free(void* mem) {
+    struct mem* m = mem;
+    slab_t* s = slab_head;
+
+    for (; s; s = s->next) {
+        if ((void*) s > mem || (uint8_t*) s + PGSIZE < (uint8_t*) mem) {
+            continue;
+        }
+        m->next = s->freelist;
+        s->freelist = m;
+        return 0;
+    }
+
+    return -1;
+}
+
 void*
 kmalloc(uint32_t size) {
-//    struct mem* m = kmem;
-//
-//    if (m) {
-//        kmem = m->next;
-//    }
-    void* res;
-    res = buddy_malloc(size);
-
-    return res;
+    if (BUDDY_MIN < size) {
+        return buddy_alloc(size);
+    }
+    return slab_alloc(size);
 }
 
 void
@@ -228,17 +317,10 @@ kfree_range(void* start, void* end) {
     }
 }
 
-void
-kfree(void* v) {
-//    struct mem* m = v;
-//    if ((uint32_t) v << (PTESIZE - PDXOFF)) {
-//        panic("kfree: va not aligned");
-//    }
-
-    buddy_free(v);
-
-//    memset(v, MEM_MAGIC, PGSIZE);
-
-//    m->next = kmem;
-//    kmem = m;
+int32_t
+kfree(void* mem) {
+    if (0 == slab_free(mem) || 0 == buddy_free(mem)) {
+        return 0;
+    }
+    return 1;
 }

@@ -4,7 +4,7 @@
 #include "filesystem.h"
 
 #define SB16_PAGE_ADDRESS       0x120000    // memory address for SB16 DMA
-#define SB16_DATA_LENGTH        0x10000     // size of data buffer for SB16 DMA
+#define SB16_DATA_LENGTH        0x01000     // size of data buffer for SB16 DMA
 #define SB16_IRQ                5           // IRQ number for SB16
 
 #define SB16_MIXER_PORT         0x224
@@ -23,6 +23,7 @@
 #define SB16_8_BIT_RESUME       0xD4
 #define SB16_16_BIT_PAUSE       0xD5
 #define SB16_16_BIT_RESUME      0xD6
+#define SB16_8_BIT_EXIT         0xDA
 #define SB16_DSP_VERSION        0xE1
 #define SB16_MASTER_VOLUME      0x22
 

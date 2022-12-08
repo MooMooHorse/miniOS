@@ -192,7 +192,7 @@ int32_t sb16_close(file_t* file) {
         // SB16 must be initialized before close
         return -1;
     }
-
+    outb(0xD0, SB16_WRITE_PORT);
     file->fops.close = NULL;
     file->fops.read = NULL;
     file->fops.write = NULL;
@@ -204,7 +204,7 @@ int32_t sb16_close(file_t* file) {
     sb16.sb16_busy = 0;
     sb16.sb16_interrupted = 0;
     
-    // outb(0x41, SB16_WRITE_PORT);
+    outb(SB16_8_BIT_EXIT, SB16_WRITE_PORT);
 
     return 0;
 }

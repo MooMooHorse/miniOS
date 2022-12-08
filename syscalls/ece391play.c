@@ -79,11 +79,11 @@ int main() {
     uint8_t file_name[1024]; // used for file input, hardcoded file for now
     uint8_t debug_buf[1024];
 
-    // obtain filename
-    if (0 != ece391_getargs(file_name, 1024)) {
-        ece391_fdputs(1, (uint8_t*)"Error: no file name provided\n");
-        return 2;
-    }
+    // // obtain filename
+    // if (0 != ece391_getargs(file_name, 1024)) {
+    //     ece391_fdputs(1, (uint8_t*)"Error: no file name provided\n");
+    //     return 2;
+    // }
 
     ece391_strcpy((uint8_t*)file_name, (uint8_t*)"stopandsmell8.wav");
 

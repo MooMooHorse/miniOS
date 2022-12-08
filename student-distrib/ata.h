@@ -2,7 +2,7 @@
 #ifndef _ATA_H
 #define _ATA_H
 
-#define DISK_PREPARED
+// #define DISK_PREPARED
 
 #include "types.h"
 

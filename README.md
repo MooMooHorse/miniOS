@@ -32,6 +32,13 @@ The functionalities I finished are :
   * replace `path_to_*` file path to your path to  `qemu-system-i386w.exe`(QEMU executable),`mp3.img`(kernel image),   `disks\image.img`(disk image)
 * In Mac/Ubuntu, do the same as in windows, with just `path_to_qemu\qemu-system-i386w.exe` replaced with your `qemu-system-i386w` command. ( Not tested)
 
+## Documentations
+
+* `doc` folder
+* our website https://moomoohorse.com/home/mini-os/
+
+
+
 ## ECE391 : 2nd place
 
 This project is ECE391 project, and wins the 2nd place for the contest

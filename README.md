@@ -1,5 +1,51 @@
+# Mini OS
+
+This OS is implemented by me as well as my group mates.
+
+This is an OS starting from scratch with QEMU. 
+
+* Siyuan Qian
+* Erik Ji
+* Ozgur Tufekci
+
+This OS contains these pieces of functionalities
+
+* PIC and interrupts
+* Round Robin Scheduling
+* System Calls
+* Flat File System
+* Signals and Dynamic Memory Allocation
+* Multi-terminals
+* User level GUI, Editors, and Music Players
+* Devices drivers : PIT, RTC, keyboard, mouse, VGA, Sound Blaster, ATA HardDrive
+
+## My contribution
+
+The functionalities I finished are : 
+
+* Interrupts, System Calls, Flat File System, Signals, Multi-terminals, User level GUI, Editors, VGA and ATA HardDrive driver.
+
+## Installation 
+
+* Install QEMU version below 4.0 the best (because the known bug for QEMU for sound blaster 16)
+* In windows, set the QEMU parameter `path_to_qemu\qemu-system-i386w.exe -hda "path_to_kernel\mp3.img" -hdb "path_to_disk\disks\image.img" -soundhw sb16 -m 256 -gdb tcp:127.0.0.1:1234 -name mp3`
+  * replace `path_to_*` file path to your path to  `qemu-system-i386w.exe`(QEMU executable),`mp3.img`(kernel image),   `disks\image.img`(disk image)
+* In Mac/Ubuntu, do the same as in windows, with just `path_to_qemu\qemu-system-i386w.exe` replaced with your `qemu-system-i386w` command. ( Not tested)
+
+## Documentations
+
+* `doc` folder
+* our website https://moomoohorse.com/home/mini-os/
+
+
+
+## ECE391 : 2nd place
+
+This project is ECE391 project, and wins the 2nd place for the contest
+
 ACADEMIC INTEGRITY
 -----
+
 Please review the University of Illinois Student Code before starting,
 particularly all subsections of Article 1, Part 4 Academic Integrity and Procedure [here](http://studentcode.illinois.edu/article1_part4_1-401.html).
 
